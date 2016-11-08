@@ -2,6 +2,7 @@ import numpy as np
 from netcdf_subset import netCDF_subset
 from operator import attrgetter
 from argparse import ArgumentParser
+from matplotlib import pyplot as plt
 from netCDF4 import Dataset
 
 if __name__ == '__main__':
@@ -14,8 +15,18 @@ if __name__ == '__main__':
     getter = attrgetter('input','output')
     inp,outp = getter(opts)
     dsin = Dataset(inp,"r")
-    level = [500,1000]
+    level = [500]
     vs = ['u','v']
-    n_sub = netCDF_subset(dsin,level,vs)
-    print n_sub.lvl_pos()
-    n_sub.write_tofile(outp)
+    n_sub = netCDF_subset(dsin,level,vs,'level','time')
+    #clut_list = n_sub.link_var('average','cosine',10)
+    #n_sub.link_var('average','cosine',10)
+    #print n_sub.lvl_pos()
+    #for i in clut_list:
+    #    avg_list = []
+    #    for pos,c in enumerate(i):
+    #        avg_list.append(n_sub.calculate_clut_avg_cent(pos,clut_list))
+    #    print avg_list
+    n_sub.link_multivar('average','cosine',10)
+   # n_sub.cluster_tofile(outp,2,clut_list)
+    #n_sub.write_tofile(outp)
+    #print n_sub.get_time()
