@@ -62,9 +62,11 @@ class netCDF_subset(object):
           gather_data = np.concatenate(temp_v_list)
           uv = np.ndarray(shape=(gather_data.shape[0]/len(var_list),gather_data.shape[1]*2))
           for pos,idx in enumerate(uv):
-              idx = np.append(gather_data[pos],gather_data[pos+uv.shape[0]])
+              uv[pos] = np.append(gather_data[pos],gather_data[pos+uv.shape[0]])
           print uv.shape
           del gather_data
+          print uv[1]
+          print len(uv[0])
           UV = linkage(uv,method,metrics)
           cutree = np.array(cut_tree(UV,n_clusters=n_clusters).flatten())
           clut_indices = []
