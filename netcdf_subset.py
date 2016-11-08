@@ -50,6 +50,29 @@ class netCDF_subset(object):
               var_cluster_state = self.extract_timedata(c[cluster_label],self.lvl_pos())
               return np.average(var_cluster_state)
       
+      def calculate_overlap(self,clut_list1,clut_list2):
+          c_overlap = []
+          if len(clut_list1)!=1 and len(clut_list2)!=1:
+              raise TypeError('List of clusters must contain only a single variable')
+          for time_space in range(0,self.dataset.variables[self.time_name].shape[0]):
+              time_space = 723#int(time_space)
+              idx_1 = None
+              idx_2 = None
+              for clut in clut_list1[0]:
+                  if time_space in clut:
+                     clut = clut.tolist()
+                     idx_1 = clut.index(time_space)
+                     break
+              for clut in clut_list2[0]:
+                  if time_space in clut:
+                      clut=clut.tolist()
+                      idx_2 = clut.index(time_space)
+              #if idx_1!=None and idx_2 != None:
+              #print idx_1,idx_2
+              #to be continued
+              break
+              
+      
       #Perform clustering and retrieve dataset clustered in n_clusters (for multiple variables)
       def link_multivar(self,method,metrics,n_clusters):
           var_list = self.extract_data(self.lvl_pos())
@@ -65,8 +88,6 @@ class netCDF_subset(object):
               uv[pos] = np.append(gather_data[pos],gather_data[pos+uv.shape[0]])
           print uv.shape
           del gather_data
-          print uv[1]
-          print len(uv[0])
           UV = linkage(uv,method,metrics)
           cutree = np.array(cut_tree(UV,n_clusters=n_clusters).flatten())
           clut_indices = []
@@ -80,7 +101,14 @@ class netCDF_subset(object):
               for nc in range(0,n_clusters):
                   obv_dev.append((nc,len(c[nc])))
               print sorted(obv_dev,key=lambda x:x[1],reverse=True)
-          return clut_list
+              #for nc in range(0,n_clusters):
+              #    print 'Cluster ',nc
+              #    print '--------------------------'
+              #    unit = self.dataset.variables['time'].units
+              #    cal = self.dataset.variables['time'].calendar
+              #    times = self.dataset.variables['time'][c[nc]]
+              #    print num2date(times,unit,cal)
+          return clut_list,UV
                    
       #Perform clustering and retrieve dataset clustered in n_clusters (every var individually)
       def link_var(self,method,metrics,n_clusters):
@@ -111,18 +139,23 @@ class netCDF_subset(object):
                   #    unit = self.dataset.variables['time'].units
                   #    cal = self.dataset.variables['time'].calendar
                   #    times = self.dataset.variables['time'][c[nc]]
-                  #    print num2date(times,unit,cal)                      
-          return clut_list
+                  #    print num2date(times,unit,cal)
+          return clut_list,V
       
 
           
-      #Write a single cluster to a file
-      def cluster_tofile(self,out_path,cluster_label,clut_list):
+      #Write a single cluster to a file for a variable
+      def single_cluster_tofile(self,out_path,cluster_label,clut_list):
           for pos,c in enumerate(clut_list):
               print 'Creating file for Variable ',self.subset_variables[pos]
               print 'Cluster label is ',cluster_label
               self.write_timetofile(out_path+'/var_'+self.subset_variables[pos]+'_cluster'+str(cluster_label)+'.nc',self.lvl_pos(),c[cluster_label])
-                  
+      
+      #Write a single cluster to file for mixed variable
+      def multi_cluster_tofile(self,out_path,cluster_label,clut_list):
+          for pos,c in enumerate(clut_list):
+              print 'Creating file for mixed variables. Cluster label is ',cluster_label
+              self.write_timetofile(out_path+'/var_mixed_cluster'+str(cluster_label)+'.nc',self.lvl_pos(),c[cluster_label])
             
       #Export results to file from attibute dataset
       def write_tofile(self,out_path):

@@ -26,7 +26,16 @@ if __name__ == '__main__':
     #    for pos,c in enumerate(i):
     #        avg_list.append(n_sub.calculate_clut_avg_cent(pos,clut_list))
     #    print avg_list
-    n_sub.link_multivar('average','cosine',10)
-   # n_sub.cluster_tofile(outp,2,clut_list)
+    #n_sub.link_multivar('average','cosine',10)
+    #n_sub.cluster_tofile(outp,2,clut_list)
+    clut_list,UV = n_sub.link_multivar('average','cosine',10)
+    #n_sub.multi_cluster_tofile(outp,3,clust_list)
+    level2 = [500]
+    vs2 = ['z']
+    n_sub2 = netCDF_subset(dsin,level2,vs2,'level','time')
+    clut_list2,Z = n_sub2.link_var('average','cosine',10)
+    print n_sub2.calculate_overlap(clut_list,clut_list2)
+    #plt.plot(range(0,UV.shape[0]),UV[:,2],'r--')
+    #plt.show()
     #n_sub.write_tofile(outp)
     #print n_sub.get_time()
