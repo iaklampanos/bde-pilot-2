@@ -1,5 +1,5 @@
 import numpy as np
-from netcdf_subset import netCDF_subset
+from netcdf_subset import netCDF_subset,calculate_clut_metrics,calculate_prf
 from operator import attrgetter
 from argparse import ArgumentParser
 from matplotlib import pyplot as plt
@@ -15,9 +15,9 @@ if __name__ == '__main__':
     getter = attrgetter('input','output')
     inp,outp = getter(opts)
     dsin = Dataset(inp,"r")
-    level = [500]
-    vs = ['u','v']
-    n_sub = netCDF_subset(dsin,level,vs,'level','time')
+    #level = [500]
+    #vs = ['u','v']
+    #n_sub = netCDF_subset(dsin,level,vs,'level','time')
     #clut_list = n_sub.link_var('average','cosine',10)
     #n_sub.link_var('average','cosine',10)
     #print n_sub.lvl_pos()
@@ -28,13 +28,37 @@ if __name__ == '__main__':
     #    print avg_list
     #n_sub.link_multivar('average','cosine',10)
     #n_sub.cluster_tofile(outp,2,clut_list)
-    clut_list,UV = n_sub.link_multivar('average','cosine',10)
+    #clut_list,UV = n_sub.link_multivar('average','cosine',10)
     #n_sub.multi_cluster_tofile(outp,3,clust_list)
     level2 = [500]
     vs2 = ['z']
     n_sub2 = netCDF_subset(dsin,level2,vs2,'level','time')
-    clut_list2,Z = n_sub2.link_var('average','cosine',10)
-    print n_sub2.calculate_overlap(clut_list,clut_list2)
+    WSS =[]
+    BSS=[]
+    TOTAL = []
+    for i in range(2,21):
+        clut_list2,Z = n_sub2.link_var('average','cosine',i)
+        #print calculate_prf(clut_list,clut_list2)
+        clusters = []
+        for c in clut_list2[0]:
+            temp_arr = np.array(n_sub2.extract_timedata(c.tolist(),n_sub2.lvl_pos()))
+            temp_arr = temp_arr.reshape(len(c),5335)
+            clusters.append(temp_arr)
+        #print clusters[0].shape
+        #np.savetxt('qq.txt',clusters[0])
+        #print clusters[0]
+        #print 'Cluster number...... ',i
+        #print 'WSS BSS TOTAL'
+        wss,bss,total = calculate_clut_metrics(clusters)
+        WSS.append(wss)
+        BSS.append(bss)
+        TOTAL.append(total)
+    print 'WSS'
+    print WSS
+    print 'BSS'
+    print BSS
+    print 'TOTAL'
+    print total    
     #plt.plot(range(0,UV.shape[0]),UV[:,2],'r--')
     #plt.show()
     #n_sub.write_tofile(outp)

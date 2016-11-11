@@ -2,6 +2,71 @@ import numpy as np
 from netCDF4 import Dataset,num2date
 from scipy.cluster.hierarchy import dendrogram, linkage, cut_tree
 
+#Calculate precision,recall and F-scores for two clustering outcomes
+def calculate_prf(clut_list1,clut_list2):
+          if len(clut_list1)!=1 and len(clust_list2)!=1:
+              raise ValueError('List of clusters must contain only a single variable or a single list for multiple variables')
+          P = []
+          R = []
+          F = []
+          for c in clut_list1[0]:
+              C_precision = []
+              C_recall = []
+              C_f = []
+              for cc in clut_list2[0]:
+                  p = len(np.intersect1d(c,cc))/float(len(cc))
+                  r = len(np.intersect1d(c,cc))/float(len(c))
+                  if len(np.intersect1d(c,cc)) != 0:
+                      C_precision.append(p)
+                      C_recall.append(r)
+                      C_f.append(2*p*r/(p+r))
+                  else:
+                      C_precision.append(0)
+                      C_recall.append(0)
+                      C_f.append(0)
+              P.append(C_precision)
+              R.append(C_recall)
+              F.append(C_f)
+          #for idx,f in enumerate(F):
+              #print 'Cluster ',idx
+              #print '------------------'
+              #for ff in f:
+              #    if ff != 0:
+              #        print ff
+          return P,R,F
+
+#Calculate Cohesion(WSS) by Sum squared error and Separation measured by between cluster sum of squares
+def calculate_clut_metrics(cluster_data):
+    wss_c = []
+    bss_c = []
+    mag = []
+    #for cluster in cluster_data:
+    #    mag.append(np.linalg.norm(cluster))
+    #max_mag = max(mag)
+    #cluster_norm = []
+    #for cluster in cluster_data:
+    #    cluster_norm.append(np.divide(cluster,max_mag))
+    flatten_clust = np.array([0])
+    for c in cluster_data:
+    #for c in cluster_norm:
+        flatten_clust = np.append(flatten_clust,c)
+    flatten_clust = np.delete(flatten_clust,0)
+    m = np.mean(flatten_clust,axis=0)
+    #for cluster in cluster_norm:
+    for cluster in cluster_data:
+        mi = np.mean(np.matrix(cluster),axis=0)
+        wss = np.power((np.subtract(cluster,mi)),2)
+        bss = np.multiply(len(cluster),np.power(np.subtract(m,mi),2))
+        wss_c.append(np.sum(wss))
+        bss_c.append(np.sum(bss))
+        #wss_c.append(np.divide(np.sum(wss),len(cluster)))
+        #bss_c.append(np.divide(np.sum(bss),len(cluster)))
+    #print sorted(wss_c,reverse=True)
+    #print sorted(bss_c,reverse=True)
+    WSS = np.sum(wss_c)
+    BSS = np.sum(bss_c)
+    TOTAL = WSS+BSS
+    return WSS,BSS,TOTAL
 
 class netCDF_subset(object):
       dataset = None #initial netcdf dataset path
@@ -42,37 +107,7 @@ class netCDF_subset(object):
           for v in self.subset_variables:
                 var_list.append(self.dataset.variables[v][time_pos,sub_pos,:,:])
           return var_list
-
-      def calculate_clut_avg_cent(self,cluster_label,clut_list):
-          for pos,c in enumerate(clut_list):
-              print 'Calculating average for Variable ',self.subset_variables[pos]
-              print 'Cluster label is ',cluster_label
-              var_cluster_state = self.extract_timedata(c[cluster_label],self.lvl_pos())
-              return np.average(var_cluster_state)
-      
-      def calculate_overlap(self,clut_list1,clut_list2):
-          c_overlap = []
-          if len(clut_list1)!=1 and len(clut_list2)!=1:
-              raise TypeError('List of clusters must contain only a single variable')
-          for time_space in range(0,self.dataset.variables[self.time_name].shape[0]):
-              time_space = 723#int(time_space)
-              idx_1 = None
-              idx_2 = None
-              for clut in clut_list1[0]:
-                  if time_space in clut:
-                     clut = clut.tolist()
-                     idx_1 = clut.index(time_space)
-                     break
-              for clut in clut_list2[0]:
-                  if time_space in clut:
-                      clut=clut.tolist()
-                      idx_2 = clut.index(time_space)
-              #if idx_1!=None and idx_2 != None:
-              #print idx_1,idx_2
-              #to be continued
-              break
-              
-      
+            
       #Perform clustering and retrieve dataset clustered in n_clusters (for multiple variables)
       def link_multivar(self,method,metrics,n_clusters):
           var_list = self.extract_data(self.lvl_pos())
