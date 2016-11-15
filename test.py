@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.cluster.hierarchy import fcluster,dendrogram
 from netcdf_subset import netCDF_subset,calculate_clut_metrics,calculate_prf
 from operator import attrgetter
 from argparse import ArgumentParser
@@ -33,32 +34,39 @@ if __name__ == '__main__':
     level2 = [500]
     vs2 = ['z']
     n_sub2 = netCDF_subset(dsin,level2,vs2,'level','time')
-    WSS =[]
-    BSS=[]
-    TOTAL = []
-    for i in range(2,21):
-        clut_list2,Z = n_sub2.link_var('average','cosine',i)
-        #print calculate_prf(clut_list,clut_list2)
-        clusters = []
-        for c in clut_list2[0]:
-            temp_arr = np.array(n_sub2.extract_timedata(c.tolist(),n_sub2.lvl_pos()))
-            temp_arr = temp_arr.reshape(len(c),5335)
-            clusters.append(temp_arr)
+    clut_list2,Z = n_sub2.link_var('average','cosine',5)
+    #n_sub2.find_continuous_timeslots(clut_list2)
+    wss,bss,total = calculate_clut_metrics(n_sub2.prepare_c_list_for_metrics(clut_list2))
+    #for i in range(0,5):
+    #    n_sub2.single_cluster_tofile(outp,i,clut_list2)
+    #plt.plot(range(0,Z.shape[0]),Z[:,2])
+    #plt.show()
+    #WSS =[]
+    #BSS=[]
+    #TOTAL = []
+    #for i in range(2,21):
+    #    clut_list2,Z = n_sub2.link_var('average','cosine',i)
+    #    print calculate_prf(clut_list,clut_list2)
+    #    clusters = []
+    #    for c in clut_list2[0]:
+    #        temp_arr = np.array(n_sub2.extract_timedata(c.tolist(),n_sub2.lvl_pos()))
+    #        temp_arr = temp_arr.reshape(len(c),5335)
+    #        clusters.append(temp_arr)
         #print clusters[0].shape
         #np.savetxt('qq.txt',clusters[0])
         #print clusters[0]
         #print 'Cluster number...... ',i
         #print 'WSS BSS TOTAL'
-        wss,bss,total = calculate_clut_metrics(clusters)
-        WSS.append(wss)
-        BSS.append(bss)
-        TOTAL.append(total)
-    print 'WSS'
-    print WSS
-    print 'BSS'
-    print BSS
-    print 'TOTAL'
-    print total    
+    #    wss,bss,total = calculate_clut_metrics(clusters)
+    #    WSS.append(wss)
+    #    BSS.append(bss)
+    #    TOTAL.append(total)
+    #print 'WSS'
+    #print WSS
+    #print 'BSS'
+    #print BSS
+    #print 'TOTAL'
+    #print total    
     #plt.plot(range(0,UV.shape[0]),UV[:,2],'r--')
     #plt.show()
     #n_sub.write_tofile(outp)
