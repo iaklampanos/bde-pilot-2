@@ -76,7 +76,7 @@ class netCDF_subset(object):
       time_name = None
       pressure_levels = None #pressure level of interest
       subset_variables = None #variables of interest
-      
+
       #Constructor
       def __init__(self,dataset,levels,sub_vars,lvlname,timename):
           #Init original dataset
@@ -87,7 +87,7 @@ class netCDF_subset(object):
           self.subset_variables = sub_vars
           self.level_name = lvlname
           self.time_name = timename
-      
+
       #Find pressure level position in dataset
       def lvl_pos(self):
           idx_list = []
@@ -95,21 +95,21 @@ class netCDF_subset(object):
           for lvl in self.pressure_levels:
               idx_list.append(arr.index(lvl))
           return idx_list
-      
+
       #Retrieve variables for a specific level (defined in Class attributes)
       def extract_data(self,sub_pos):
           var_list = []
           for v in self.subset_variables:
                 var_list.append(self.dataset.variables[v][:,sub_pos,:,:])
           return var_list
-      
+
       #Retrieve variables for a specific level and time (used in clusters to file)
       def extract_timedata(self,time_pos,sub_pos):
           var_list = []
           for v in self.subset_variables:
                 var_list.append(self.dataset.variables[v][time_pos,sub_pos,:,:])
           return var_list
-            
+
       #Perform clustering and retrieve dataset clustered in n_clusters (for multiple variables)
       def link_multivar(self,method,metrics,n_clusters):
           var_list = self.extract_data(self.lvl_pos())
@@ -150,7 +150,7 @@ class netCDF_subset(object):
               #    times = self.dataset.variables['time'][c[nc]]
               #    print num2date(times,unit,cal)
           return clut_list,UV
-                   
+
       #Perform clustering and retrieve dataset clustered in n_clusters (every var individually)
       def link_var(self,method,metrics,n_clusters):
           var_list = self.extract_data(self.lvl_pos())
@@ -182,7 +182,7 @@ class netCDF_subset(object):
                   #    times = self.dataset.variables['time'][c[nc]]
                   #    print num2date(times,unit,cal)
           return clut_list,V
-      
+
       def get_clusters_saved(self,V,n_clusters):
           clut_list = []
           cutree = np.array(cut_tree(V, n_clusters=n_clusters).flatten())
@@ -207,20 +207,20 @@ class netCDF_subset(object):
                   #print num2date(times,unit,cal)
           return clut_list
 
-          
+
       #Write a single cluster to a file for a variable
       def single_cluster_tofile(self,out_path,cluster_label,clut_list):
           for pos,c in enumerate(clut_list):
               print 'Creating file for Variable ',self.subset_variables[pos]
               print 'Cluster label is ',cluster_label
               self.write_timetofile(out_path+'/var_'+self.subset_variables[pos]+'_cluster'+str(cluster_label)+'.nc',self.lvl_pos(),c[cluster_label])
-      
+
       #Write a single cluster to file for mixed variable
       def multi_cluster_tofile(self,out_path,cluster_label,clut_list):
           for pos,c in enumerate(clut_list):
               print 'Creating file for mixed variables. Cluster label is ',cluster_label
               self.write_timetofile(out_path+'/var_mixed_cluster'+str(cluster_label)+'.nc',self.lvl_pos(),c[cluster_label])
-      
+
       #Find the maximum continuous timeslot for every cluster
       def find_continuous_timeslots(self,clut_list,hourslot=6):
           times_list = []
@@ -261,7 +261,7 @@ class netCDF_subset(object):
                   print time[start_idx],time[end_idx]
                   print time[end_idx]-time[start_idx]
                   print start_idx,end_idx
-                  
+
       #Export results to file from attibute dataset
       def write_tofile(self,out_path):
           dsout = Dataset(out_path,'w')
@@ -272,7 +272,7 @@ class netCDF_subset(object):
               if dname != self.level_name:
                  dsout.createDimension(dname, len(dim) if not dim.isunlimited() else None)
               else:
-                 dsout.createDimension(dname, len(self.pressure_levels) if not dim.isunlimited() else None) 
+                 dsout.createDimension(dname, len(self.pressure_levels) if not dim.isunlimited() else None)
           for v_name, varin in self.dataset.variables.iteritems():
               if v_name in self.subset_variables:
                   for pos_v,v in enumerate(self.subset_variables):
@@ -288,7 +288,7 @@ class netCDF_subset(object):
                   else:
                      outVar[:] = varin[:]
           dsout.close()
-      
+
       #Export variables for specific lvl and time period
       def write_timetofile(self,out_path,lvl_pos,time_pos):
           dsout = Dataset(out_path,'w')
@@ -297,7 +297,7 @@ class netCDF_subset(object):
           for dname, dim in self.dataset.dimensions.iteritems():
               dim_vars.append(dname)
               if dname == self.level_name:
-                 dsout.createDimension(dname, len(self.pressure_levels) if not dim.isunlimited() else None) 
+                 dsout.createDimension(dname, len(self.pressure_levels) if not dim.isunlimited() else None)
               elif dname == self.time_name:
                  dsout.createDimension(dname, len(time_pos) if not dim.isunlimited() else None)
               else:
@@ -319,4 +319,3 @@ class netCDF_subset(object):
                   else:
                      outVar[:] = varin[:]
           dsout.close()
-          

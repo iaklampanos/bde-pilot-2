@@ -3,8 +3,9 @@ from scipy.cluster.hierarchy import fcluster,dendrogram
 from netcdf_subset import netCDF_subset,calculate_clut_metrics,calculate_prf
 from operator import attrgetter
 from argparse import ArgumentParser
-from matplotlib import pyplot as plt
 from netCDF4 import Dataset
+from sklearn.decomposition import PCA as sklearnPCA
+from matplotlib.mlab import PCA as mlabPCA
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Extract variables from netcdf file')
@@ -34,9 +35,32 @@ if __name__ == '__main__':
     level2 = [500]
     vs2 = ['z']
     n_sub2 = netCDF_subset(dsin,level2,vs2,'level','time')
-    clut_list2,Z = n_sub2.link_var('average','cosine',5)
+    vals = np.load('../c_6_z_values.npy')
+    vals2 = []
+    for v in vals:
+        print v.shape
+        q = v.reshape(len(v),v.shape[1]*v.shape[2])
+        vals2.append(q)
+    for v in vals2:
+        print v.shape
+    vals2 = np.array(vals2)
+    vv = np.array([0])
+    for v in vals2:
+        vv = np.append(v,vv)
+    vv = np.delete(vv,0)
+    vv = vv.reshape(2920,47107)
+    print vv.shape
+    del(vals)
+    del(vals2)
+    #mlab_pca = mlabPCA(vv.T)
+
+    sklean_pca = sklearnPCA(n_components=5)
+    sklearn_transf = sklean_pca.fit_transform(vv.T)
+    print len(sklearn_transf)
+    print sklearn_transfs
+    #clut_list2,Z = n_sub2.link_var('average','cosine',5)
     #n_sub2.find_continuous_timeslots(clut_list2)
-    wss,bss,total = calculate_clut_metrics(n_sub2.prepare_c_list_for_metrics(clut_list2))
+    #wss,bss,total = calculate_clut_metrics(n_sub2.prepare_c_list_for_metrics(clut_list2))
     #for i in range(0,5):
     #    n_sub2.single_cluster_tofile(outp,i,clut_list2)
     #plt.plot(range(0,Z.shape[0]),Z[:,2])
@@ -66,7 +90,7 @@ if __name__ == '__main__':
     #print 'BSS'
     #print BSS
     #print 'TOTAL'
-    #print total    
+    #print total
     #plt.plot(range(0,UV.shape[0]),UV[:,2],'r--')
     #plt.show()
     #n_sub.write_tofile(outp)
