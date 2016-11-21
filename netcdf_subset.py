@@ -183,17 +183,21 @@ class netCDF_subset(object):
                   #    print num2date(times,unit,cal)
           return clut_list,V
 
-      def get_clusters_saved(self,V,n_clusters):
+      def get_clusters_saved(self,V,n_clusters,saved_model='hierachical'):
           clut_list = []
-          cutree = np.array(cut_tree(V, n_clusters=n_clusters).flatten())
+          if saved_model == 'hierachical':
+             cutree = np.array(cut_tree(V, n_clusters=n_clusters).flatten())
           clut_indices = []
           for nc in range(0,n_clusters):
-              clut_indices.append(np.where(cutree == nc)[0])
+              if saved_model == 'hierachical':
+                 clut_indices.append(np.where(cutree == nc)[0])
+              else:
+                 clut_indices.append(np.where(V == nc)[0])
           clut_list.append(clut_indices)
           print 'Cluster distirbution'
           print '---------------------'
           for pos,c in enumerate(clut_list):
-              print 'Variable ',self.subset_variables[pos]
+              #print 'Variable ',self.subset_variables[pos]
               obv_dev = []
               for nc in range(0,n_clusters):
                   obv_dev.append((nc,len(c[nc])))
@@ -206,6 +210,17 @@ class netCDF_subset(object):
                   #times = self.dataset.variables['time'][c[nc]]
                   #print num2date(times,unit,cal)
           return clut_list
+
+      def prepare_c_list_for_metrics(self,clut_list):
+         if (len(clut_list)!=1):
+             raise ValueError('List of clusters must contain only a single variable or a single list for multiple variables')
+         ret_list = []
+         for c in clut_list[0]:
+             print c.tolist()
+             temp_arr = np.array(self.extract_timedata(c.tolist(),self.lvl_pos()))
+             temp_arr = temp_arr.reshape(len(c),len(self.dataset.variables['longitude'])*len(self.dataset.variables['latitude']))
+             ret_list.append(temp_arr)
+         return ret_list
 
 
       #Write a single cluster to a file for a variable
