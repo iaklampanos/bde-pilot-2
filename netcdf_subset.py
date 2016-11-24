@@ -1,7 +1,22 @@
 import numpy as np
 from netCDF4 import Dataset,num2date
 from scipy.cluster.hierarchy import dendrogram, linkage, cut_tree
+from sklearn.cluster import KMeans
 from datetime import timedelta
+
+def ncar_to_ecmwf_type(input,output):
+      dataset = Dataset(input,'r')
+      dsout = Dataset(output,'w')
+      for dname, dim in dataset.dimensions.iteritems():
+             dsout.createDimension(dname, len(dim) if not dim.isunlimited() else None)
+      for v_name, varin in dataset.variables.iteritems():
+          outVar = dsout.createVariable(v_name, varin.datatype, varin.dimensions)
+          outVar.setncatts({k: varin.getncattr(k) for k in varin.ncattrs()})
+          outVar[:] = varin[:]
+      outVar = dsout.createVariable('num_metgrid_levels','int32',('num_metgrid_levels',))
+      outVar.setncatts({u'units': u'millibars', u'long_name': u'pressure_level'})
+      outVar[:] = np.array([0,1,2,3,5,7,10,20,30,50,70,100,125,150,175,200,225,250,300,350,400,450,500,550,600,650,700,750,775,800,825,850,875,900,925,950,975,1000])[:]
+      dsout.close()
 
 #Calculate precision,recall and F-scores for two clustering outcomes
 def calculate_prf(clut_list1,clut_list2):
@@ -111,7 +126,10 @@ class netCDF_subset(object):
           return var_list
 
       #Perform clustering and retrieve dataset clustered in n_clusters (for multiple variables)
-      def link_multivar(self,method,metrics,n_clusters):
+      def link_multivar(self,n_clusters,algorithm='hierachical',multilevel=False,method='average',metrics='cosine'):
+          if len(self.pressure_levels)!=1:
+             if not multilevel:
+                raise('Multilevel is disabled, if you want multilevel clustering then re run with multilevel=True')
           var_list = self.extract_data(self.lvl_pos())
           clut_list = []
           temp_v_list = []
@@ -129,11 +147,17 @@ class netCDF_subset(object):
               uv[pos] = gather_data[iters].flatten()
           print uv.shape
           del gather_data
-          UV = linkage(uv,method,metrics)
-          cutree = np.array(cut_tree(UV,n_clusters=n_clusters).flatten())
+          if algorithm == 'hierachical':
+             UV = linkage(uv,method,metrics)
+             cutree = np.array(cut_tree(UV,n_clusters=n_clusters).flatten())
+          else:
+             UV = KMeans(n_clusters=n_clusters,random_state=0).fit(uv).labels_
           clut_indices = []
           for nc in range(0,n_clusters):
-              clut_indices.append(np.where(cutree == nc)[0])
+              if algorithm == 'hierachical':
+                 clut_indices.append(np.where(cutree == nc)[0])
+              else:
+                 clut_indices.append(np.where(UV == nc)[0])
           clut_list.append(clut_indices)
           print 'Cluster distirbution'
           print '---------------------'
@@ -152,7 +176,10 @@ class netCDF_subset(object):
           return clut_list,UV
 
       #Perform clustering and retrieve dataset clustered in n_clusters (every var individually)
-      def link_var(self,method,metrics,n_clusters):
+      def link_var(self,n_clusters,algorithm='hierachical',multilevel=False,method='average',metrics='cosine'):
+          if len(self.pressure_levels)!=1:
+              if not multilevel:
+                  raise('Multilevel is disabled, if you want multilevel clustering then re run with multilevel=True')
           var_list = self.extract_data(self.lvl_pos())
           clut_list = []
           for v in var_list:
@@ -160,11 +187,17 @@ class netCDF_subset(object):
               for i in range(0,v.shape[0]):
                   var_data[i] = v[i][:].flatten()
               print var_data.shape
-              V = linkage(var_data,method,metrics)
-              cutree = np.array(cut_tree(V, n_clusters=n_clusters).flatten())
+              if algorithm == 'hierachical':
+                 V = linkage(var_data,method,metrics)
+                 cutree = np.array(cut_tree(V, n_clusters=n_clusters).flatten())
+              else:
+                 V = KMeans(n_clusters=n_clusters,random_state=0).fit(var_data).labels_
               clut_indices = []
               for nc in range(0,n_clusters):
-                  clut_indices.append(np.where(cutree == nc)[0])
+                  if algorithm == 'hierachical':
+                     clut_indices.append(np.where(cutree == nc)[0])
+                  else:
+                     clut_indices.append(np.where(V == nc)[0])
               clut_list.append(clut_indices)
               print 'Cluster distirbution'
               print '---------------------'
