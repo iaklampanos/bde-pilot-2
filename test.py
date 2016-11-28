@@ -20,7 +20,7 @@ if __name__ == '__main__':
     inp,outp = getter(opts)
     dsin = Dataset(inp,"r")
     level2 = [500]
-    vs2 = ['GHT']
-    n_sub2 = netCDF_subset(dsin,level2,vs2,'num_metgrid_levels','Times')
-    clut_list,Z = n_sub2.link_var(6,'kmeans')
-    n_sub2.single_cluster_tofile(outp,5,clut_list)
+    vs2 = ['u','v']
+    n_sub2 = netCDF_subset(dsin,level2,vs2,'level','time','longitude','latitude')
+    clut_list,Z,c_dist = n_sub2.link_multivar(6,'hierachical')
+    print calculate_clut_metrics(n_sub2.prepare_c_list_for_metrics(clut_list,len(vs2)))
