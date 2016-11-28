@@ -25,8 +25,8 @@ if __name__ == '__main__':
     oc.push('x',rang)
     dsin = Dataset(inp,"r")
     level2 = [300]
-    vs2 = ['GHT','GHT']
-    n_sub2 = netCDF_subset(dsin,level2,vs2,'num_metgrid_levels','Times','south_north','west_east')
+    vs2 = ['UU','VV']
+    n_sub2 = netCDF_subset(dsin,level2,vs2,'num_metgrid_levels','Times','south_north_stag','west_east')
     dir_name = ""
     for pos,v_name in enumerate(vs2):
         if pos!=0:

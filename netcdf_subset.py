@@ -251,9 +251,18 @@ class netCDF_subset(object):
              raise ValueError('List of clusters must contain only a single variable or a single list for multiple variables')
          ret_list = []
          for c in clut_list[0]:
-             temp_arr = np.array(self.extract_timedata(c.tolist(),self.lvl_pos()))
-             temp_arr = temp_arr.reshape(len(c),var_num*len(self.dataset.dimensions[self.longitude_name])*len(self.dataset.dimensions[self.latitude_name]))
-             ret_list.append(temp_arr)
+            if var_num == 1:
+                 temp_arr = np.array(self.extract_timedata(c.tolist(),self.lvl_pos()))
+                 temp_arr = temp_arr.reshape(len(c),len(self.dataset.dimensions[self.longitude_name])*len(self.dataset.dimensions[self.latitude_name]))
+                 ret_list.append(temp_arr)
+            else:
+                 var_list = self.extract_timedata(c.tolist(),self.lvl_pos())
+                 temp_arr = np.array(0)
+                 for v in var_list:
+                     temp_arr = np.append(temp_arr,v)
+                 temp_arr = np.delete(temp_arr,0)
+                 temp_arr = temp_arr.reshape(len(c),var_num*len(self.dataset.dimensions[self.longitude_name])*len(self.dataset.dimensions[self.latitude_name]))
+                 print temp_arr.shape
          return ret_list
 
 
