@@ -25,8 +25,8 @@ if __name__ == '__main__':
     oc.push('x',rang)
     dsin = Dataset(inp,"r")
     level2 = [300]
-    vs2 = ['UU','VV']
-    n_sub2 = netCDF_subset(dsin,level2,vs2,'num_metgrid_levels','Times','south_north_stag','west_east')
+    vs2 = ['UU','VV','GHT']
+    n_sub2 = netCDF_subset(dsin,level2,vs2,'num_metgrid_levels','Times')
     dir_name = ""
     for pos,v_name in enumerate(vs2):
         if pos!=0:
@@ -70,7 +70,7 @@ if __name__ == '__main__':
                     plot_dir=dist_path,plot_name='cluster'+str(int(i))+'_distirbution',plot_format='jpeg',
                     plot_width='2048',plot_height='1536')
         np.save(link_path+'/cluster'+str(int(i))+"_linkage.npy",linkage)
-        wss,bss,total = calculate_clut_metrics(n_sub2.prepare_c_list_for_metrics(clut_list,len(vs2)))
+        wss,bss,total = calculate_clut_metrics(n_sub2.prepare_c_list_for_metrics(clut_list))
         WSS.append(wss)
         BSS.append(bss)
     oc.push('wss',WSS)

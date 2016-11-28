@@ -93,7 +93,7 @@ class netCDF_subset(object):
       subset_variables = None #variables of interest
 
       #Constructor
-      def __init__(self,dataset,levels,sub_vars,lvlname,timename,longitude_name,latitude_name):
+      def __init__(self,dataset,levels,sub_vars,lvlname,timename):
           #Init original dataset
           self.dataset = dataset
           #Multiple levels
@@ -102,8 +102,6 @@ class netCDF_subset(object):
           self.subset_variables = sub_vars
           self.level_name = lvlname
           self.time_name = timename
-          self.longitude_name = longitude_name
-          self.latitude_name = latitude_name
 
       #Find pressure level position in dataset
       def lvl_pos(self):
@@ -246,23 +244,21 @@ class netCDF_subset(object):
                   #print num2date(times,unit,cal)
           return clut_list
 
-      def prepare_c_list_for_metrics(self,clut_list,var_num):
+      def prepare_c_list_for_metrics(self,clut_list):
          if (len(clut_list)!=1):
              raise ValueError('List of clusters must contain only a single variable or a single list for multiple variables')
          ret_list = []
+         reshape_dim = 0
+         for var in self.subset_variables:
+             reshape_dim += self.dataset[var].shape[2]*self.dataset[var].shape[3]
          for c in clut_list[0]:
-            if var_num == 1:
-                 temp_arr = np.array(self.extract_timedata(c.tolist(),self.lvl_pos()))
-                 temp_arr = temp_arr.reshape(len(c),len(self.dataset.dimensions[self.longitude_name])*len(self.dataset.dimensions[self.latitude_name]))
-                 ret_list.append(temp_arr)
-            else:
-                 var_list = self.extract_timedata(c.tolist(),self.lvl_pos())
-                 temp_arr = np.array(0)
-                 for v in var_list:
-                     temp_arr = np.append(temp_arr,v)
-                 temp_arr = np.delete(temp_arr,0)
-                 temp_arr = temp_arr.reshape(len(c),var_num*len(self.dataset.dimensions[self.longitude_name])*len(self.dataset.dimensions[self.latitude_name]))
-                 print temp_arr.shape
+             var_list = self.extract_timedata(c.tolist(),self.lvl_pos())
+             temp_arr = np.array(0)
+             for v in var_list:
+                 temp_arr = np.append(temp_arr,v)
+             temp_arr = np.delete(temp_arr,0)
+             temp_arr = temp_arr.reshape(len(c),reshape_dim)
+             ret_list.append(temp_arr)
          return ret_list
 
 
