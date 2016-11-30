@@ -1,8 +1,10 @@
 import numpy as np
-from netCDF4 import Dataset,num2date
+from netCDF4 import Dataset,num2date,date2num
 from scipy.cluster.hierarchy import dendrogram, linkage, cut_tree
 from sklearn.cluster import KMeans
 from datetime import timedelta
+import datetime
+
 
 def ncar_to_ecmwf_type(input,output):
       dataset = Dataset(input,'r')
@@ -10,9 +12,38 @@ def ncar_to_ecmwf_type(input,output):
       for dname, dim in dataset.dimensions.iteritems():
              dsout.createDimension(dname, len(dim) if not dim.isunlimited() else None)
       for v_name, varin in dataset.variables.iteritems():
-          outVar = dsout.createVariable(v_name, varin.datatype, varin.dimensions)
-          outVar.setncatts({k: varin.getncattr(k) for k in varin.ncattrs()})
-          outVar[:] = varin[:]
+          if v_name == 'UU' or v_name == 'VV':
+              outVar = dsout.createVariable(v_name, varin.datatype,('Time', 'num_metgrid_levels', 'south_north', 'west_east'))
+              outVar.setncatts({k: varin.getncattr(k) for k in varin.ncattrs()})
+              rang = range(0,62)
+              if v_name == 'UU':
+                 outVar[:] = varin[:,:,:,rang]
+              else:
+                 outVar[:] = varin[:,:,rang,:]
+          elif v_name == 'Times':
+              outVar = dsout.createVariable(v_name, 'int32', ('Time',))
+              outVar.setncatts({'units': 'hours since 1900-01-01 00:00:0.0','long_name': 'time','calendar': 'gregorian'})
+              nvarin = []
+              for var in varin[:]:
+                  str = ""
+                  for v in var:
+                      str += v
+                  nvarin.append(str)
+              nums = []
+              for var in nvarin:
+                  under_split = var.split('_')
+                  date_split = under_split[0].split('-')
+                  time_split = under_split[1].split(':')
+                  date_object = datetime.datetime(int(date_split[0]),int(date_split[1]),int(date_split[2]),int(time_split[0]),int(time_split[1]))
+                  d2n = date2num(date_object,'hours since 1900-01-01 00:00:0.0','gregorian')
+                  nums.append(int(d2n))
+              nums = np.array(nums)
+              print nums[:]
+              outVar[:] = nums[:]
+          else:
+              outVar = dsout.createVariable(v_name, varin.datatype, varin.dimensions)
+              outVar.setncatts({k: varin.getncattr(k) for k in varin.ncattrs()})
+              outVar[:] = varin[:]
       outVar = dsout.createVariable('num_metgrid_levels','int32',('num_metgrid_levels',))
       outVar.setncatts({u'units': u'millibars', u'long_name': u'pressure_level'})
       outVar[:] = np.array([0,1,2,3,5,7,10,20,30,50,70,100,125,150,175,200,225,250,300,350,400,450,500,550,600,650,700,750,775,800,825,850,875,900,925,950,975,1000])[:]
@@ -126,11 +157,36 @@ class netCDF_subset(object):
           return var_list
 
       #Perform clustering and retrieve dataset clustered in n_clusters (for multiple variables)
-      def link_multivar(self,n_clusters,algorithm='hierachical',multilevel=False,method='average',metrics='cosine'):
+      def link_multivar(self,n_clusters,algorithm='hierachical',normalize=False,seasonal='',multilevel=False,method='average',metrics='cosine'):
           if len(self.pressure_levels)!=1:
              if not multilevel:
                 raise('Multilevel is disabled, if you want multilevel clustering then re run with multilevel=True')
-          var_list = self.extract_data(self.lvl_pos())
+          if seasonal!='':
+              seasons_idx = []
+              times = num2date(self.dataset[self.time_name][:],'hours since 1900-01-01 00:00:0.0','gregorian')
+              for t in times:
+                  if t.month == 12 or t.month == 1 or t.month == 2:
+                      seasons_idx.append('winter')
+                  elif t.month == 3 or t.month == 4 or t.month == 5:
+                      seasons_idx.append('spring')
+                  elif t.month == 6 or t.month == 7 or t.month == 8:
+                      seasons_idx.append('summer')
+                  elif t.month == 9 or t.month == 10 or t.month == 11:
+                      seasons_idx.append('autumn')
+              winter_idx = [idx for idx,season in enumerate(seasons_idx) if season=='winter']
+              spring_idx = [idx for idx,season in enumerate(seasons_idx) if season=='spring']
+              summer_idx = [idx for idx,season in enumerate(seasons_idx) if season=='summer']
+              autumn_idx = [idx for idx,season in enumerate(seasons_idx) if season=='autumn']
+              if seasonal == 'winter':
+                 var_list = self.extract_timedata(winter_idx,self.lvl_pos())
+              elif seasonal == 'summer':
+                 var_list = self.extract_timedata(summer_idx,self.lvl_pos())
+              elif seasonal == 'spring':
+                 var_list = self.extract_timedata(spring_idx,self.lvl_pos())
+              elif seasonal == 'autumn':
+                 var_list = self.extract_timedata(autumn_idx,self.lvl_pos())
+          else:
+              var_list = self.extract_data(self.lvl_pos())
           clut_list = []
           temp_v_list = []
           for pos,v in enumerate(var_list):
@@ -147,6 +203,10 @@ class netCDF_subset(object):
               uv[pos] = gather_data[iters].flatten()
           print uv.shape
           del gather_data
+          if normalize:
+             for j in range(0,uv.shape[1]):
+                 mean = uv[:,j].mean()
+                 uv[:,j] = np.subtract(uv[:,j],mean)
           if algorithm == 'hierachical':
              UV = linkage(uv,method,metrics)
              cutree = np.array(cut_tree(UV,n_clusters=n_clusters).flatten())
@@ -176,17 +236,46 @@ class netCDF_subset(object):
           return clut_list,UV,sorted(obv_dev,key=lambda x:x[1],reverse=True)
 
       #Perform clustering and retrieve dataset clustered in n_clusters (every var individually)
-      def link_var(self,n_clusters,algorithm='hierachical',multilevel=False,method='average',metrics='cosine'):
+      def link_var(self,n_clusters,algorithm='hierachical',normalize=False,seasonal='',multilevel=False,method='average',metrics='cosine'):
           if len(self.pressure_levels)!=1:
               if not multilevel:
                   raise('Multilevel is disabled, if you want multilevel clustering then re run with multilevel=True')
-          var_list = self.extract_data(self.lvl_pos())
+          if seasonal!='':
+              seasons_idx = []
+              times = num2date(self.dataset[self.time_name][:],'hours since 1900-01-01 00:00:0.0','gregorian')
+              for t in times:
+                  if t.month == 12 or t.month == 1 or t.month == 2:
+                      seasons_idx.append('winter')
+                  elif t.month == 3 or t.month == 4 or t.month == 5:
+                      seasons_idx.append('spring')
+                  elif t.month == 6 or t.month == 7 or t.month == 8:
+                      seasons_idx.append('summer')
+                  elif t.month == 9 or t.month == 10 or t.month == 11:
+                      seasons_idx.append('autumn')
+              winter_idx = [idx for idx,season in enumerate(seasons_idx) if season=='winter']
+              spring_idx = [idx for idx,season in enumerate(seasons_idx) if season=='spring']
+              summer_idx = [idx for idx,season in enumerate(seasons_idx) if season=='summer']
+              autumn_idx = [idx for idx,season in enumerate(seasons_idx) if season=='autumn']
+              if seasonal == 'winter':
+                 var_list = self.extract_timedata(winter_idx,self.lvl_pos())
+              elif seasonal == 'summer':
+                 var_list = self.extract_timedata(summer_idx,self.lvl_pos())
+              elif seasonal == 'spring':
+                 var_list = self.extract_timedata(spring_idx,self.lvl_pos())
+              elif seasonal == 'autumn':
+                 var_list = self.extract_timedata(autumn_idx,self.lvl_pos())
+          else:
+              var_list = self.extract_data(self.lvl_pos())
           clut_list = []
           for v in var_list:
               var_data = np.ndarray(shape=(v.shape[0],v[0][:].flatten().shape[0]))
               for i in range(0,v.shape[0]):
                   var_data[i] = v[i][:].flatten()
               print var_data.shape
+              if normalize:
+                  for j in range(0,var_data.shape[1]):
+                      mean = var_data[:,j].mean()
+                      var_data[:,j] = np.subtract(var_data[:,j],mean)
               if algorithm == 'hierachical':
                  V = linkage(var_data,method,metrics)
                  cutree = np.array(cut_tree(V, n_clusters=n_clusters).flatten())
@@ -275,21 +364,26 @@ class netCDF_subset(object):
               print 'Creating file for mixed variables. Cluster label is ',cluster_label
               self.write_timetofile(out_path+'/var_mixed_cluster'+str(cluster_label)+'.nc',self.lvl_pos(),c[cluster_label])
 
+      def cluster_descriptor_max(self,out_path,max_ret_list):
+          for pos,c in enumerate(max_ret_list):
+              self.write_timetofile(out_path+'/cluster_descriptor_max'+str(pos)+'.nc',self.lvl_pos(),range(c[0],c[1]),c_desc=True)
+
       #Find the maximum continuous timeslot for every cluster
       def find_continuous_timeslots(self,clut_list,hourslot=6):
           times_list = []
           for pos,c in enumerate(clut_list):
               for nc in range(0,len(clut_list[0])):
-                  unit = self.dataset.variables['time'].units
-                  cal = self.dataset.variables['time'].calendar
-                  times = self.dataset.variables['time'][c[nc]]
+                  unit = self.dataset.variables[self.time_name].units
+                  cal = self.dataset.variables[self.time_name].calendar
+                  times = self.dataset.variables[self.time_name][c[nc]]
                   times_list.append(num2date(times,unit,cal))
+          max_ret_list = []
           for c,time in enumerate(times_list):
               idx_difs = []
               idx_dif = []
               for idx,t in enumerate(time):
                   try:
-                     dif = (time[idx+1]-time[idx])==timedelta(hourslot)
+                     dif = (time[idx+1]-time[idx])==timedelta(hours=hourslot)
                      if dif:
                          idx_dif.append(idx)
                      else:
@@ -301,20 +395,23 @@ class netCDF_subset(object):
               len_list = []
               for idx in idx_difs:
                   len_list.append(len(idx))
-              print 'Cluster ',c
-              print '-------------------------'
+              #print 'Cluster ',c
+              #print '-------------------------'
               try:
                  max_idx = max(len_list)
               except:
-                  print 'No continuous timeslots'
+                  #print 'No continuous timeslots'
+                  max_ret_list.append([])
               else:
                   pos_max = len_list.index(max_idx)
                   start_idx = idx_difs[pos_max][0]
                   end_idx = idx_difs[pos_max][len(idx_difs[pos_max])-1]
-                  print 'Maximum continuous timeslot'
-                  print time[start_idx],time[end_idx]
-                  print time[end_idx]-time[start_idx]
-                  print start_idx,end_idx
+                  #print 'Maximum continuous timeslot'
+                  #print time[start_idx],time[end_idx]
+                  #print time[end_idx]-time[start_idx]
+                  #print start_idx,end_idx
+                  max_ret_list.append([start_idx,end_idx])
+          return max_ret_list
 
       #Export results to file from attibute dataset
       def write_tofile(self,out_path):
@@ -344,7 +441,7 @@ class netCDF_subset(object):
           dsout.close()
 
       #Export variables for specific lvl and time period
-      def write_timetofile(self,out_path,lvl_pos,time_pos):
+      def write_timetofile(self,out_path,lvl_pos,time_pos,c_desc=False):
           dsout = Dataset(out_path,'w')
           dim_vars = []
           var_list = self.extract_timedata(time_pos,lvl_pos)
@@ -362,7 +459,10 @@ class netCDF_subset(object):
                       if v_name == v:
                           outVar = dsout.createVariable(v_name, varin.datatype, varin.dimensions)
                           outVar.setncatts({k: varin.getncattr(k) for k in varin.ncattrs()})
-                          outVar[:] = var_list[pos_v]
+                          if c_desc:
+                              #mean of max time slot
+                          else:
+                              outVar[:] = var_list[pos_v]
               elif v_name in dim_vars:
                   outVar = dsout.createVariable(v_name, varin.datatype, varin.dimensions)
                   outVar.setncatts({k: varin.getncattr(k) for k in varin.ncattrs()})

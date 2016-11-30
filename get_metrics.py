@@ -14,18 +14,17 @@ if __name__ == '__main__':
                         help='')
     parser.add_argument('-r2','--range2',required=True,type=int,
                         help='')
-    parser.add_argument('-a','--algorithm',required=True,type=str)
     parser.add_argument('-o', '--output',type=str,
                         help='output file')
     opts = parser.parse_args()
-    getter = attrgetter('input','range1','range2','algorithm','output')
-    inp,rang1,rang2,alg,outp = getter(opts)
+    getter = attrgetter('input','range1','range2','output')
+    inp,rang1,rang2,outp = getter(opts)
     rang = range(rang1,rang2)
     oc = oct2py.Oct2Py()
     oc.push('x',rang)
     dsin = Dataset(inp,"r")
     level2 = [300]
-    vs2 = ['UU','VV','GHT']
+    vs2 = ['GHT']
     n_sub2 = netCDF_subset(dsin,level2,vs2,'num_metgrid_levels','Times')
     dir_name = ""
     for pos,v_name in enumerate(vs2):
@@ -56,14 +55,14 @@ if __name__ == '__main__':
         print i
         if len(vs2)==1:
             if len(level2)==1:
-               clut_list,linkage,c_dist = n_sub2.link_var(n_clusters=i,algorithm=alg)
+               clut_list,linkage,c_dist = n_sub2.link_var(n_clusters=i,normalize=True,seasonal='winter')
             else:
-               clut_list,linkage,c_dist = n_sub2.link_var(n_clusters=i,algorithm=alg,multilevel=True)
+               clut_list,linkage,c_dist = n_sub2.link_var(n_clusters=i,normalize=True,multilevel=True,seasonal='winter')
         else:
            if len(level2)==1:
-              clut_list,linkage,c_dist = n_sub2.link_multivar(n_clusters=i,algorithm=alg)
+              clut_list,linkage,c_dist = n_sub2.link_multivar(n_clusters=i,normalize=True,seasonal='winter')
            else:
-              clut_list,linkage,c_dist = n_sub2.link_multivar(n_clusters=i,algorithm=alg,multilevel=True)
+              clut_list,linkage,c_dist = n_sub2.link_multivar(n_clusters=i,normalize=True,multilevel=True,seasonal='winter')
         oc.push('x_dist',range(0,i))
         oc.push('y_dist',[int(j[1]) for j in c_dist])
         oc.eval("plot(x_dist,y_dist),title(\'Clustering distirbution\')",
