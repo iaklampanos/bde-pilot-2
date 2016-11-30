@@ -460,7 +460,13 @@ class netCDF_subset(object):
                           outVar = dsout.createVariable(v_name, varin.datatype, varin.dimensions)
                           outVar.setncatts({k: varin.getncattr(k) for k in varin.ncattrs()})
                           if c_desc:
-                              #mean of max time slot
+                              reshape_dim = self.dataset[v].shape[2]*self.dataset[v].shape[3]
+                              test = var_list[pos_v].reshape(len(time_pos),reshape_dim)
+                              one =  np.mean(np.matrix(test),axis=0)
+                              one = one.reshape(1,1,self.dataset[v].shape[2],self.dataset[v].shape[3])
+                              tt = var_list[pos_v][0,:]
+                              tt[:] = one[:]
+                              outVar[:] = tt
                           else:
                               outVar[:] = var_list[pos_v]
               elif v_name in dim_vars:
