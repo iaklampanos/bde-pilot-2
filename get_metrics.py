@@ -14,16 +14,21 @@ if __name__ == '__main__':
                         help='')
     parser.add_argument('-r2','--range2',required=True,type=int,
                         help='')
+    parser.add_argument('-s','--season',type=str,
+                        help='')
     parser.add_argument('-o', '--output',type=str,
                         help='output file')
     opts = parser.parse_args()
-    getter = attrgetter('input','range1','range2','output')
-    inp,rang1,rang2,outp = getter(opts)
+    getter = attrgetter('input','range1','range2','season','output')
+    inp,rang1,rang2,season,outp = getter(opts)
+    seasons = ['winter','spring','summer','autumn']
     rang = range(rang1,rang2)
     oc = oct2py.Oct2Py()
     oc.push('x',rang)
     dsin = Dataset(inp,"r")
-    level2 = [300]
+    #lvl_v = [500,550,600,650,700,750,775,800,825,850,875,900]
+    #for l in lvl_v:
+    level2 = [500,550,600,650,700,750,775,800,825,850,875,900]
     vs2 = ['GHT']
     n_sub2 = netCDF_subset(dsin,level2,vs2,'num_metgrid_levels','Times')
     dir_name = ""
@@ -32,7 +37,13 @@ if __name__ == '__main__':
            dir_name += '_'+str(v_name)
         else:
            dir_name += str(v_name)
-    met_path = outp+'/'+dir_name
+    if season in seasons:
+        s_path = outp+'/'+season
+        if not(os.path.isdir(s_path)):
+            os.mkdir(s_path)
+        met_path = s_path+'/'+dir_name
+    else:
+        met_path = outp+'/'+dir_name
     for pos,lvl_name in enumerate(level2):
         if pos!=0:
            dir_name += '_'+str(lvl_name)
@@ -55,21 +66,27 @@ if __name__ == '__main__':
         print i
         if len(vs2)==1:
             if len(level2)==1:
-               clut_list,linkage,c_dist = n_sub2.link_var(n_clusters=i,normalize=True,seasonal='winter')
+               if season in seasons:
+                  clut_list,linkage,c_dist = n_sub2.link_var(n_clusters=i,algorithm='kmeans',normalize=True,multilevel=True,seasonal=season)
+               else:
+                  clut_list,linkage,c_dist = n_sub2.link_var(n_clusters=i,algorithm='kmeans',normalize=True,multilevel=True)
             else:
-               clut_list,linkage,c_dist = n_sub2.link_var(n_clusters=i,normalize=True,multilevel=True,seasonal='winter')
+               clut_list,linkage,c_dist = n_sub2.link_var(n_clusters=i,algorithm='kmeans',normalize=True,multilevel=True,seasonal=season)
         else:
            if len(level2)==1:
-              clut_list,linkage,c_dist = n_sub2.link_multivar(n_clusters=i,normalize=True,seasonal='winter')
+               if season in seasons:
+                   clut_list,linkage,c_dist = n_sub2.link_multivar(n_clusters=i,algorithm='kmeans',normalize=True,multilevel=True,seasonal=season)
+               else:
+                   clut_list,linkage,c_dist = n_sub2.link_multivar(n_clusters=i,algorithm='kmeans',normalize=True,multilevel=True)
            else:
-              clut_list,linkage,c_dist = n_sub2.link_multivar(n_clusters=i,normalize=True,multilevel=True,seasonal='winter')
+              clut_list,linkage,c_dist = n_sub2.link_multivar(n_clusters=i,algorithm='kmeans',normalize=True)
         oc.push('x_dist',range(0,i))
         oc.push('y_dist',[int(j[1]) for j in c_dist])
         oc.eval("plot(x_dist,y_dist),title(\'Clustering distirbution\')",
                     plot_dir=dist_path,plot_name='cluster'+str(int(i))+'_distirbution',plot_format='jpeg',
                     plot_width='2048',plot_height='1536')
         np.save(link_path+'/cluster'+str(int(i))+"_linkage.npy",linkage)
-        wss,bss,total = calculate_clut_metrics(n_sub2.prepare_c_list_for_metrics(clut_list))
+        wss,bss,total = calculate_clut_metrics(n_sub2.prepare_c_list_for_metrics(clut_list,normalize=True,multilevel=True))
         WSS.append(wss)
         BSS.append(bss)
     oc.push('wss',WSS)

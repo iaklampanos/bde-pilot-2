@@ -333,13 +333,18 @@ class netCDF_subset(object):
                   #print num2date(times,unit,cal)
           return clut_list
 
-      def prepare_c_list_for_metrics(self,clut_list):
+      def prepare_c_list_for_metrics(self,clut_list,normalize=False,multilevel=False):
          if (len(clut_list)!=1):
              raise ValueError('List of clusters must contain only a single variable or a single list for multiple variables')
          ret_list = []
          reshape_dim = 0
-         for var in self.subset_variables:
-             reshape_dim += self.dataset[var].shape[2]*self.dataset[var].shape[3]
+         if multilevel:
+            for lvl in self.pressure_levels:
+                for var in self.subset_variables:
+                    reshape_dim += self.dataset[var].shape[2]*self.dataset[var].shape[3]
+         else:
+             for var in self.subset_variables:
+                 reshape_dim += self.dataset[var].shape[2]*self.dataset[var].shape[3]
          for c in clut_list[0]:
              var_list = self.extract_timedata(c.tolist(),self.lvl_pos())
              temp_arr = np.array(0)
@@ -347,6 +352,10 @@ class netCDF_subset(object):
                  temp_arr = np.append(temp_arr,v)
              temp_arr = np.delete(temp_arr,0)
              temp_arr = temp_arr.reshape(len(c),reshape_dim)
+             if normalize:
+                for j in range(0,temp_arr.shape[1]):
+                    mean = temp_arr[:,j].mean()
+                    temp_arr[:,j] = np.subtract(temp_arr[:,j],mean)
              ret_list.append(temp_arr)
          return ret_list
 
@@ -364,9 +373,25 @@ class netCDF_subset(object):
               print 'Creating file for mixed variables. Cluster label is ',cluster_label
               self.write_timetofile(out_path+'/var_mixed_cluster'+str(cluster_label)+'.nc',self.lvl_pos(),c[cluster_label])
 
+      def middle_cluster_tofile(self,out_path,clut_list):
+          size = 12 #three days
+          for pos,c in enumerate(clut_list):
+              mid_start_plus = (c[len(c)-1]-c[0]+1)/2 - size/2
+              mid_start = c[0]+mid_start_plus
+              self.exact_copy_file(out_path+'/cluster_descriptor'+str(pos)+'.nc',range(mid_start,mid_start+size))
+
+
       def cluster_descriptor_max(self,out_path,max_ret_list):
           for pos,c in enumerate(max_ret_list):
-              self.write_timetofile(out_path+'/cluster_descriptor_max'+str(pos)+'.nc',self.lvl_pos(),range(c[0],c[1]),c_desc=True)
+              self.write_timetofile(out_path+'/cluster_descriptor_meanmax'+str(pos)+'.nc',self.lvl_pos(),range(c[0],c[1]),c_desc=True)
+
+      def cluster_descriptor_middle(self,out_path,max_ret_list):
+          size = 12 #three days
+          for pos,c in enumerate(max_ret_list):
+              mid_start_plus = (c[1]-c[0]+1)/2 - size/2
+              mid_start = c[0]+mid_start_plus
+              self.write_timetofile(out_path+'/cluster_descriptor_meanmiddle'+str(pos)+'.nc',self.lvl_pos(),range(mid_start,mid_start+size),c_desc=True)
+
 
       #Find the maximum continuous timeslot for every cluster
       def find_continuous_timeslots(self,clut_list,hourslot=6):
@@ -478,4 +503,29 @@ class netCDF_subset(object):
                      outVar[:] = self.dataset.variables[self.time_name][time_pos]
                   else:
                      outVar[:] = varin[:]
+          dsout.close()
+
+
+      def exact_copy_file(self,out_path,time_pos):
+          dsout = Dataset(out_path,'w')
+          for gattr in self.dataset.ncattrs():
+              if gattr == 'SIMULATION_START_DATE':
+                  gvalue = self.dataset.variables[self.time_name][time_pos[0]]
+                  sim_date = ""
+                  for gv in gvalue:
+                      sim_date += gv
+                  print sim_date
+                  dsout.setncattr(gattr,sim_date)
+              else:
+                  gvalue = self.dataset.getncattr(gattr)
+                  dsout.setncattr(gattr,gvalue)
+          for dname, dim in self.dataset.dimensions.iteritems():
+               if dname == self.time_name:
+                    dsout.createDimension(dname, len(time_pos) if not dim.isunlimited() else None)
+               else:
+                    dsout.createDimension(dname, len(dim) if not dim.isunlimited() else None)
+          for v_name, varin in self.dataset.variables.iteritems():
+               outVar = dsout.createVariable(v_name, varin.datatype, varin.dimensions)
+               outVar.setncatts({k: varin.getncattr(k) for k in varin.ncattrs()})
+               outVar[:] = varin[time_pos,:]
           dsout.close()
