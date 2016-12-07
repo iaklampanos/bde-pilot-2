@@ -6,6 +6,11 @@ from datetime import timedelta
 import datetime
 
 
+def find_time_slot(year,month,day,hour,min):
+    dat = datetime.datetime(year,month,day,hour,min)
+    return date2num(dat,'hours since 1900-01-01 00:00:0.0','gregorian')
+
+
 def ncar_to_ecmwf_type(input,output):
       dataset = Dataset(input,'r')
       dsout = Dataset(output,'w')
@@ -374,11 +379,14 @@ class netCDF_subset(object):
               self.write_timetofile(out_path+'/var_mixed_cluster'+str(cluster_label)+'.nc',self.lvl_pos(),c[cluster_label])
 
       def middle_cluster_tofile(self,out_path,clut_list):
+          ret_tupl = []
           size = 12 #three days
           for pos,c in enumerate(clut_list):
               mid_start_plus = (c[len(c)-1]-c[0]+1)/2 - size/2
               mid_start = c[0]+mid_start_plus
               self.exact_copy_file(out_path+'/cluster_descriptor'+str(pos)+'.nc',range(mid_start,mid_start+size))
+              ret_tupl.append((mid_start,mid_start+size))
+          return ret_tupl
 
 
       def cluster_descriptor_max(self,out_path,max_ret_list):
@@ -392,6 +400,38 @@ class netCDF_subset(object):
               mid_start = c[0]+mid_start_plus
               self.write_timetofile(out_path+'/cluster_descriptor_meanmiddle'+str(pos)+'.nc',self.lvl_pos(),range(mid_start,mid_start+size),c_desc=True)
 
+      def get_time_diagram(self,start_date,clut_list):
+          if len(clut_list)!=1:
+             raise ValueError('List of clusters must contain only a single variable or a single list for multiple variables')
+          times = self.dataset.variables['Times'][:]
+          difs = []
+          for c in clut_list[0]:
+              t = sorted(times[c])
+              diffs = []
+              for slots in t:
+                  slots = num2date(slots,'hours since 1900-01-01 00:00:0.0','gregorian')
+                  diffs.append(float((slots-start_date).days)+float(slots.hour)/24)
+              difs.append(diffs)
+          return difs
+
+      def euc_dist(self,start_date,end_date,clut_list):
+          if len(clut_list)!=1:
+             raise ValueError('List of clusters must contain only a single variable or a single list for multiple variables')
+          size = 12
+          times = self.dataset.variables[self.time_name][:]
+          times = times.tolist()
+          t1_pos = times.index(start_date)
+          t2_pos = times.index(end_date)
+          z_case = self.extract_timedata(range(t1_pos,t2_pos),self.lvl_pos())
+          z_case = np.mean(z_case[0],axis=0)
+          ec_dist = []
+          for pos,c in enumerate(clut_list[0]):
+              mid_start_plus = (c[len(c)-1]-c[0]+1)/2 - size/2
+              mid_start = c[0]+mid_start_plus
+              z_c = self.extract_timedata(range(mid_start,mid_start+size),self.lvl_pos())
+              z_c = np.mean(z_c[0],axis=0)
+              ec_dist.append(np.linalg.norm(z_case-z_c))
+          return ec_dist
 
       #Find the maximum continuous timeslot for every cluster
       def find_continuous_timeslots(self,clut_list,hourslot=6):
@@ -403,6 +443,7 @@ class netCDF_subset(object):
                   times = self.dataset.variables[self.time_name][c[nc]]
                   times_list.append(num2date(times,unit,cal))
           max_ret_list = []
+          timestamps = []
           for c,time in enumerate(times_list):
               idx_difs = []
               idx_dif = []
@@ -434,8 +475,13 @@ class netCDF_subset(object):
                   #print 'Maximum continuous timeslot'
                   #print time[start_idx],time[end_idx]
                   #print time[end_idx]-time[start_idx]
-                  #print start_idx,end_idx
-                  max_ret_list.append([start_idx,end_idx])
+                  timestamps.append([time[start_idx],time[end_idx]])
+          all_times = self.dataset.variables[self.time_name][:].tolist()
+          for timestamp in timestamps:
+              d2n = date2num(timestamp,unit,cal)
+              start_idx = all_times.index(d2n[0])
+              end_idx = all_times.index(d2n[1])
+              max_ret_list.append((start_idx,end_idx))
           return max_ret_list
 
       #Export results to file from attibute dataset
