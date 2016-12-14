@@ -64,14 +64,14 @@ class Kclustering(Clustering):
         else:
             var_list = self._netcdf_subset.extract_timeslotdata(time_idx,
                                                                 self._netcdf_subset.lvl_pos())
-        uv = Clustering.preprocess_multivar(var_list)
+        uv = self.preprocess_multivar(var_list)
         # for normalization purposes we get the column mean and subtract it
         if self._normalize:
             for j in range(0, uv.shape[1]):
                 mean = uv[:, j].mean()
                 uv[:, j] = np.subtract(uv[:, j], mean)
         UV = KMeans(n_clusters=self._n_clusters, n_jobs=-1).fit(uv).labels_
-        return self.get_clut_list(V)
+        return self.get_clut_list(UV)
 
 
     # Clustering for certain season (i.e winter,spring,summer,autumn)

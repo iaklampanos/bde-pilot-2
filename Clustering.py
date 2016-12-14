@@ -123,7 +123,7 @@ class Clustering(object):
         for t in times:
             if t.month in cold_d:
                 seasons_idx.append('cold')
-            elif t.month in hod_d:
+            elif t.month in hot_d:
                 seasons_idx.append('hot')
         cold_idx = [idx for idx, season in enumerate(
             seasons_idx) if season == 'cold']
@@ -187,7 +187,7 @@ class Clustering(object):
         times = times.tolist()
         t1_pos = times.index(start_date)
         t2_pos = times.index(end_date)
-        z_case = self._netcdf_subset.extract_timedata(
+        z_case = self._netcdf_subset.extract_timeslotdata(
             range(t1_pos, t2_pos), self.lvl_pos())
         z_case = np.mean(z_case[0], axis=0)
         ec_dist = []
@@ -195,7 +195,7 @@ class Clustering(object):
             mid_start_plus = (c[len(c) - 1] - c[0] + 1) / \
                 2 - self._size_desc / 2
             mid_start = c[0] + mid_start_plus
-            z_c = self._netcdf_subset.extract_timedata(
+            z_c = self._netcdf_subset.extract_timeslotdata(
                 range(mid_start, mid_start + self._size_desc), self.lvl_pos())
             z_c = np.mean(z_c[0], axis=0)
             ec_dist.append(np.linalg.norm(z_case - z_c))
