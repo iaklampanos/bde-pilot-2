@@ -136,10 +136,10 @@ class Clustering(object):
 
     def single_cluster_tofile(self, out_path, cluster_label, clut_list):
         for pos, c in enumerate(clut_list):
-            print 'Creating file for Variable ', self.subset_variables[pos]
+            print 'Creating file for Variable ', self._netcdf_subset._subset_variables[pos]
             print 'Cluster label is ', cluster_label
             self._netcdf_subset.write_timetofile(out_path +
-                                                 '/var_' + self._netcdf_subset.subset_variables[pos] +
+                                                 '/var_' + self._netcdf_subset._subset_variables[pos] +
                                                  '_cluster' +
                                                  str(cluster_label) + '.nc',
                                                  self._netcdf_subset.lvl_pos(), c[cluster_label])
@@ -152,8 +152,15 @@ class Clustering(object):
                                                  str(cluster_label) + '.nc',
                                                  self._netcdf_subset.lvl_pos(), c[cluster_label])
 
-    def middle_cluster_tofile(self, out_path, clut_list):
-        for pos, c in enumerate(clut_list):
+    def cluster_descriptor_max(self, out_path, max_ret_list):
+        for pos, c in enumerate(max_ret_list):
+            self._netcdf_subset.write_timetofile(out_path + '/cluster_descriptor_meanmax'
+                                                 + str(pos) + '.nc', self._netcdf_subset.lvl_pos(), range(c[0], c[1]),
+                                                 c_desc=True)
+
+    #From this function and now on we need the original dataset and not the modified one
+    def middle_cluster_tofile(self, out_path, max_ret_list):
+        for pos, c in enumerate(max_ret_list):
             mid_start_plus = (c[len(c) - 1] - c[0] + 1) / \
                 2 - self._size_desc / 2
             mid_start = c[0] + mid_start_plus
@@ -161,12 +168,6 @@ class Clustering(object):
                                                 '/cluster_descriptor' +
                                                 str(pos) + '.nc',
                                                 range(mid_start, mid_start + self._size_desc))
-
-    def cluster_descriptor_max(self, out_path, max_ret_list):
-        for pos, c in enumerate(max_ret_list):
-            self._netcdf_subset.write_timetofile(out_path + '/cluster_descriptor_meanmax'
-                                                 + str(pos) + '.nc', self.lvl_pos(), range(c[0], c[1]),
-                                                 c_desc=True)
 
     def cluster_descriptor_middle(self, out_path, max_ret_list):
         for pos, c in enumerate(max_ret_list):

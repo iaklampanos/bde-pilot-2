@@ -311,7 +311,7 @@ class netCDF_subset(object):
     def exact_copy_mean(self, out_path, time_pos, size, parts):
         dsout = Dataset(out_path, 'w')
         self.write_gattrs_and_dims(dsout, time_pos, size, parts)
-        self.write_variables_to_file_mean(dsout, time_pos, size_parts)
+        self.write_variables_to_file_mean(dsout, time_pos, size, parts)
         dsout.close()
 
     def get_times(self):

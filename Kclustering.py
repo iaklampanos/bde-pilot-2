@@ -52,7 +52,7 @@ class Kclustering(Clustering):
 
     # Perform clustering and retrieve dataset clustered in n_clusters (for
     # multiple variables)
-    def link_multivar(self, time_idx):
+    def link_multivar(self, time_idx=None):
         # Check pressure levels
         if len(self._netcdf_subset._pressure_levels) != 1:
             if not(self._multilevel):
