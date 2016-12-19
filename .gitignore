@@ -87,8 +87,3 @@ ENV/
 
 # Rope project settings
 .ropeproject
-
-[submodule "containered-wrf-data"]
-     path = containered-wrf-data
-     url = https://github.com/rdccosmo/containered-wrf-data
-     ignore = dirty
