@@ -3,6 +3,7 @@ from sklearn.cluster import AgglomerativeClustering
 from netcdf_subset import netCDF_subset
 from Clustering import Clustering
 
+
 class Hclustering(Clustering):
 
     def __init__(self, cluster_dict, dataset_dict):
@@ -40,9 +41,11 @@ class Hclustering(Clustering):
             print var_data.shape
             # for normalization purposes we get the column mean and subtract it
             if self._normalize:
-                for j in range(0, var_data.shape[1]):
-                    mean = var_data[:, j].mean()
-                    var_data[:, j] = np.subtract(var_data[:, j], mean)
+                for j in range(0, var_data.shape[0]):
+                    mean = var_data[j, :].mean()
+                    var_data[j, :] = np.subtract(var_data[j, :], mean)
+                    var_data[j, :] = np.divide(
+                        var_data[j, :], np.std(var_data[j, :]))
             # perform parallel Kmeans clustering
             V = AgglomerativeClustering(n_clusters=self._n_clusters,
                                         affinity=self._affinity, linkage=self._method).fit(var_data).labels_
@@ -65,9 +68,10 @@ class Hclustering(Clustering):
         uv = self.preprocess_multivar(var_list)
         # for normalization purposes we get the column mean and subtract it
         if self._normalize:
-            for j in range(0, uv.shape[1]):
-                mean = uv[:, j].mean()
-                uv[:, j] = np.subtract(uv[:, j], mean)
+            for j in range(0, uv.shape[0]):
+                mean = uv[j, :].mean()
+                uv[j, :] = np.subtract(uv[j, :], mean)
+                uv[j, :] = np.divide(uv[j, :], np.std(uv[j, :]))
         UV = AgglomerativeClustering(n_clusters=self._n_clusters,
                                      affinity=self._affinity, linkage=self._method).fit(uv).labels_
         return self.get_clut_list(UV)

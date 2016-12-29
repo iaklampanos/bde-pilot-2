@@ -5,13 +5,14 @@ from Clustering import Clustering
 
 # if something doesnt work change some methods from self. to Clustering.
 
+
 class Kclustering(Clustering):
 
     def __init__(self, cluster_dict, dataset_dict):
         cdict_fields = ['n_clusters', 'normalize', 'season',
-                         'therm_season', 'multilevel', 'size_desc', 'size_div']
+                        'therm_season', 'multilevel', 'size_desc', 'size_div']
         datadict_fields = ['dataset', 'levels', 'sub_vars',
-                            'lvlname', 'timename', 'time_unit', 'time_cal', 'ncar_lvls']
+                           'lvlname', 'timename', 'time_unit', 'time_cal', 'ncar_lvls']
         Clustering.__init__(self, cluster_dict, dataset_dict,
                             cdict_fields, datadict_fields)
 
@@ -38,17 +39,18 @@ class Kclustering(Clustering):
             for i in range(0, v.shape[0]):
                 var_data[i] = v[i][:].flatten()
             print var_data.shape
+            self._var_data = var_data
             # for normalization purposes we get the column mean and subtract it
             if self._normalize:
-                for j in range(0, var_data.shape[1]):
-                    mean = var_data[:, j].mean()
-                    var_data[:, j] = np.subtract(var_data[:, j], mean)
+                for j in range(0, var_data.shape[0]):
+                    mean = var_data[j, :].mean()
+                    var_data[j, :] = np.subtract(var_data[j, :], mean)
+                    var_data[j, :] = np.divide(
+                        var_data[j, :], np.std(var_data[j, :]))
             # perform parallel Kmeans clustering
             V = KMeans(n_clusters=self._n_clusters,
                        n_jobs=-1).fit(var_data).labels_
         return self.get_clut_list(V)
-
-
 
     # Perform clustering and retrieve dataset clustered in n_clusters (for
     # multiple variables)
@@ -65,14 +67,15 @@ class Kclustering(Clustering):
             var_list = self._netcdf_subset.extract_timeslotdata(time_idx,
                                                                 self._netcdf_subset.lvl_pos())
         uv = self.preprocess_multivar(var_list)
+        self._var_data = uv
         # for normalization purposes we get the column mean and subtract it
         if self._normalize:
-            for j in range(0, uv.shape[1]):
-                mean = uv[:, j].mean()
-                uv[:, j] = np.subtract(uv[:, j], mean)
+            for j in range(0, uv.shape[0]):
+                mean = uv[j, :].mean()
+                uv[j, :] = np.subtract(uv[j, :], mean)
+                uv[j, :] = np.divide(uv[j, :], np.std(uv[j, :]))
         UV = KMeans(n_clusters=self._n_clusters, n_jobs=-1).fit(uv).labels_
         return self.get_clut_list(UV)
-
 
     # Clustering for certain season (i.e winter,spring,summer,autumn)
     def link_4svar(self):

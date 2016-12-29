@@ -32,8 +32,8 @@ class Meta_clustering(object):
         ret_list = []
         reshape_dim = 0
         if self._multilevel:
-            for lvl in self._netcdf_subset.pressure_levels:
-                for var in self._netcdf_subset.subset_variables:
+            for lvl in self._netcdf_subset._pressure_levels:
+                for var in self._netcdf_subset._subset_variables:
                     reshape_dim += self._netcdf_subset._dataset[var].shape[2]* \
                     self._netcdf_subset._dataset[var].shape[3]
         else:

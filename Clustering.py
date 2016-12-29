@@ -178,7 +178,7 @@ class Clustering(object):
             else:
                 self._netcdf_subset.exact_copy_mean(out_path +
                                                     '/cluster_descriptor_meanmiddle' + str(pos) +
-                                                    '.nc', range(c[0], c[1]), self._size_desc, self._size_div)
+                                                    '.nc', range(c[0], c[1]), len(range(c[0],c[1])), self._size_div)
 
     def euc_dist(self, start_date, end_date, clut_list):
         if len(clut_list) != 1:
