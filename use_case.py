@@ -28,10 +28,13 @@ if __name__ == '__main__':
                  'timename': 'Times', 'time_unit': 'hours since 1900-01-01 00:00:0.0',
                  'time_cal': 'gregorian', 'ncar_lvls': None}
     c_dict = {'n_clusters': 6, 'normalize': True, 'season': None,
-      'therm_season': None, 'multilevel': True, 'size_desc': 24, 'size_div': 3}
-    clut_list,V,obd = kc.link_multivar()
-    print kc._var_data.shape
-    np.save('uv_500_700_900.npy',kc._var_data)
+      'therm_season': None, 'multilevel': False, 'size_desc': 48, 'size_div': 2}
+    #print clut_list[0][0]
+    kc = Kclustering(c_dict, data_dict)
+    kc._netcdf_subset.ncar_to_ecmwf_type(inp,outp)
+    #clut_list,V,obd = kc.link_multivar()
+    #print kc._var_data.shape
+    #np.save('uv_500_700_900.npy',kc._var_data)
     """
     max_ret_list = kc._netcdf_subset.find_continuous_timeslots(clut_list)
     data_dict = {'dataset': Dataset('../../data/1986_1987.nc', 'r'), 'levels': [900],
