@@ -368,29 +368,6 @@ class netCDF_subset(object):
             outVar[:] = varin[time_pos, :]
         dsout.close()
 
-    def old_exact_copy_file(self,out_path,time_pos):
-      dsout = Dataset(out_path,'w',format='NETCDF3_CLASSIC')
-      for gattr in self.dataset.ncattrs():
-          if gattr == 'SIMULATION_START_DATE':
-              gvalue = self.dataset.variables[self.time_name][time_pos[0]]
-              sim_date = ""
-              for gv in gvalue:
-                  sim_date += gv
-              print sim_date
-              dsout.setncattr(gattr,sim_date)
-          else:
-              gvalue = self.dataset.getncattr(gattr)
-              dsout.setncattr(gattr,gvalue)
-      for dname, dim in self.dataset.dimensions.iteritems():
-           if dname == self.time_name:
-                dsout.createDimension(dname, len(time_pos) if not dim.isunlimited() else None)
-           else:
-                dsout.createDimension(dname, len(dim) if not dim.isunlimited() else None)
-      for v_name, varin in self.dataset.variables.iteritems():
-           outVar = dsout.createVariable(v_name, varin.datatype, varin.dimensions)
-           outVar.setncatts({k: varin.getncattr(k) for k in varin.ncattrs()})
-           outVar[:] = varin[time_pos,:]
-      dsout.close()
 
     # Export exact copy of netcdf with some variables/dimensions modified
     def exact_copy_mean(self, out_path, time_pos, size, parts):
