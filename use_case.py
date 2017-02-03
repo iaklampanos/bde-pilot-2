@@ -6,13 +6,14 @@ from operator import attrgetter
 from argparse import ArgumentParser
 from netCDF4 import Dataset
 from sklearn.decomposition import PCA as PCA
-from sklearn.cluster import KMeans
-import cPickle
+from sklearn.cluster import KMeans,MiniBatchKMeans
+import pickle
 from matplotlib.mlab import PCA as mlabPCA
 from Kclustering import Kclustering
 from Hclustering import Hclustering
 from Meta_clustering import Meta_clustering
 from sklearn import metrics
+from Autoencoder import AutoEncoder,setup_autoencoder
 
 
 if __name__ == '__main__':
@@ -29,16 +30,18 @@ if __name__ == '__main__':
     #             'sub_vars': ['UU', 'VV'], 'lvlname': 'num_metgrid_levels',
     #             'timename': 'Times', 'time_unit': 'hours since 1900-01-01 00:00:0.0',
     #             'time_cal': 'gregorian', 'ncar_lvls': None}
-    UVT = np.load('UVT2.npy')
+    UVT = np.load('UVT.npy')
     clust = []
     CH = []
-    np.std(UVT)
-    for i in range(2, 31):
-        print i
-        V = KMeans(n_clusters=self._n_clusters,n_init=20,
-                   n_jobs=-1).fit(UVT).labels_
-        clust.append(V)
-        CH.append(metrics.calinski_harabaz_score(UVT, V))
+    print UVT.shape
+    A = setup_autoencoder(dataset=UVT,hidden_size=8000,mini_batch_size=100,train=True)
+    with open('weather_eval/autoencoders_4000.pkl', 'wb') as output:
+        pickle.dump(A, output, pickle.HIGHEST_PROTOCOL)
+    UVT = A.encode(UVT)
+    V = MiniBatchKMeans(n_clusters=14,n_init=20,
+               n_jobs=-1).fit(UVT).labels_
+    clust.append(V)
+    CH.append(metrics.calinski_harabaz_score(UVT, V))
     clust = np.array(clust)
     CH = np.array(CH)
     np.save('weather_eval/clusters.npy', clust)
