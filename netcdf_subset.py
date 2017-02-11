@@ -340,7 +340,7 @@ class netCDF_subset(object):
 
     # Export results to file from attibute dataset
     def write_tofile(self, out_path):
-        dsout = Dataset(out_path, 'w',format='NETCDF3_CLASSIC')
+        dsout = Dataset(out_path, 'w')
         dim_vars = []
         var_list = self.extract_data(self.lvl_pos())
         dim_vars = self.write_dimensions_to_file(dsout, var_list)
@@ -349,7 +349,7 @@ class netCDF_subset(object):
 
     # Export variables for specific lvl and time period
     def write_timetofile(self, out_path, lvl_pos, time_pos, c_desc=False):
-        dsout = Dataset(out_path, 'w',format='NETCDF3_CLASSIC')
+        dsout = Dataset(out_path, 'w')
         dim_vars = []
         var_list = self.extract_timeslotdata(time_pos, lvl_pos)
         dim_vars = self.write_dimensions_to_file(dsout, var_list, time_pos)
@@ -359,7 +359,7 @@ class netCDF_subset(object):
 
     # Export exact copy of netcdf with some variables/dimensions modified
     def exact_copy_file(self, out_path, time_pos):
-        dsout = Dataset(out_path, 'w',format='NETCDF3_CLASSIC')
+        dsout = Dataset(out_path, 'w')
         self.write_gattrs_and_dims(dsout, time_pos)
         for v_name, varin in self._dataset.variables.iteritems():
             outVar = dsout.createVariable(
@@ -368,10 +368,9 @@ class netCDF_subset(object):
             outVar[:] = varin[time_pos, :]
         dsout.close()
 
-
     # Export exact copy of netcdf with some variables/dimensions modified
     def exact_copy_mean(self, out_path, time_pos, size, parts):
-        dsout = Dataset(out_path, 'w',format='NETCDF3_CLASSIC')
+        dsout = Dataset(out_path, 'w')
         self.write_gattrs_and_dims(dsout, time_pos, size, parts)
         self.write_variables_to_file_mean(dsout, time_pos, size, parts)
         dsout.close()

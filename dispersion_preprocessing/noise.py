@@ -21,5 +21,6 @@ if __name__ == '__main__':
         noisy.append(dataset[i,:])
         for j in range(0,num):
              rng = np.random.RandomState().uniform(-0.1,0.1,size=data_y)
-             noisy.append(np.multiply(dataset[i,:],rng))
+             noise = np.add(dataset[i,:],np.multiply(dataset[i,:],rng))
+             noisy.append(noise)
     np.save(output,noisy)

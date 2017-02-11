@@ -2,10 +2,9 @@ import numpy as np
 from theano import tensor as T
 import theano as th
 import time
-from numpy import random as rng
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 from Clustering import Clustering
-
+from numpy import random as rng
 
 class AutoEncoder(object):
 
@@ -17,10 +16,9 @@ class AutoEncoder(object):
         assert len(X.shape) == 2
         self.input = X
         self.X = X
-        #self.X = th.shared(name='X', value=np.asarray(self.X,
-        #                                              dtype=th.config.floatX),
-        #                   borrow=True)
-
+        self.X = th.shared(name='X', value=np.asarray(self.X,
+                                                      dtype=th.config.floatX),
+                           borrow=True)
         self.n = X.shape[1]
         self.m = X.shape[0]
         assert type(hidden_size) is int
@@ -48,14 +46,14 @@ class AutoEncoder(object):
         self.corrupt = corrupt
 
     def kl_divergence(self, p, p_hat):
-        eps = 1e-12
+        eps = 0
         term1 = p + eps * T.log(p + eps)
         term2 = p + eps * T.log(p_hat + eps)
         term3 = (1 - p + eps) * T.log(1 - p + eps)
         term4 = (1 - p + eps) * T.log(1 - p_hat + eps)
         return term1 - term2 + term3 - term4
 
-    def sparsity_penalty(self, h, sparsity_level=0.05, sparse_reg=1):
+    def sparsity_penalty(self, h, sparsity_level=0.01, sparse_reg=1):
         sparsity_penalty = 0
         avg_act = h.mean(axis=0)
         kl_div = self.kl_divergence(sparsity_level, avg_act)
@@ -63,9 +61,9 @@ class AutoEncoder(object):
         return sparsity_penalty
 
     def get_corrupted_input(self, input, corruption_level):
-        return RandomStreams(np.random.RandomState().randint(2 ** 30)).binomial(size=input.shape,
-                                                                                n=1, p=1 - corruption_level,
-                                                                                type=th.config.floatX) * input
+        return RandomStreams(np.random.RandomState().randint(2 ** 30)).binomial(size=input.shape, n=1,
+                                                                                p=1 - corruption_level,
+                                                                                dtype=th.config.floatX) * input
 
     def train(self):
         index = T.lscalar()
@@ -80,15 +78,13 @@ class AutoEncoder(object):
         L1 = (self.W ** 2).sum()
         Spars = self.sparsity_penalty(
             hidden, self.sparsity_level, self.sparse_reg)
-        cost = L + (0.001) / 2 * L1 #+ Spars
+        cost = L + (0.001) / 2 * L1 + Spars
         updates = []
         gparams = T.grad(cost, params)
         for param, gparam in zip(params, gparams):
             updates.append((param, param - self.learning_rate * gparam))
-        data = T.matrix()
-        train = th.function(inputs=[data], outputs=[cost], updates=updates,
-                            givens={x: data})
-                            #givens={x: self.X[index:index + self.mini_batch_size, :]})
+        train = th.function(inputs=[index], outputs=[cost], updates=updates,
+                            givens={x: self.X[index:index + self.mini_batch_size, :]})
 
         print gparam
         start_time = time.clock()
@@ -96,15 +92,13 @@ class AutoEncoder(object):
             print "Epoch:", epoch
             ccost = []
             for row in xrange(0, self.m, self.mini_batch_size):
-                #t =
-                #print t.shape
-                c = train(self.X[row:row+self.mini_batch_size,:])
+                c = train(row)
                 ccost.append(c[0])
             print np.mean(ccost)
         end_time = time.clock()
         print "Average time per epoch=", (end_time - start_time) / self.n_epochs
-        #self.hidden = self.get_hidden(self.input)
-        #self.decode = self.get_output(self.input)
+        self.hidden = self.get_hidden(self.input)
+        self.decode = self.get_output(self.input)
 
     def get_hidden(self, data):
         x = T.dmatrix('x')
@@ -123,7 +117,7 @@ class AutoEncoder(object):
         return [self.W.get_value(), self.b1.get_value(), self.b2.get_value()]
 
 
-def load_weather_data(ncobj,time_idx=None):
+def load_weather_data(ncobj,time_idx=None,normalize=True):
     if time_idx is None:
         var_list = ncobj.extract_data(ncobj.lvl_pos())
     else:
@@ -136,7 +130,7 @@ def load_weather_data(ncobj,time_idx=None):
             for i in range(0, v.shape[0]):
                 var_data[i] = v[i][:].flatten()
             print var_data.shape
-        if self._normalize:
+        if normalize:
             for j in range(0, uv.shape[0]):
                 mean = uv[j, :].mean()
                 uv[j, :] = np.subtract(uv[j, :], mean)
@@ -144,7 +138,7 @@ def load_weather_data(ncobj,time_idx=None):
     else:
         uv = Clustering.preprocess_multivar(var_list)
         # for normalization purposes we get the column mean and subtract it
-        if self._normalize:
+        if normalize:
             for j in range(0, uv.shape[0]):
                 mean = uv[j, :].mean()
                 uv[j, :] = np.subtract(uv[j, :], mean)
@@ -154,7 +148,7 @@ def load_weather_data(ncobj,time_idx=None):
 
 def setup_autoencoder(dataset, hidden_size=100, activation_function=T.nnet.sigmoid,
                       output_function=T.nnet.sigmoid, n_epochs=100,
-                      mini_batch_size=1, corrupt=False,train=False):
+                      mini_batch_size=1, corrupt=True,train=False):
     A = AutoEncoder(X=dataset, hidden_size=hidden_size,
                     activation_function=activation_function,
                     output_function=output_function,

@@ -1,6 +1,6 @@
 import numpy as np
 from netcdf_subset import netCDF_subset
-
+import scipy.stats
 
 class Clustering(object):
 
@@ -201,3 +201,15 @@ class Clustering(object):
             z_c = np.mean(z_c[0], axis=0)
             ec_dist.append(np.linalg.norm(z_case - z_c))
         return ec_dist
+
+    def kl_divergence(self,current_weather,cfile_list,var_list):
+        kl = []
+        for c in cfile_list:
+            self._netcdf_subset = c
+            cv = preprocess_multivar(var_list)
+            cv_sum = np.sum(cv)
+            cv = np.divide(cv,cv_sum)
+            curr_sum = np.sum(current_weather)
+            current_weather = np.divide(current_weather,curr_sum)
+            kl.append(scipy.stats.entropy(current_weather, cv))
+        return kl

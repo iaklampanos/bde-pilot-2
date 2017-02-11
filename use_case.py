@@ -30,13 +30,15 @@ if __name__ == '__main__':
     #             'sub_vars': ['UU', 'VV'], 'lvlname': 'num_metgrid_levels',
     #             'timename': 'Times', 'time_unit': 'hours since 1900-01-01 00:00:0.0',
     #             'time_cal': 'gregorian', 'ncar_lvls': None}
-    UVT = np.load('UVT.npy')
+    UVT = np.load('q.npy')
+    print UVT.shape
     clust = []
     CH = []
     print UVT.shape
-    A = setup_autoencoder(dataset=UVT,hidden_size=8000,mini_batch_size=100,train=True)
-    with open('weather_eval/autoencoders_4000.pkl', 'wb') as output:
-        pickle.dump(A, output, pickle.HIGHEST_PROTOCOL)
+    A = setup_autoencoder(dataset=UVT,hidden_size=100,mini_batch_size=100,n_epochs=100,train=True,corrupt=True)
+    exit(-1)
+    #with open('weather_eval/autoencoders_4000.pkl', 'wb') as output:
+    #    pickle.dump(A, output, pickle.HIGHEST_PROTOCOL)
     UVT = A.encode(UVT)
     V = MiniBatchKMeans(n_clusters=14,n_init=20,
                n_jobs=-1).fit(UVT).labels_
