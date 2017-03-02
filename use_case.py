@@ -1,20 +1,15 @@
-import datetime
-import numpy as np
-from scipy.cluster.hierarchy import fcluster, dendrogram
-from netcdf_subset import netCDF_subset, ncar_to_ecmwf_type
+from netcdf_subset import netCDF_subset
 from operator import attrgetter
 from argparse import ArgumentParser
-from netCDF4 import Dataset
-from sklearn.decomposition import PCA as PCA
-from sklearn.cluster import KMeans,MiniBatchKMeans
-import pickle
-from matplotlib.mlab import PCA as mlabPCA
-from Kclustering import Kclustering
-from Hclustering import Hclustering
-from Meta_clustering import Meta_clustering
-from sklearn import metrics
-from Autoencoder import AutoEncoder,setup_autoencoder
-
+from Dataset_transformations import Dataset_transformations
+from Dataset import Dataset
+from Clustering import Clustering
+import numpy as np
+from sklearn.cluster import KMeans
+import dataset_utils as utils
+from ClusteringExperiment import ClusteringExperiment
+from Autoencoder import AutoEncoder
+from theano import tensor as T
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Extract variables from netcdf file')
@@ -25,36 +20,38 @@ if __name__ == '__main__':
     opts = parser.parse_args()
     getter = attrgetter('input', 'output')
     inp, outp = getter(opts)
-    #dsin = Dataset(inp, "r")
-    #data_dict = {'dataset': dsin, 'levels': [500, 700, 900],
-    #             'sub_vars': ['UU', 'VV'], 'lvlname': 'num_metgrid_levels',
-    #             'timename': 'Times', 'time_unit': 'hours since 1900-01-01 00:00:0.0',
-    #             'time_cal': 'gregorian', 'ncar_lvls': None}
-    UVT = np.load('q.npy')
-    print UVT.shape
-    clust = []
-    CH = []
-    print UVT.shape
-    A = setup_autoencoder(dataset=UVT,hidden_size=100,mini_batch_size=100,n_epochs=100,train=True,corrupt=True)
-    exit(-1)
-    #with open('weather_eval/autoencoders_4000.pkl', 'wb') as output:
-    #    pickle.dump(A, output, pickle.HIGHEST_PROTOCOL)
-    UVT = A.encode(UVT)
-    V = MiniBatchKMeans(n_clusters=14,n_init=20,
-               n_jobs=-1).fit(UVT).labels_
-    clust.append(V)
-    CH.append(metrics.calinski_harabaz_score(UVT, V))
-    clust = np.array(clust)
-    CH = np.array(CH)
-    np.save('weather_eval/clusters.npy', clust)
-    np.save('weather_eval/CH.npy', CH)
-    '''
-    max_ret_list = kc._netcdf_subset.find_continuous_timeslots(clut_list)
-    data_dict = {'dataset': Dataset('../../data/1986_1990.nc', 'r'), 'levels': [500,700,900],
-                 'sub_vars': ['UU', 'VV'], 'lvlname': 'num_metgrid_levels',
-                 'timename': 'Times', 'time_unit': 'hours since 1900-01-01 00:00:0.0',
-                 'time_cal': 'gregorian', 'ncar_lvls': None}
-    kc2 = Kclustering(c_dict, data_dict)
-    print max_ret_list
-    kc2.cluster_descriptor_middle(outp, max_ret_list)
-    '''
+    data_dict = netCDF_subset(inp, [500], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
+    #data_dict2 = netCDF_subset(inp, [1000], ['TT'], lvlname='num_metgrid_levels', timename='Times')
+    export_template = netCDF_subset('/mnt/disk1/thanasis/data/train.nc', [500], ['UU'], lvlname='num_metgrid_levels', timename='Times')
+    items = [data_dict.extract_data()]
+    items = np.array(items)
+    # #items = items[:,:,:,:,range(0,32),:]
+    #items = items[:,:,:,:,:,range(0,32)]
+    print items.shape
+    ds = Dataset_transformations(items,1000,items.shape)
+    ds.twod_transformation()
+    #ds.normalize()
+    #ds.shift()
+    print np.min(ds._items),np.max(ds._items)
+    #data = ds.get_items()
+    #print data.shape
+    #data = data[,:]
+    #ds._items = data
+    #print ds._items.shape
+    clust_obj = Clustering(ds,n_clusters=3,n_init=100,features_first=True)
+    A = AutoEncoder(X=np.transpose(ds.get_items()), hidden_size=3000,
+                     activation_function=T.nnet.sigmoid,
+                     output_function=T.nnet.sigmoid,
+                     n_epochs=400, mini_batch_size=1000,
+                     sparsity_level=0.05, sparse_reg=1e-4,
+                     learning_rate=0.3,
+                     corruption_level=0.4,
+                     corrupt=True
+                     )
+    exper = ClusteringExperiment(ds,A,clust_obj)
+    exper.start()
+    exper.plot_output_frames(64,64)
+    #clust_obj.kmeans()
+    #clust_obj.create_descriptors(13)
+    #print np.array(clust_obj._descriptors).shape
+    #utils.export_descriptor_kmeans(outp,export_template,clust_obj)

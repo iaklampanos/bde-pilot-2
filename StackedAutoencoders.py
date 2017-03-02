@@ -1,33 +1,38 @@
 
 class StackedAutoencoders(object):
 
-      def __init__(self,Autoencs,Hidden_layers_size):
-          self.autoencs = Autoencs
-          self.hidden_size = Hidden_layers_size
-          self.hl = len(self.hidden_size)
+      def __init__(self,_autoencs,Hidden_layers_size):
+          self._autoencs = _autoencs
+          self._hidden_size = Hidden_layers_size
+          self._hl = len(self._hidden_size)
+          self._hidden_list = range(0,self._hl)
 
       def train(self):
-          for i in range(0,self.hl):
-              self.autoencs[i].train()
+          for i in range(0,self._hl):
+              self._autoencs[i].train()
 
-      def get_train_encode(self,pos):
-          for i in range(0,self.hl):
-              if i == pos:
-                 return self.autoencs[i].hidden
+      def get_hidden(self,pos=None):
+          if not(pos is None):
+              i = self._hidden_list.index(pos)
+              return self._autoencs[i].hidden
+          else:
+              return self._autoencs[self._hl-1].hidden
 
-      def get_train_decode(self,pos):
-          for i in range(0,self.hl):
-              if i == pos:
-                 return self.autoencs[i].decode
+      def get_output(self,pos=None):
+          if not(pos is None):
+              i = self._hidden_list.index(pos)
+              return self._autoencs[i].decoded
+          else:
+              return self._autoencs[self._hl-1].decoded
 
       def test(self,data):
-          for i in range(0,self.hl):
+          for i in self._hidden_list:
               if i == 0:
-                  self.autoencs[i].hidden = self.autoencs[i].get_hidden(data)
+                  self._autoencs[i].hidden = self._autoencs[i].get_hidden(data)
               else:
-                  self.autoencs[i].hidden = self.autoencs[i].get_hidden(self.autoencs[i-1].hidden)
-          for i in range(0,self.hl):
+                  self._autoencs[i].hidden = self._autoencs[i].get_hidden(self._autoencs[i-1].hidden)
+          for i in self._hidden_list:
               if i == 0:
-                  self.autoencs[i].decode = self.autoencs[i].get_output(data)
+                  self._autoencs[i].decode = self._autoencs[i].get_output(data)
               else:
-                  self.autoencs[i].decode = self.autoencs[i].get_output(self.autoencs[i-1].decode)
+                  self._autoencs[i].decode = self._autoencs[i].get_output(self._autoencs[i-1].decode)

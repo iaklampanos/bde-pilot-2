@@ -3,15 +3,15 @@ from theano import tensor as T
 import theano as th
 import time
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
-from Clustering import Clustering
 from numpy import random as rng
 
 class AutoEncoder(object):
 
+
     def __init__(self, X, hidden_size, activation_function,
                  output_function, corrupt=False, n_epochs=100, mini_batch_size=1,
-                 learning_rate=0.1, sparsity_level=0.01, sparse_reg=1,
-                 corruption_level=0.):
+                 learning_rate=0.1, sparsity_level=0.05, sparse_reg=1e-3,
+                 corruption_level=0.0):
         assert type(X) is np.ndarray
         assert len(X.shape) == 2
         self.input = X
@@ -41,20 +41,22 @@ class AutoEncoder(object):
         self.mini_batch_size = mini_batch_size
         self.learning_rate = learning_rate
         self.sparsity_level = sparsity_level
+        print self.sparsity_level
         self.sparse_reg = sparse_reg
         self.corruption_level = corruption_level
         self.corrupt = corrupt
 
     def kl_divergence(self, p, p_hat):
-        eps = 0
+        eps = 1e-4
         term1 = p + eps * T.log(p + eps)
         term2 = p + eps * T.log(p_hat + eps)
         term3 = (1 - p + eps) * T.log(1 - p + eps)
         term4 = (1 - p + eps) * T.log(1 - p_hat + eps)
         return term1 - term2 + term3 - term4
 
-    def sparsity_penalty(self, h, sparsity_level=0.01, sparse_reg=1):
-        sparsity_penalty = 0
+    def sparsity_penalty(self, h, sparsity_level=0.05, sparse_reg=1e-4):
+        #sparsity_level = th.shared(name='sparsity_level',value=sparsity_level)
+        #sparsity_level = T.extra_ops.repeat(sparsity_level, self.hidden_size)
         avg_act = h.mean(axis=0)
         kl_div = self.kl_divergence(sparsity_level, avg_act)
         sparsity_penalty = sparse_reg * kl_div.sum()
@@ -78,7 +80,7 @@ class AutoEncoder(object):
         L1 = (self.W ** 2).sum()
         Spars = self.sparsity_penalty(
             hidden, self.sparsity_level, self.sparse_reg)
-        cost = L + (0.001) / 2 * L1 + Spars
+        cost = L + (0.001) / 2 * L1 + 1*Spars
         updates = []
         gparams = T.grad(cost, params)
         for param, gparam in zip(params, gparams):
@@ -98,63 +100,30 @@ class AutoEncoder(object):
         end_time = time.clock()
         print "Average time per epoch=", (end_time - start_time) / self.n_epochs
         self.hidden = self.get_hidden(self.input)
-        self.decode = self.get_output(self.input)
+        self.decoded = self.get_output(self.input)
 
-    def get_hidden(self, data):
-        x = T.dmatrix('x')
-        hidden = self.activation_function(T.dot(x, self.W) + self.b1)
-        transformed_data = th.function(inputs=[x], outputs=[hidden])
-        return np.array(transformed_data(data)).reshape(self.m, self.hidden_size)
+    def get_hidden(self, data=None):
+        if data is None:
+            return self.hidden
+        else:
+            x = T.dmatrix('x')
+            hidden = self.activation_function(T.dot(x, self.W) + self.b1)
+            transformed_data = th.function(inputs=[x], outputs=[hidden])
+            return np.array(transformed_data(data)).reshape(self.m, self.hidden_size)
 
-    def get_output(self, data):
-        x = T.dmatrix('x')
-        output = self.output_function(T.dot(self.activation_function(
-            T.dot(x, self.W) + self.b1), T.transpose(self.W)) + self.b2)
-        transformed_data = th.function(inputs=[x], outputs=[output])
-        return np.array(transformed_data(data)).reshape(self.m, self.n)
+    def get_output(self, data=None):
+        if data is None:
+            return self.decoded
+        else:
+            x = T.dmatrix('x')
+            output = self.output_function(T.dot(self.activation_function(
+                T.dot(x, self.W) + self.b1), T.transpose(self.W)) + self.b2)
+            transformed_data = th.function(inputs=[x], outputs=[output])
+            return np.array(transformed_data(data)).reshape(self.m, self.n)
+
+    def test(self,data):
+        self.hidden = self.get_hidden(data)
+        self.decoded = self.get_output(data)
 
     def get_weights(self):
         return [self.W.get_value(), self.b1.get_value(), self.b2.get_value()]
-
-
-def load_weather_data(ncobj,time_idx=None,normalize=True):
-    if time_idx is None:
-        var_list = ncobj.extract_data(ncobj.lvl_pos())
-    else:
-        var_list = ncobj.extract_timeslotdata(time_idx, ncobj.lvl_pos())
-    if not multivar:
-        for v in var_list:
-            # create place holder variable where the grid is flattened
-            var_data = np.ndarray(
-                shape=(v.shape[0], v[0][:].flatten().shape[0]))
-            for i in range(0, v.shape[0]):
-                var_data[i] = v[i][:].flatten()
-            print var_data.shape
-        if normalize:
-            for j in range(0, uv.shape[0]):
-                mean = uv[j, :].mean()
-                uv[j, :] = np.subtract(uv[j, :], mean)
-                uv[j, :] = np.divide(uv[j, :], np.std(uv[j, :]))
-    else:
-        uv = Clustering.preprocess_multivar(var_list)
-        # for normalization purposes we get the column mean and subtract it
-        if normalize:
-            for j in range(0, uv.shape[0]):
-                mean = uv[j, :].mean()
-                uv[j, :] = np.subtract(uv[j, :], mean)
-                uv[j, :] = np.divide(uv[j, :], np.std(uv[j, :]))
-    return uv
-
-
-def setup_autoencoder(dataset, hidden_size=100, activation_function=T.nnet.sigmoid,
-                      output_function=T.nnet.sigmoid, n_epochs=100,
-                      mini_batch_size=1, corrupt=True,train=False):
-    A = AutoEncoder(X=dataset, hidden_size=hidden_size,
-                    activation_function=activation_function,
-                    output_function=output_function,
-                    n_epochs=n_epochs, mini_batch_size=mini_batch_size,
-                    corrupt=corrupt
-                    )
-    if train:
-        A.train()
-    return A
