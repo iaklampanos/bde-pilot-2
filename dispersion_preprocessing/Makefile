@@ -9,10 +9,10 @@ METDIP=./metdip
 TOPODIP=./topodip
 FILM=./film
 MK_DIR=$(shell pwd)
-PRE_DIR=/mnt/disk1/thanasis/cpbab/FILMAKER/pre_process/
-FILM_DIR=/mnt/disk1/thanasis/cpbab/FILMAKER/run
-DIP_DIR=/mnt/disk1/thanasis/cpbab/DIPCOT/run
-DIP_MAKE=/mnt/disk1/thanasis/cpbab/DIPCOT/source_files/Makefile
+PRE_DIR=
+FILM_DIR=
+DIP_DIR=
+DIP_MAKE=
 DIP=./DIPCOT
 NCMAKER=dipcot_out_netcdf
 
@@ -60,7 +60,7 @@ clean_dipcot::
 preproc:: init
 	@echo --- $(MK_DIR)
 	echo `pwd`;\
-	cd /mnt/disk1/thanasis/cpbab/FILMAKER2/pre_process;\
+	cd $(filmaker_preprocess);\
 	export LD_LIBRARY_PATH=/usr/local/lib:;\
 	for f in `ls $(WRF_IN)`; do make -f $(MK_DIR)/Makefile preproc_f PREPROC_IN=$(WRF_IN)/$$f WRF_IN=$(WRF_IN); done
 	cd $(MK_DIR)

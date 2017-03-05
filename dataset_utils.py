@@ -9,6 +9,7 @@ import os
 import struct
 from array import array as pyarray
 from numpy import append, array, int8, uint8, zeros
+from netCDF4 import Dataset
 
 def save(filename, *objects):
     fil = gzip.open(filename, 'wb')
@@ -26,6 +27,11 @@ def load(filename):
             break
     fil.close()
 
+def load_single(filename):
+    fil = gzip.open(filename, 'rb')
+    c = cPickle.load(fil)
+    fil.close()
+    return c
 
 def export_timebars(outp, start_date, nc_sub, clust_obj):
     oc = oct2py.Oct2Py()
@@ -102,6 +108,14 @@ def export_descriptor_kmeans(outp, nc_sub, clust_obj):
     for pos, desc in enumerate(descriptors):
         nc_sub.exact_copy_kmeans(
             outp + '/desc_kmeans_' + str(pos) + '.nc', desc)
+
+def rename_descriptors(path):
+    filelist = sorted(os.listdir(path))
+    start_dts = [Dataset(path+'/'+f,'r').SIMULATION_START_DATE for f in filelist]
+    for pos,f in enumerate(filelist):
+        os.rename(path+'/'+f,path+'/'+f+'_'+start_dts[pos]+'.nc')
+
+
 
 
 def export_descriptor_max(out_path, nc_sub, clust_obj):

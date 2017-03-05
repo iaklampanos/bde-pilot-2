@@ -5,6 +5,7 @@ from sklearn import metrics
 import dataset_utils as utils
 import oct2py
 
+
 class Clustering(Dataset):
 
     def __init__(self, dataset, n_clusters, n_init,
@@ -54,22 +55,21 @@ class Clustering(Dataset):
         self._leaves = self._link.leaves_
         self.get_clut_list(self._labels)
 
-    def create_descriptors(self,frames):
+    def create_descriptors(self, frames):
         data = self.get_items()
         clut_list = self._index_list[0]
         c_desc = []
         for c in clut_list:
             cluster_data = data[c]
             kj = KMeans(n_clusters=frames, n_init=self._n_init,
-                                max_iter=self._max_iter, n_jobs=-1).fit(cluster_data).labels_
+                        max_iter=self._max_iter, n_jobs=-1).fit(cluster_data).labels_
             avg = []
-            for j in range(0,frames):
+            for j in range(0, frames):
                 idx = [idx for idx, frame in enumerate(
                     kj) if frame == j]
                 avg.append(c[idx])
             c_desc.append(avg)
         self._descriptors = c_desc
-
 
     def get_clut_list(self, V):
         clut_list = []
@@ -97,6 +97,25 @@ class Clustering(Dataset):
         oc.eval('plot(xlens,lens)',
                 plot_dir=outp, plot_name='clustering_frequency', plot_format='jpeg',
                 plot_width='2048', plot_height='1536')
+
+    def centroids_distance(self, dataset,features_first=False):
+        items = dataset.get_items()
+        if features_first:
+            items = np.transpose(items)
+        dists = [(x,np.linalg.norm(self._centroids[x]-items)) for x in range(0, self._n_clusters)]
+        dists = sorted(dists, key=lambda x: x[1], reverse=False)
+        return dists
+
+    def desc_date(self,nc_subset):
+        desc_date = []
+        for pos,i in enumerate(self._descriptors):
+            gvalue = nc_subset._dataset.variables[nc_subset._time_name][i[0][0]]
+            sim_date = ""
+            for gv in gvalue:
+                sim_date += gv
+            desc_date.append(sim_date)
+        self._desc_date = desc_date
+        return desc_date
 
     def CH_evaluation(self):
         return metrics.calinski_harabaz_score(self.get_items(), self._labels)

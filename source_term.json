@@ -1,0 +1,19 @@
+{
+  "test_netcdf_path":"/mnt/disk1/thanasis/data/wrf/nc/",
+  "test_netcdf":"1994-01-01_00:00:00.nc",
+  "export_netcdf":"/mnt/disk1/thanasis/data/train.nc",
+  "cluster_obj":"/mnt/disk1/thanasis/bde-pilot-2/Clustering_object.zip",
+  "cluster_disp_path":"/mnt/disk1/thanasis/hysplit/hysplit/trunk/exec/",
+  "test_disp_path":"/mnt/disk1/thanasis/hysplit/hysplit/trunk/exec/",
+  "stations":[
+    {"name":"CERNAVODA"},{"name":"KOZLODUY"},{"name":"GROHNDE"}
+    ,{"name":"EMSLAND"},{"name":"SIZEWELL"},{"name":"HINKLEY"}
+    ,{"name":"COFRENTES"},{"name":"ALMARAZ"},{"name":"LOVIISA"}
+    ,{"name":"FORSMARK"},{"name":"RINGHALS"},{"name":"SUKRAINE"}
+    ,{"name":"KHMELNITSKY"},{"name":"PAKS"},{"name":"KRSKO"}
+    ,{"name":"VANDELLOS"},{"name":"DOEL"},{"name":"HEYSHAM"}
+  ],
+  "pollutants":[
+    {"name":"C137"},{"name":"I131"}
+  ]
+}

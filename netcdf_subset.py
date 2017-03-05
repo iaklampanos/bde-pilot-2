@@ -38,7 +38,11 @@ class netCDF_subset(object):
         try:
             self._sub_pos = self.lvl_pos()
         except:
-            self._sub_pos = None
+            idx_list = []
+            ncar = list(self._ncar_lvl_names)
+            for lvl in self._pressure_levels:
+                idx_list.append(ncar.index(lvl))
+            self._sub_pos = idx_list
 
     # Find pressure level position in dataset
     def lvl_pos(self):
@@ -163,6 +167,10 @@ class netCDF_subset(object):
         dat = datetime.datetime(year, month, day, hour, min)
         return date2num(dat, self._time_unit, self._time_cal)
 
+    def find_timeslot_idx(self,idx):
+        times = self._dataset.variables[self._time_name][:]
+        return num2date(times[idx],self._time_unit,self._time_name)
+
     # Create a season map and divide the dataset into seasons
     def get_seasons(self, times, season_ch):
         seasons_idx = []
@@ -281,9 +289,11 @@ class netCDF_subset(object):
         for gattr in self._dataset.ncattrs():
             if gattr == 'SIMULATION_START_DATE':
                 if isinstance(time_pos[0], np.ndarray):
+                    print '123'
                     gvalue = self._dataset.variables[
                         self._time_name][time_pos[0][0]]
                 else:
+                    print '456'
                     gvalue = self._dataset.variables[
                         self._time_name][time_pos[0]]
                 sim_date = ""
@@ -388,7 +398,6 @@ class netCDF_subset(object):
                 mean_array = []
                 for var in varin_array:
                     mean_array.append(np.mean(var, axis=0))
-                print np.array(mean_array).shape
                 outVar = dsout.createVariable(
                     v_name, varin.datatype, varin.dimensions)
                 outVar.setncatts({k: varin.getncattr(k)
