@@ -40,16 +40,10 @@ class ClusteringExperiment(object):
      def plot_output_frames(self,x,y,iter_=40):
          inp = self._training_dataset.get_items()
          output = self._output.get_items()
-         #inp = inp[:,range(24576,28672)]
-         #output = output[:,range(24576,28672)]
-         inp = inp[:,range(0,4096)]
-         output = output[:,range(0,4096)]
          print inp.shape
          print output.shape
          for i in range(0,iter_):
              utils.plot_pixel_image(inp[i],output[i],x,y)
-
-     #def plot_clustering_frames(self):
 
 
      def save(self, filename='Clustering_experiment.zip'):

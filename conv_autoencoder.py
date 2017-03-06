@@ -1,0 +1,114 @@
+from lasagne import layers
+from lasagne.updates import nesterov_momentum
+from nolearn.lasagne import NeuralNet
+import numpy as np
+import theano as th
+import theano.tensor as T
+from nolearn.lasagne import BatchIterator
+from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
+from theano.sandbox.neighbours import neibs2images
+from lasagne.objectives import squared_error
+from lasagne.regularization import l2
+from netcdf_subset import netCDF_subset
+from Dataset_transformations import Dataset_transformations
+import dataset_utils as utils
+from shape import ReshapeLayer, Unpool2DLayer
+from lasagne.objectives import squared_error
+from lasagne.nonlinearities import tanh
+import pickle
+import sys
+from sklearn.metrics import mean_squared_error as mse
+from sklearn.metrics import precision_score
+import os
+import urllib
+import gzip
+import cPickle
+from IPython.display import Image as IPImage
+from PIL import Image
+import dataset_utils as utils
+
+class ConvAutoencoder(Object):
+
+    def __init__(self, conv_filters, deconv_filters, filter_sizes, epochs,
+                 hidden_size, channels, corruption_level, l2_level,
+                 samples, features_x, features_y):
+        self.input_var = T.tensor4('X')
+        self.conv_filters = conv_filters
+        self.deconv_filters = deconv_filters
+        self.filter_sizes = filter_sizes
+        self.epochs = epochs
+        self.encode_size = hidden_size
+        self.ae = NeuralNet(
+            layers=[
+                ('input', layers.InputLayer),
+                ('conv', layers.Conv2DLayer),
+                ('pool', layers.MaxPool2DLayer),  # max pool 2D/3D/4D ?
+                ('flatten', ReshapeLayer),  # output_dense
+                ('encode_layer', layers.DenseLayer),
+                ('hidden', layers.DenseLayer),  # output_dense
+                ('unflatten', ReshapeLayer),
+                ('unpool', Unpool2DLayer),
+                ('deconv', layers.Conv2DLayer),
+                ('output_layer', ReshapeLayer),
+            ],
+            input_shape=(None, 1, features_x, features_y),
+            input_var=get_corrupted_input(input_var, corruption_level),
+            conv_num_filters=conv_filters, conv_filter_size=(
+                filter_sizes, filter_sizes),
+            # conv_border_mode="valid", removed from latest version
+            conv_nonlinearity=None,
+            pool_pool_size=(2, 2),
+            flatten_shape=(([0], -1)),  # not sure if necessary?
+            encode_layer_num_units=encode_size,
+            hidden_num_units=deconv_filters * (features_x + filter_sizes - 1) ** 2 / 4,
+            unflatten_shape=(
+                ([0], deconv_filters, (features_x + filter_sizes - 1) / 2, (features_y + filter_sizes - 1) / 2)),
+            unpool_ds=(2, 2),
+            deconv_num_filters=channels, deconv_filter_size=(filter_sizes, filter_sizes),
+            # deconv_border_mode="valid",
+            deconv_nonlinearity=None,
+            output_layer_shape=(([0], -1)),
+            update_learning_rate=0.01,
+            update_momentum=0.975,
+            objective_l2=(0.001) / 2,
+            objective_loss_function=squared_error,
+            batch_iterator_train=BatchIterator(batch_size=500),
+            regression=True,
+            max_epochs=epochs,
+            verbose=1,
+        )
+
+    def train(self,X_train,X_out):
+        self.ae.fit(X_train,X_out)
+
+    def test(self,X_pred,X_pred_shape):
+        return self.ae.predict(X_pred).reshape(X_pred_shape)
+
+    def get_corrupted_input(self, input, corruption_level):
+        return RandomStreams(np.random.RandomState().randint(2 ** 30)).binomial(size=input.shape, n=1,
+                                                                                p=1 - corruption_level,
+                                                                                dtype=th.config.floatX) * input
+
+    def get_output_from_nn(self, last_layer, X):
+        indices = np.arange(164, X.shape[0], 164)
+        sys.stdout.flush()
+
+        # not splitting into batches can cause a memory error
+        X_batches = np.split(X, indices)
+        out = []
+        for count, X_batch in enumerate(X_batches):
+            out.append(layers.helper.get_output(last_layer, X_batch).eval())
+            sys.stdout.flush()
+        return np.vstack(out)
+
+    def get_hidden(self, X):
+        return self.get_output_from_nn(encode_layer, X)
+
+    def get_output(self,X):
+        return self.get_output_from_nn(output_layer, X)
+
+    def save(self, filename='ConvAutoencoder.zip'):
+        utils.save(filename, self)
+
+    def load(self, filename='ConvAutoencoder.zip'):
+        self = utils.load(filename)

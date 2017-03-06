@@ -4,6 +4,7 @@ import theano as th
 import time
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 from numpy import random as rng
+import dataset_utils as utils
 
 class AutoEncoder(object):
 
@@ -80,7 +81,7 @@ class AutoEncoder(object):
         L1 = (self.W ** 2).sum()
         Spars = self.sparsity_penalty(
             hidden, self.sparsity_level, self.sparse_reg)
-        cost = L + (0.001) / 2 * L1 + 1*Spars
+        cost = L + (0.001) / 2 * L1 #+ 1*Spars
         updates = []
         gparams = T.grad(cost, params)
         for param, gparam in zip(params, gparams):
@@ -127,3 +128,10 @@ class AutoEncoder(object):
 
     def get_weights(self):
         return [self.W.get_value(), self.b1.get_value(), self.b2.get_value()]
+
+
+    def save(self, filename='Autoencoder.zip'):
+        utils.save(filename, self)
+
+    def load(self, filename='Autoencoder.zip'):
+        self = utils.load(filename)
