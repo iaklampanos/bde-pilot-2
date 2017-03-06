@@ -47,7 +47,7 @@ def export_timebars(outp, start_date, nc_sub, clust_obj):
         oc.push('y', y)
         oc.eval('y(a)=1;')
         oc.eval('bar(y)',
-                plot_dir=outp, plot_name='cluster' + str(int(i)) + '_timebar', plot_format='jpeg',
+                plot_dir=outp, plot_name='cluster' + str(int(n_clust)) + '_timebar', plot_format='jpeg',
                 plot_width='2048', plot_height='1536')
 
 

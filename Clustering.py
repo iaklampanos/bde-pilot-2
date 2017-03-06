@@ -42,7 +42,6 @@ class Clustering(Dataset):
                                      max_iter=self._max_iter, max_no_improvement=self._max_no_imprv).fit(data)
         self._labels = self._link.labels_
         self._centroids = self._link.cluster_centers_
-        self.get_clut_list(self._link)
         self.get_clut_list(self._labels)
 
     def hierachical(self, affinity, linkage):
@@ -89,11 +88,12 @@ class Clustering(Dataset):
         self._index_list = clut_list
 
     def plot_cluster_distirbution(self, outp):
+        lens = []
         oc = oct2py.Oct2Py()
         for i in self._clustering_dist:
             lens.append(i[1])
         oc.push('lens', lens)
-        oc.push('xlens', range(1, self._n_clusters))
+        oc.push('xlens', range(0, self._n_clusters))
         oc.eval('plot(xlens,lens)',
                 plot_dir=outp, plot_name='clustering_frequency', plot_format='jpeg',
                 plot_width='2048', plot_height='1536')
