@@ -16,7 +16,9 @@ import datetime
 from netCDF4 import Dataset
 import scipy
 import cPickle
-
+import os
+import dataset_utils as utils
+import time
 
 def reconstruct_date(date_str, dot_nc=False):
     if dot_nc:
@@ -43,8 +45,8 @@ def calc_station_distance(parameters, test_date, cluster_date):
             jpollutant['name'] = pollutant['name']
             current_weather = test_disp.variables[pollutant['name']][:]
             cluster_weather = cluster_disp.variables[pollutant['name']][:]
-            jpollutant['euclidean'] = np.linalg.norm(
-                cluster_weather - current_weather)
+            jpollutant['euclidean'] = unicode(np.linalg.norm(
+                cluster_weather - current_weather))
             current_weather = current_weather.flatten()
             cluster_weather = cluster_weather.flatten()
             current_weather = np.divide(
@@ -53,12 +55,39 @@ def calc_station_distance(parameters, test_date, cluster_date):
                 cluster_weather, np.sum(cluster_weather))
             current_weather = np.add(current_weather, 1e-6)
             cluster_weather = np.add(cluster_weather, 1e-6)
-            jpollutant['KL'] = scipy.stats.entropy(
-                current_weather, cluster_weather)
+            jpollutant['KL'] = unicode(scipy.stats.entropy(
+                current_weather, cluster_weather))
             polls.append(jpollutant)
         jstation['distances'] = polls
         stat_dist.append(jstation)
     return stat_dist
+
+def reorder_for_save(parameters,stat_dist):
+    json_array = []
+    poll_names = []
+    for poll in parameters['pollutants']:
+        poll_names.append(poll['name'])
+    poll_euclidean = []
+    poll_kl = []
+    for pos,p in enumerate(poll_names):
+        local_eucl = []
+        local_kl = []
+        for stat in stat_dist:
+            s_name = stat['name']
+            for dpos,dist in enumerate(stat['distances']):
+                if dpos == pos:
+                    local_eucl.append((s_name,dist['euclidean']))
+                    local_kl.append((s_name,dist['KL']))
+        poll_euclidean.append(local_eucl)
+        poll_kl.append(local_kl)
+    for pos,p in enumerate(poll_names):
+        jpoll = {}
+        jpoll['name'] = p
+        jpoll['euclidean'] = poll_euclidean[pos]
+        jpoll['KL'] = poll_kl[pos]
+        json_array.append(jpoll)
+    return json_array
+
 
 def print_order(stat_dist):
     tupples = []
@@ -79,20 +108,39 @@ if __name__ == '__main__':
     inp, outp = getter(opts)
     with open(inp) as data_file:
         parameters = json.load(data_file)
-    test_dict = netCDF_subset(parameters['test_netcdf_path'] + parameters['test_netcdf'], [
-                              700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
+    test_file_list = sorted(os.listdir(parameters['test_netcdf_path']))
     export_template = netCDF_subset(parameters['export_netcdf'], [700], [
                                     'GHT'], lvlname='num_metgrid_levels', timename='Times')
-    items = [test_dict.extract_data()]
-    items = np.array(items)
-    print items.shape
-    ds = Dataset_transformations(items, 1000, items.shape)
-    ds.twod_transformation()
-    ds.normalize()
     clust_obj = utils.load_single(parameters['cluster_obj'])
-    utils.export_timebars(outp,datetime.datetime(1986,01,01,00,00),export_template,clust_obj)
-    # clust_obj.desc_date(export_template)
-    # cd = clust_obj.centroids_distance(ds, features_first=True)
-    # test_date = reconstruct_date(parameters['test_netcdf'], dot_nc=True)
-    # cluster_date = reconstruct_date(clust_obj._desc_date[cd[0][0]])
-    # print_order(calc_station_distance(parameters, test_date, cluster_date))
+    clust_obj.desc_date(export_template)
+    for num,tfl in enumerate(test_file_list):
+        start_time = time.time()
+        print tfl
+        print str((num+1))+'/'+str(len(test_file_list))
+        test_dict = netCDF_subset(parameters['test_netcdf_path'] + tfl, [
+                                  700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
+        items = [test_dict.extract_data()]
+        items = np.array(items)
+        print items.shape
+        ds = Dataset_transformations(items, 1000, items.shape)
+        ds.twod_transformation()
+        ds.normalize()
+        cd = clust_obj.centroids_distance(ds, features_first=True)
+        test_date = reconstruct_date(tfl, dot_nc=True)
+        cluster_results = []
+        os.chdir(parameters['test_disp_path']+test_date)
+        os.system('bzip2 -dk *.bz2')
+        for i,cdi in enumerate(cd):
+            jcluster = {}
+            cluster_date = reconstruct_date(clust_obj._desc_date[cdi[0]])
+            station_results = reorder_for_save(parameters,calc_station_distance(parameters, test_date, cluster_date))
+            jcluster['name'] = clust_obj._desc_date[cdi[0]]
+            jcluster['id'] = cdi[0]
+            jcluster['distance'] = cdi[1]
+            jcluster['results'] = station_results
+            cluster_results.append(jcluster)
+        cluster_results = sorted(cluster_results, key=lambda k: float(k['distance']),reverse=False)
+        utils.save(parameters['export_path']+'/'+test_date+'.zip',cluster_results)
+        os.system('find . ! -name \'*.bz2\' -type f -exec rm -f {} +')
+        end_time = time.time()
+        print ((start_time-end_time) / 60.0)

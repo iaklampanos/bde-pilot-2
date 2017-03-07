@@ -27,7 +27,8 @@ from IPython.display import Image as IPImage
 from PIL import Image
 import dataset_utils as utils
 
-class ConvAutoencoder(Object):
+
+class ConvAutoencoder(object):
 
     def __init__(self, conv_filters, deconv_filters, filter_sizes, epochs,
                  hidden_size, channels, corruption_level, l2_level,
@@ -51,26 +52,29 @@ class ConvAutoencoder(Object):
                 ('deconv', layers.Conv2DLayer),
                 ('output_layer', ReshapeLayer),
             ],
-            input_shape=(None, 1, features_x, features_y),
-            input_var=get_corrupted_input(input_var, corruption_level),
+            input_shape=(None, channels, features_x, features_y),
+            input_var=self.get_corrupted_input(
+                self.input_var, corruption_level),
             conv_num_filters=conv_filters, conv_filter_size=(
                 filter_sizes, filter_sizes),
             # conv_border_mode="valid", removed from latest version
             conv_nonlinearity=None,
             pool_pool_size=(2, 2),
             flatten_shape=(([0], -1)),  # not sure if necessary?
-            encode_layer_num_units=encode_size,
-            hidden_num_units=deconv_filters * (features_x + filter_sizes - 1) ** 2 / 4,
+            encode_layer_num_units=self.encode_size,
+            hidden_num_units=deconv_filters * \
+            (features_x + filter_sizes - 1) ** 2 / 4,
             unflatten_shape=(
                 ([0], deconv_filters, (features_x + filter_sizes - 1) / 2, (features_y + filter_sizes - 1) / 2)),
             unpool_ds=(2, 2),
-            deconv_num_filters=channels, deconv_filter_size=(filter_sizes, filter_sizes),
+            deconv_num_filters=channels, deconv_filter_size=(
+                filter_sizes, filter_sizes),
             # deconv_border_mode="valid",
             deconv_nonlinearity=None,
             output_layer_shape=(([0], -1)),
             update_learning_rate=0.01,
             update_momentum=0.975,
-            objective_l2=(0.001) / 2,
+            objective_l2=l2_level,
             objective_loss_function=squared_error,
             batch_iterator_train=BatchIterator(batch_size=500),
             regression=True,
@@ -78,10 +82,10 @@ class ConvAutoencoder(Object):
             verbose=1,
         )
 
-    def train(self,X_train,X_out):
-        self.ae.fit(X_train,X_out)
+    def train(self, X_train, X_out):
+        self.ae.fit(X_train, X_out)
 
-    def test(self,X_pred,X_pred_shape):
+    def test(self, X_pred, X_pred_shape):
         return self.ae.predict(X_pred).reshape(X_pred_shape)
 
     def get_corrupted_input(self, input, corruption_level):
@@ -104,7 +108,7 @@ class ConvAutoencoder(Object):
     def get_hidden(self, X):
         return self.get_output_from_nn(encode_layer, X)
 
-    def get_output(self,X):
+    def get_output(self, X):
         return self.get_output_from_nn(output_layer, X)
 
     def save(self, filename='ConvAutoencoder.zip'):

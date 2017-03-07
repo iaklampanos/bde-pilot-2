@@ -3,7 +3,7 @@ import numpy as np
 from lasagne.theano_extensions import padding
 
 from lasagne.layers import Layer
-
+from lasagne import layers
 
 __all__ = [
     "FlattenLayer",

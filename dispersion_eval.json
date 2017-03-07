@@ -1,10 +1,10 @@
 {
   "test_netcdf_path":"/mnt/disk1/thanasis/data/wrf/nc/",
-  "test_netcdf":"1994-01-01_00:00:00.nc",
   "export_netcdf":"/mnt/disk1/thanasis/data/train.nc",
   "cluster_obj":"/mnt/disk1/thanasis/Clustering_evaluation/raw_kmeans/Clustering_object.zip",
-  "cluster_disp_path":"/mnt/disk1/thanasis/hysplit/hysplit/trunk/exec/",
-  "test_disp_path":"/mnt/disk1/thanasis/hysplit/hysplit/trunk/exec/",
+  "cluster_disp_path":"/mnt/disk1/thanasis/hysplit/hysplit/trunk/exec/c/",
+  "test_disp_path":"/mnt/disk1/thanasis/hysplit/hysplit/trunk/test_exec/test/",
+  "export_path":"/mnt/disk1/thanasis/Clustering_evaluation/raw_kmeans/results",
   "stations":[
     {"name":"CERNAVODA"},{"name":"KOZLODUY"},{"name":"GROHNDE"}
     ,{"name":"EMSLAND"},{"name":"SIZEWELL"},{"name":"HINKLEY"}

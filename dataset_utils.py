@@ -11,6 +11,7 @@ from array import array as pyarray
 from numpy import append, array, int8, uint8, zeros
 from netCDF4 import Dataset
 
+
 def save(filename, *objects):
     fil = gzip.open(filename, 'wb')
     for obj in objects:
@@ -27,11 +28,13 @@ def load(filename):
             break
     fil.close()
 
+
 def load_single(filename):
     fil = gzip.open(filename, 'rb')
     c = cPickle.load(fil)
     fil.close()
     return c
+
 
 def export_timebars(outp, start_date, nc_sub, clust_obj):
     oc = oct2py.Oct2Py()
@@ -62,6 +65,20 @@ def plot_pixel_image(image, image2, x, y):
     plt.xticks(np.array([]))
     plt.yticks(np.array([]))
     plt.plot()
+    plt.show()
+
+
+def plot_concentration(pollutant_array, x=45, y=150):
+    fit = plt.figure()
+    integ = np.zeros(shape=(pollutant_array.shape[
+                     1] * pollutant_array.shape[2] * pollutant_array.shape[3]))
+    for i in range(0,pollutant_array.shape[0]):
+        integ += pollutant_array[i,0,:,:].flatten()
+    print np.max(integ)
+    integ = integ.reshape(pollutant_array.shape[2],pollutant_array.shape[3])
+    integ_plot = integ[range(x,y),:]
+    integ_plot = integ_plot[:,range(x,y)]
+    plt.imshow(integ_plot,interpolation='nearest')
     plt.show()
 
 def load_mnist(dataset="training", digits=np.arange(10), path="."):
@@ -103,19 +120,21 @@ def load_mnist(dataset="training", digits=np.arange(10), path="."):
         images[i] = images[i] / 255
     return images, labels
 
+
 def export_descriptor_kmeans(outp, nc_sub, clust_obj):
     descriptors = clust_obj._descriptors
     for pos, desc in enumerate(descriptors):
         nc_sub.exact_copy_kmeans(
             outp + '/desc_kmeans_' + str(pos) + '.nc', desc)
 
+
 def rename_descriptors(path):
     filelist = sorted(os.listdir(path))
-    start_dts = [Dataset(path+'/'+f,'r').SIMULATION_START_DATE for f in filelist]
-    for pos,f in enumerate(filelist):
-        os.rename(path+'/'+f,path+'/'+f+'_'+start_dts[pos]+'.nc')
-
-
+    start_dts = [
+        Dataset(path + '/' + f, 'r').SIMULATION_START_DATE for f in filelist]
+    for pos, f in enumerate(filelist):
+        os.rename(path + '/' + f, path + '/' +
+                  f + '_' + start_dts[pos] + '.nc')
 
 
 def export_descriptor_max(out_path, nc_sub, clust_obj):
