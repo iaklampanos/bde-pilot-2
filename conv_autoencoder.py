@@ -30,10 +30,10 @@ import dataset_utils as utils
 
 class ConvAutoencoder(object):
 
-    def __init__(self, conv_filters, deconv_filters, filter_sizes, epochs,
-                 hidden_size, channels, corruption_level, l2_level,
+    def __init__(self, X_train, conv_filters, deconv_filters, filter_sizes, epochs,
+                 hidden_size, channels, stride, corruption_level, l2_level,
                  samples, features_x, features_y):
-        self.input_var = T.tensor4('X')
+        self.input_var = X_train
         self.conv_filters = conv_filters
         self.deconv_filters = deconv_filters
         self.filter_sizes = filter_sizes
@@ -55,14 +55,15 @@ class ConvAutoencoder(object):
             input_shape=(None, channels, features_x, features_y),
             input_var=self.get_corrupted_input(
                 self.input_var, corruption_level),
-            conv_num_filters=conv_filters, conv_filter_size=(
+            conv_num_filters=self.conv_filters, conv_filter_size=(
                 filter_sizes, filter_sizes),
+            conv_stride=stride,
             # conv_border_mode="valid", removed from latest version
             conv_nonlinearity=None,
             pool_pool_size=(2, 2),
             flatten_shape=(([0], -1)),  # not sure if necessary?
             encode_layer_num_units=self.encode_size,
-            hidden_num_units=deconv_filters * \
+            hidden_num_units=self.deconv_filters * \
             (features_x + filter_sizes - 1) ** 2 / 4,
             unflatten_shape=(
                 ([0], deconv_filters, (features_x + filter_sizes - 1) / 2, (features_y + filter_sizes - 1) / 2)),
