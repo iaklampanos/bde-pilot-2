@@ -67,6 +67,10 @@ def plot_pixel_image(image, image2, x, y):
     plt.plot()
     plt.show()
 
+def plot_loss(A):
+    oc = oct2py.Oct2Py()
+    oc.push('loss',A.loss)
+    oc.eval('plot(loss)',plot_width='2048', plot_height='1536')
 
 def plot_concentration(pollutant_array, x=45, y=150):
     fit = plt.figure()
@@ -122,6 +126,7 @@ def load_mnist(dataset="training", digits=np.arange(10), path="."):
 
 
 def export_descriptor_kmeans(outp, nc_sub, clust_obj):
+    print clust_obj.get_items().shape
     descriptors = clust_obj._descriptors
     for pos, desc in enumerate(descriptors):
         nc_sub.exact_copy_kmeans(
@@ -133,8 +138,8 @@ def rename_descriptors(path):
     start_dts = [
         Dataset(path + '/' + f, 'r').SIMULATION_START_DATE for f in filelist]
     for pos, f in enumerate(filelist):
-        os.rename(path + '/' + f, path + '/' +
-                  f + '_' + start_dts[pos] + '.nc')
+        os.system('ncks -3 '+path + '/' + f+' '+path + '/' + f)
+        os.rename(path + '/' + f, start_dts[pos] + '.nc')
 
 
 def export_descriptor_max(out_path, nc_sub, clust_obj):

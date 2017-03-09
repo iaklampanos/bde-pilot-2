@@ -289,11 +289,9 @@ class netCDF_subset(object):
         for gattr in self._dataset.ncattrs():
             if gattr == 'SIMULATION_START_DATE':
                 if isinstance(time_pos[0], np.ndarray):
-                    print '123'
                     gvalue = self._dataset.variables[
                         self._time_name][time_pos[0][0]]
                 else:
-                    print '456'
                     gvalue = self._dataset.variables[
                         self._time_name][time_pos[0]]
                 sim_date = ""

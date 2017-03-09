@@ -42,7 +42,6 @@ class AutoEncoder(object):
         self.mini_batch_size = mini_batch_size
         self.learning_rate = learning_rate
         self.sparsity_level = sparsity_level
-        print self.sparsity_level
         self.sparse_reg = sparse_reg
         self.corruption_level = corruption_level
         self.corrupt = corrupt
@@ -77,11 +76,11 @@ class AutoEncoder(object):
         hidden = self.activation_function(T.dot(x, self.W) + self.b1)
         output = T.dot(hidden, T.transpose(self.W)) + self.b2
         output = self.output_function(output)
-        L = T.mean(((output - x)**2).sum(axis=1))
-        L1 = (self.W ** 2).sum()
-        Spars = self.sparsity_penalty(
-            hidden, self.sparsity_level, self.sparse_reg)
-        cost = L + (0.001) / 2 * L1 #+ 1*Spars
+        mse = T.mean(((output - x)**2).sum(axis=1))
+        L2 = (self.W ** 2).sum()
+        # Spars = self.sparsity_penalty(
+        #     hidden, self.sparsity_level, self.sparse_reg)
+        cost = mse + (0.001) / 2 * L2 #+ 1*Spars
         updates = []
         gparams = T.grad(cost, params)
         for param, gparam in zip(params, gparams):
@@ -91,6 +90,7 @@ class AutoEncoder(object):
 
         print gparam
         start_time = time.clock()
+        loss = []
         for epoch in xrange(self.n_epochs):
             print "Epoch:", epoch
             ccost = []
@@ -98,8 +98,10 @@ class AutoEncoder(object):
                 c = train(row)
                 ccost.append(c[0])
             print np.mean(ccost)
+            loss.append(np.mean(ccost))
         end_time = time.clock()
         print "Average time per epoch=", (end_time - start_time) / self.n_epochs
+        self.loss = loss
         self.hidden = self.get_hidden(self.input)
         self.decoded = self.get_output(self.input)
 

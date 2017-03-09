@@ -34,7 +34,8 @@ class ClusteringExperiment(object):
         self._output = Dataset_transformations(output,self._nnet.m/100,output.shape)
 
      def clustering(self):
-         self._clustering._dataset = self._encodings.get_items()
+         self._clustering._items = self._encoding.get_items()
+         print self._clustering.get_items().shape
          self._clustering.kmeans()
 
      def plot_output_frames(self,x,y,iter_=40):

@@ -76,3 +76,11 @@ class Dataset_transformations(Dataset):
         self._items = np.add(self._items, self._items_min)
         self._items = self._items.reshape(self._x, self._y)
         # print np.min(self._items), np.max(self._items), np.std(self._items)
+
+    def conv_process(self, items):
+        X_train = np.transpose(self.get_items())
+        X_train = X_train.reshape(items.shape[2], items.shape[
+                                  0], items.shape[4], items.shape[5])
+        X_train = X_train.astype(np.float32)
+        X_out = X_train.reshape((X_train.shape[0], -1))
+        return X_train,X_out

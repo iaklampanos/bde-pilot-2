@@ -28,6 +28,7 @@ class Clustering(Dataset):
 
     def kmeans(self):
         data = self.get_items()
+        print data.shape
         self._link = KMeans(n_clusters=self._n_clusters, n_init=self._n_init,
                             max_iter=self._max_iter, n_jobs=-1).fit(data)
         self._labels = self._link.labels_
@@ -87,16 +88,19 @@ class Clustering(Dataset):
         self._clustering_dist = sort_obd_dev
         self._index_list = clut_list
 
-    def plot_cluster_distirbution(self, outp):
+    def plot_cluster_distirbution(self, outp=None):
         lens = []
         oc = oct2py.Oct2Py()
         for i in self._clustering_dist:
             lens.append(i[1])
         oc.push('lens', lens)
         oc.push('xlens', range(0, self._n_clusters))
-        oc.eval('plot(xlens,lens)',
-                plot_dir=outp, plot_name='clustering_frequency', plot_format='jpeg',
-                plot_width='2048', plot_height='1536')
+        if outp is None:
+            oc.eval('plot(xlens,lens)',plot_width='2048', plot_height='1536')
+        else:
+            oc.eval('plot(xlens,lens)',
+                    plot_dir=outp, plot_name='clustering_frequency', plot_format='jpeg',
+                    plot_width='2048', plot_height='1536')
 
     def centroids_distance(self, dataset,features_first=False):
         items = dataset.get_items()

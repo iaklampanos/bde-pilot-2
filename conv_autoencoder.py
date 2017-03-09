@@ -33,12 +33,14 @@ class ConvAutoencoder(object):
     def __init__(self, X_train, conv_filters, deconv_filters, filter_sizes, epochs,
                  hidden_size, channels, stride, corruption_level, l2_level,
                  samples, features_x, features_y):
+        self._dataset = X_train
         self.input_var = X_train
         self.conv_filters = conv_filters
         self.deconv_filters = deconv_filters
         self.filter_sizes = filter_sizes
         self.epochs = epochs
-        self.encode_size = hidden_size
+        self.hidden_size = hidden_size
+        self.m = samples
         self.ae = NeuralNet(
             layers=[
                 ('input', layers.InputLayer),
@@ -62,7 +64,7 @@ class ConvAutoencoder(object):
             conv_nonlinearity=None,
             pool_pool_size=(2, 2),
             flatten_shape=(([0], -1)),  # not sure if necessary?
-            encode_layer_num_units=self.encode_size,
+            encode_layer_num_units=self.hidden_size,
             hidden_num_units=self.deconv_filters * \
             (features_x + filter_sizes - 1) ** 2 / 4,
             unflatten_shape=(
@@ -83,10 +85,14 @@ class ConvAutoencoder(object):
             verbose=1,
         )
 
-    def train(self, X_train, X_out):
-        self.ae.fit(X_train, X_out)
+    def train(self):
+        X_out = self._dataset.reshape((self._dataset.shape[0], -1))
+        self.ae.fit(self._dataset, X_out)
+        self.decoded = self.test(self._dataset)
+        self.hidden = self.get_hidden(self._dataset)
 
-    def test(self, X_pred, X_pred_shape):
+    def test(self, X_pred):
+        X_pred_shape = X_pred.shape
         return self.ae.predict(X_pred).reshape(X_pred_shape)
 
     def get_corrupted_input(self, input, corruption_level):
@@ -107,7 +113,9 @@ class ConvAutoencoder(object):
         return np.vstack(out)
 
     def get_hidden(self, X):
-        return self.get_output_from_nn(encode_layer, X)
+        encode_layer_index = map(lambda pair: pair[0], self.ae.layers).index('encode_layer')
+        encode_layer = self.ae.get_all_layers()[encode_layer_index]
+        return self.get_output_from_nn(encode_layer,X)
 
     def get_output(self, X):
         return self.get_output_from_nn(output_layer, X)
