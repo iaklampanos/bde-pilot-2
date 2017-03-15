@@ -1,10 +1,11 @@
 {
   "test_netcdf_path":"/mnt/disk1/thanasis/data/wrf/nc/",
   "export_netcdf":"/mnt/disk1/thanasis/data/train.nc",
-  "cluster_obj":"/mnt/disk1/thanasis/Clustering_evaluation/raw_kmeans/Clustering_object.zip",
-  "cluster_disp_path":"/mnt/disk1/thanasis/hysplit/hysplit/trunk/exec/c/",
+  "cluster_obj":"/mnt/disk1/thanasis/Clustering_evaluation/autoencoder/Clustering_object.zip",
+  "experiment_obj":"/mnt/disk1/thanasis/Clustering_evaluation/autoencoder/CE_Autoencoder_700_ght.zip",
+  "cluster_disp_path":"/mnt/disk1/thanasis/hysplit/hysplit/trunk/exec/autoenc_simple/",
   "test_disp_path":"/mnt/disk1/thanasis/hysplit/hysplit/trunk/test_exec/test/",
-  "export_path":"/mnt/disk1/thanasis/Clustering_evaluation/raw_kmeans/results",
+  "export_path":"/mnt/disk1/thanasis/Clustering_evaluation/autoencoder/results",
   "stations":[
     {"name":"CERNAVODA"},{"name":"KOZLODUY"},{"name":"GROHNDE"}
     ,{"name":"EMSLAND"},{"name":"SIZEWELL"},{"name":"HINKLEY"}

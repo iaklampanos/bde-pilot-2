@@ -1,3 +1,6 @@
+import sys
+sys.path.append('..')
+
 from netcdf_subset import netCDF_subset
 from operator import attrgetter
 from argparse import ArgumentParser
@@ -19,6 +22,7 @@ import cPickle
 import os
 import dataset_utils as utils
 import time
+
 
 def reconstruct_date(date_str, dot_nc=False):
     if dot_nc:
@@ -128,7 +132,10 @@ if __name__ == '__main__':
         cd = clust_obj.centroids_distance(ds, features_first=True)
         test_date = reconstruct_date(tfl, dot_nc=True)
         cluster_results = []
-        os.chdir(parameters['test_disp_path']+test_date)
+        try:
+            os.chdir(parameters['test_disp_path']+test_date)
+        except OSError:
+            continue
         os.system('bzip2 -dk *.bz2')
         for i,cdi in enumerate(cd):
             jcluster = {}

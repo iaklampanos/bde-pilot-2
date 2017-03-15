@@ -112,7 +112,7 @@ class AutoEncoder(object):
             x = T.dmatrix('x')
             hidden = self.activation_function(T.dot(x, self.W) + self.b1)
             transformed_data = th.function(inputs=[x], outputs=[hidden])
-            return np.array(transformed_data(data)).reshape(self.m, self.hidden_size)
+            return np.array(transformed_data(data)).reshape(data.shape[0], self.hidden_size)
 
     def get_output(self, data=None):
         if data is None:
