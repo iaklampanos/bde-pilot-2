@@ -10,7 +10,7 @@ import struct
 from array import array as pyarray
 from numpy import append, array, int8, uint8, zeros
 from netCDF4 import Dataset
-
+import datetime
 
 def save(filename, *objects):
     fil = gzip.open(filename, 'wb')
@@ -71,6 +71,14 @@ def plot_loss(A):
     oc = oct2py.Oct2Py()
     oc.push('loss',A.loss)
     oc.eval('plot(loss)',plot_width='2048', plot_height='1536')
+
+def reconstruct_date(date_str, dot_nc=False):
+    if dot_nc:
+        date = datetime.datetime.strptime(
+            date_str.split('.')[0], '%Y-%m-%d_%H:%M:%S')
+    else:
+        date = datetime.datetime.strptime(date_str, '%Y-%m-%d_%H:%M:%S')
+    return datetime.datetime.strftime(date, '%y-%m-%d-%H')
 
 def plot_concentration(pollutant_array, x=45, y=150):
     fit = plt.figure()

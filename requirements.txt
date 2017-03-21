@@ -1,0 +1,14 @@
+Lasagne==0.1
+matplotlib==1.4.3
+nolearn==0.6.0
+numpy==1.9.3
+oct2py==3.6.5
+psycopg2==2.7
+scipy==0.16.0
+Theano==0.7.0
+ipython==5.3.0
+Pillow==4.0.0
+Flask==0.12
+flask_cors==3.0.2
+netCDF4==1.2.7
+scikit_learn==0.18.1

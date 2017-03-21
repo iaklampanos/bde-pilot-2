@@ -15,7 +15,7 @@ import numpy as np
 from sklearn.cluster import KMeans
 import dataset_utils as utils
 from ClusteringExperiment import ClusteringExperiment
-from Autoencoder import AutoEncoder
+from conv_autoencoder import ConvAutoencoder
 from theano import tensor as T
 import dataset_utils as utils
 import json
@@ -135,9 +135,11 @@ if __name__ == '__main__':
         ds.twod_transformation()
         ds.normalize()
         ds.shift()
-        print ds._items.shape
-        ds._items = exper._nnet.get_hidden(np.transpose(ds.get_items()))
-        print ds._items.shape
+        items = ds.get_items()
+        items = items.reshape(items.shape[0],1,64,64)
+        print items.shape
+        ds._items = exper._nnet.get_hidden(items)
+        ds._items = ds._items.astype(np.float32)
         cd = clust_obj.centroids_distance(ds, features_first=False)
         test_date = reconstruct_date(tfl, dot_nc=True)
         cluster_results = []
