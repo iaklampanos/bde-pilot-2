@@ -61,7 +61,6 @@ def detections(file_name, pollutant):
             cd = clust_obj.centroids_distance(ds, features_first=False)
     except:
         cd = clust_obj.centroids_distance(ds, features_first=True)
-    print cd[0][0]
     cluster_date = utils.reconstruct_date(clust_obj._desc_date[cd[0][0]])
     path = parameters['dispersion_path'] + '/' + cluster_date
     results = []
@@ -75,7 +74,12 @@ def detections(file_name, pollutant):
         det_obj.calculate_concetration()
         det_obj.create_detection_map()
         results.append((station['name'], det_obj.calc_score()))
-    return str(sorted(results, key=lambda k: k[1], reverse=True))
+    results = sorted(results, key=lambda k: k[1], reverse=True)
+    send = {}
+    send["station"] = str(results[0][0])
+    send["date"] = str(utils.reconstruct_date(clust_obj._desc_date[cd[0][0]]))
+    send["pollutant"] = str(pollutant)
+    return json.dumps(send)
 
 
 @app.route('/test_files', methods=['GET'])

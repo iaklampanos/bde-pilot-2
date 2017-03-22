@@ -55,8 +55,6 @@ function addInteraction() {
         vector.getSource().clear();
     });
 }
-
-
 function PaddInteractionMainMap() {
 	if (trigger) {
 		trigger = false;

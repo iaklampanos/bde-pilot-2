@@ -546,7 +546,19 @@ function estimateLocation() {
         req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
         req.send(JSON.stringify(locs));
         req.onloadend = function() {
-            alert(req.responseText);
+            resp = JSON.parse(req.responseText);
+            image_str = resp["station"] + "-" + resp["date"] + "_" + resp["pollutant"].toLowerCase() + ".png";
+            alert(image_str);
+            var feat = new ol.Feature(new ol.geom.Point(ol.proj.transform([12.0,50.0], 'EPSG:4326', 'EPSG:3857')))
+            var style = new ol.style.Style({
+              image: new ol.style.Icon({
+                src: './assets/js/images/png/'+image_str
+              })
+            });
+            feat.setStyle(style);
+            map.getView().setZoom(4);
+            var vec = vector.getSource();
+            vec.addFeature(feat);
         };
     } else {
         alert('You should choose a weather file & pollutant before estimating the source\'s location');

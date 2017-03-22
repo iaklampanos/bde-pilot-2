@@ -3,6 +3,7 @@ import numpy as np
 import dataset_utils as utils
 from netCDF4 import Dataset
 from scipy.ndimage.filters import gaussian_filter
+import scipy
 
 class Detection(object):
 
@@ -30,16 +31,12 @@ class Detection(object):
 
     def create_detection_map(self):
         pollutant_array = self._dis.variables[self._pollutant][:]
-        det_map = np.zeros(shape=(pollutant_array.shape[
-                         0] ,pollutant_array.shape[2] ,pollutant_array.shape[3]))
-        for t in range(0,pollutant_array.shape[0]):
-            for lat in self._lat_idx:
-                for lon in self._lon_idx:
-                    det_map[t,lat,lon] = 1
-        integ = np.sum(det_map,axis=0).reshape(pollutant_array.shape[2],pollutant_array.shape[3])
-        integ = integ.reshape(det_map.shape[1],det_map.shape[2])
-        integ = gaussian_filter(integ,0.3)
-        self._det_map = integ
+        det_map = np.zeros(shape=(pollutant_array.shape[2] ,pollutant_array.shape[3]))
+        for lat in self._lat_idx:
+            for lon in self._lon_idx:
+                det_map[lat,lon] = 1
+        det_map = gaussian_filter(det_map,0.3)
+        self._det_map = det_map
 
     def calc_score(self):
         nonzero_det = np.nonzero(self._det_map)
