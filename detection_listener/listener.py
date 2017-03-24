@@ -75,6 +75,7 @@ def detections(file_name, pollutant):
         det_obj.create_detection_map()
         results.append((station['name'], det_obj.calc_score()))
     results = sorted(results, key=lambda k: k[1], reverse=True)
+    print results
     send = {}
     send["station"] = str(results[0][0])
     send["date"] = str(utils.reconstruct_date(clust_obj._desc_date[cd[0][0]]))

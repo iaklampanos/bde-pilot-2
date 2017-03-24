@@ -530,7 +530,6 @@ function pollcheckedVal() {
 }
 
 
-
 function estimateLocation() {
     if (isFileChecked() && isPollChecked()) {
         var locs = []
@@ -542,23 +541,47 @@ function estimateLocation() {
             });
         });
         var req = new XMLHttpRequest();
-        req.open("POST", "http://127.0.0.1:5000/detections/"+filecheckedVal()+"/"+pollcheckedVal(), true);
+        req.open("POST", "http://127.0.0.1:5000/detections/" + filecheckedVal() + "/" + pollcheckedVal(), true);
         req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
         req.send(JSON.stringify(locs));
         req.onloadend = function() {
+            var styling = null;
+            var label = 'dispersion';
             resp = JSON.parse(req.responseText);
-            image_str = resp["station"] + "-" + resp["date"] + "_" + resp["pollutant"].toLowerCase() + ".png";
+            image_str = resp["station"] + "-" + resp["date"] + "_" + resp["pollutant"].toLowerCase() + ".json";
             alert(image_str);
-            var feat = new ol.Feature(new ol.geom.Point(ol.proj.transform([12.0,50.0], 'EPSG:4326', 'EPSG:3857')))
-            var style = new ol.style.Style({
-              image: new ol.style.Icon({
-                src: './assets/js/images/png/'+image_str
-              })
+            var layer = new ol.layer.Image({
+                title: label,
+                source: new ol.source.ImageVector({
+                    source: new ol.source.Vector({
+                        url: 'http://localhost:9999/Sextant_v2.0/data/json/' + image_str,
+                        format: new ol.format.GeoJSON()
+                    }),
+                    style: ((styling != null) ? styling : defaultVectorStyle)
+                })
             });
-            feat.setStyle(style);
-            map.getView().setZoom(4);
-            var vec = vector.getSource();
-            vec.addFeature(feat);
+
+            mapFilter.addLayer(layer);
+
+            var listenerKey = layer.getSource().on('change', function(e) {
+                if (layer.getSource().getState() == 'ready') {
+                    updateLayerStats(label);
+
+                    for (var i = 0; i < mapLayers.length; i++) {
+                        if ((mapLayers[i].name === label) && (label != 'userInfo')) {
+                            mapLayers[i].features = getLayerFeatureNames(layer);
+                            break;
+                        }
+                    }
+
+                    map.getView().fit(layer.getSource().getSource().getExtent(), map.getSize());
+
+                    //Unregister the "change" listener
+                    layer.getSource().unByKey(listenerKey);
+                }
+            });
+
+
         };
     } else {
         alert('You should choose a weather file & pollutant before estimating the source\'s location');

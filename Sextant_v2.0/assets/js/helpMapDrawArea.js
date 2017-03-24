@@ -61,6 +61,11 @@ function PaddInteractionMainMap() {
 		document.getElementById('drawExtentMainMap').style.backgroundColor = 'rgba(185, 106, 139, 0.7)';
     document.getElementById('map_canvas').style.display = 'block';
     document.getElementById('map_canvas2').style.display = 'none';
+    mapFilter.getLayers().forEach(function(layer) {
+        if (layer.get('title') == 'dispersion') {
+          mapFilter.removeLayer(layer);
+        }
+      });
   	}
 	else {
 		trigger = true;
@@ -124,10 +129,14 @@ function addInteractionMainMap() {
 
 		//Initialize map
 		var baseType = getBaseMapType();
+    var points = new OpenLayers.Layer.PointGrid({
+          isBaseLayer: true, dx: 10, dy: 10
+    });
+    points.setMaxFeatures(501);
 		//var currentView = map.getView().getCenter();
 		//var currentZoom = map.getView().getZoom();
 		mapFilter = new ol.Map({
-	        layers: [baseType, vector],
+	        layers: [baseType, vector,points],
 	        target: 'map_canvas2',
 	        view: map.getView()
 	    });
@@ -154,7 +163,9 @@ function addInteractionMainMap() {
 	        geometryFunction: geometryFunction,
 	        maxPoints: maxPoints
 	    });
-	    mapFilter.addInteraction(draw);
+      mapFilter.setSize([250,250]);
+      mapFilter.addInteraction(draw);
+
 
 	    draw.on('drawstart', function(evt) {
 	        vector.getSource().clear();
