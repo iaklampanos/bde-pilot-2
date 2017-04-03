@@ -91,7 +91,8 @@ function PaddInteractionMainMap() {
 	        layers: [baseType, vector],
 	        target: 'map_canvas2',
 	        view: map.getView(),
-          controls: ol.control.defaults().extend([mouseControl, scaleLineControl])
+          controls: ol.control.defaults().extend([mouseControl, scaleLineControl]),
+          renderer: 'webgl'
 	    });
 		//mapFilter.getView().setZoom(currentZoom);
 	    var value = 'Point';

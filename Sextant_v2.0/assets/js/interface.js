@@ -541,7 +541,7 @@ function estimateLocation() {
             });
         });
         var req = new XMLHttpRequest();
-        req.open("POST", "http://127.0.0.1:5000/detections/" + filecheckedVal() + "/" + pollcheckedVal(), true);
+        req.open("POST", "http://127.0.0.1:5000/detections/"+filecheckedVal()+"/"+pollcheckedVal(), true);
         req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
         req.send(JSON.stringify(locs));
         req.onloadend = function() {
@@ -551,33 +551,33 @@ function estimateLocation() {
             image_str = resp["station"] + "-" + resp["date"] + "_" + resp["pollutant"].toLowerCase() + ".json";
             alert(image_str);
             var layer = new ol.layer.Image({
-                title: label,
-                source: new ol.source.ImageVector({
-                    source: new ol.source.Vector({
-                        url: 'http://localhost:9999/Sextant_v2.0/data/json/' + image_str,
+              title: label,
+                    source: new ol.source.ImageVector({
+                      source: new ol.source.Vector({
+                        url: 'http://localhost:9999/Sextant_v2.0/data/json/'+image_str,
                         format: new ol.format.GeoJSON()
-                    }),
-                    style: ((styling != null) ? styling : defaultVectorStyle)
-                })
-            });
+                      }),
+                      style: ( (styling != null) ? styling : defaultVectorStyle)
+                    })
+                });
 
             mapFilter.addLayer(layer);
 
             var listenerKey = layer.getSource().on('change', function(e) {
                 if (layer.getSource().getState() == 'ready') {
-                    updateLayerStats(label);
+                  updateLayerStats(label);
 
-                    for (var i = 0; i < mapLayers.length; i++) {
-                        if ((mapLayers[i].name === label) && (label != 'userInfo')) {
-                            mapLayers[i].features = getLayerFeatureNames(layer);
+                  for (var i=0; i<mapLayers.length; i++) {
+                      if ( (mapLayers[i].name === label) && (label != 'userInfo')) {
+                          mapLayers[i].features = getLayerFeatureNames(layer);
                             break;
-                        }
+                      }
                     }
 
-                    map.getView().fit(layer.getSource().getSource().getExtent(), map.getSize());
+                  map.getView().fit(layer.getSource().getSource().getExtent(), map.getSize());
 
-                    //Unregister the "change" listener
-                    layer.getSource().unByKey(listenerKey);
+                  //Unregister the "change" listener
+                  layer.getSource().unByKey(listenerKey);
                 }
             });
 
@@ -599,10 +599,51 @@ function showfilelist() {
             var filelist = JSON.parse(req.responseText);
             str = '';
             for (var i = 0; i < filelist.length; i++) {
-                str += '<input type="radio" name="file" value="' + filelist[i] + '">' + filelist[i] + '<br>';
+                str += '<input type="radio" name="file" value="' + filelist[i] + '" onclick="drawWindDir()">' + filelist[i] + '<br>';
             }
             document.getElementById('radiofiles').innerHTML = str;
         }
+    }
+    req.send();
+}
+
+
+function drawWindDir() {
+    var req = new XMLHttpRequest();
+    req.open("GET", "./data/"+filecheckedVal()+"/data.json", true);
+    req.onreadystatechange = function() {
+        if (req.readyState == XMLHttpRequest.DONE) {
+            vector.getSource().clear();
+            try{
+              var geo = JSON.parse(req.responseText);
+              alert("Currently drawing wind direction please be patient!");
+              for (var i = 0; i < geo.length; i++) {
+                  lnglt = [parseFloat(geo[i]["lon"]),parseFloat(geo[i]["lat"])];
+                  var feat = new ol.Feature(new ol.geom.Point(ol.proj.transform(lnglt, 'EPSG:4326', 'EPSG:3857')));
+                  var style = new ol.style.Style({
+                      image: new ol.style.Icon({
+                          src: './data/'+filecheckedVal()+'/'+geo[i]["lat"]+'_'+geo[i]["lon"]+'.png',
+                      })
+                  });
+                  feat.setStyle(style);
+                  var vec = vector.getSource();
+                  vec.addFeature(feat);
+                }
+            } catch(e) {
+              alert("Wind direction for this weather file has not been pre calculated!Calculating now....");
+              var req2 = new XMLHttpRequest();
+              req2.open("GET", "http://127.0.0.1:5000/calc_winddir/"+filecheckedVal(), true);
+              req2.setRequestHeader('Content-Type', 'plain/text; charset=utf-8');
+              req2.onreadystatechange = function() {
+                if (req2.readyState == XMLHttpRequest.DONE) {
+                  alert('Wind direction was calculated!');
+                }
+              }
+              req2.send();
+            }
+
+        }
+
     }
     req.send();
 }

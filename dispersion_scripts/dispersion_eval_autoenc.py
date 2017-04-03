@@ -136,7 +136,7 @@ if __name__ == '__main__':
         ds.normalize()
         ds.shift()
         items = ds.get_items()
-        items = items.reshape(items.shape[0],1,64,64)
+        items = items.reshape(items.shape[1],1,64,64)
         print items.shape
         ds._items = exper._nnet.get_hidden(items)
         ds._items = ds._items.astype(np.float32)

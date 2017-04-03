@@ -1,6 +1,8 @@
 from operator import attrgetter
 from argparse import ArgumentParser
-from netCDF4 import Dataset
+from netCDF4 import Dataset,date2num
+import numpy as np
+import datetime
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Extract variables from netcdf file')

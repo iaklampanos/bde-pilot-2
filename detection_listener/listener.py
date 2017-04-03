@@ -80,11 +80,17 @@ def detections(file_name, pollutant):
     send["station"] = str(results[0][0])
     send["date"] = str(utils.reconstruct_date(clust_obj._desc_date[cd[0][0]]))
     send["pollutant"] = str(pollutant)
+    send["score"] = str(results[0][1])
     return json.dumps(send)
+
+@app.route('/calc_winddir/<file_name>', methods=['GET'])
+def calc_winddir(file_name):
+    os.system("python "+parameters['calc_script_path']+"netcdf_to_direction2.py -i "+file_name)
+    os.system("docker cp "+parameters['png_path']+file_name+" "+parameters['docker_id']+":/tomcat/webapps/Sextant_v2.0/data/")
 
 
 @app.route('/test_files', methods=['GET'])
-def l():
+def getfilelist():
     return json.dumps(sorted(os.listdir(parameters['test_netcdf_path'])))
 
 
