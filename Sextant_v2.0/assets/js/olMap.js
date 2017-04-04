@@ -629,7 +629,7 @@ function initialize() {
 
     document.getElementsByClassName('timeline-band-0')[0].style.backgroundColor = 'rgba(255,255,255,0)';
     document.getElementsByClassName('timeline-band-1')[0].style.backgroundColor = 'rgba(255,255,255,0)';
-
+    mapF();
 
 }
 

@@ -12,7 +12,7 @@ body {
   margin-bottom: 10px;
 }
 
-#map_canvas {	
+#map_canvas {
 	width: 100%;
 	height:100%;
 	overflow: hidden;
@@ -121,7 +121,7 @@ body {
 }
 
 #layerspage {
-	
+
 }
 
 #exploreClasses {
@@ -133,7 +133,7 @@ body {
 }
 
 #mapPage {
-	
+
 }
 
 #layerInfoModalTable {
@@ -211,9 +211,9 @@ body {
 	border-style: solid;
     border-width: 3px;
     border-radius: 0px 0px 8px 8px;
-    
+
     background-color: white; border-color: #D2D2D2;
-       
+
     background-color: #428bca; border-color: #357ebd;
     color: white;
 }
@@ -222,7 +222,7 @@ body {
 	position: absolute;
 	width: 100%;
 	height: 30%;
-	top: 70%;	
+	top: 70%;
 }
 
 #timeline {
@@ -271,13 +271,13 @@ body {
 	max-height: 50%;
 	top: 100px;
 	left: 70px;
-	z-index: 1;	
+	z-index: 1;
 	overflow-y: hidden;
 }
 
 #colorPanelBody {
 	position: relative;
-	width: 100%;	
+	width: 100%;
 	height: 500px;
 	overflow: scroll;
 }
@@ -355,7 +355,7 @@ body {
 #timelineInfo {
 	position: absolute;
 	top: -36px;
-	left: 25px;	
+	left: 25px;
 	z-index: 50;
 	border-radius: 15px 15px 0px 0px;
     background: rgba(255, 255, 255, 0.6);
@@ -457,7 +457,7 @@ navbar-fixed-top .nav {
 	border-top-width: 1px;
 	border-top-color: #C2D1E0;
 	padding-top: 5px;
-	color: #80B2FF;	
+	color: #80B2FF;
 	margin-top: 5px;
 }
 
@@ -489,8 +489,8 @@ navbar-fixed-top .nav {
 	z-index: -100;
 }
 
-a { 
-	cursor: hand; 
+a {
+	cursor: hand;
 }
 
 a.exploreURI, a.exploreURIprop, a.exploreURIrange {
@@ -573,7 +573,7 @@ div.infotitle {
 }
 
 .toggleFilters {
-	
+
 }
 
 img.evtIcon {
@@ -599,7 +599,7 @@ img.evtIcon {
 	display:block;
 	float: left;
 	width: auto;
-	font-size: 18px; 
+	font-size: 18px;
 	font-weight: bold;
 	padding: auto;
 	color: #008ae6;
@@ -621,7 +621,7 @@ img.evtIcon {
 	position: absolute;
 	width: 100%;
 	height: 36%;
-	top: 64%;	
+	top: 64%;
 	background-color: rgba(255, 255, 255, 0.4);
 }
 
@@ -638,9 +638,9 @@ img.evtIcon {
 	height: 90%;
 	right: 60px;
 	bottom:5%;
-	
+
 	border-radius: 10px 10px 10px 10px;
-    
+
     border-style: solid;
     border-width: 2px;
     border-color: lightgrey;
@@ -657,7 +657,7 @@ img.evtIcon {
 #downloadStatChart {
 	position: absolute;
 	width: 6%;
-	height: 22%;	
+	height: 22%;
 	left: 9.5%;
 	bottom: 20%;
 }
@@ -666,7 +666,7 @@ img.evtIcon {
 	position: absolute;
 	left: 4%;
 	top: 35%;
-	
+
 	height: 14px;
 	width: 18%;
 	border-radius: 25px;
@@ -696,7 +696,7 @@ img.evtIcon {
 
 #currentTime {
 	padding-top: 6px;
-	font-size: 15px;		
+	font-size: 15px;
 }
 
 .ol-zoom {
@@ -744,7 +744,7 @@ img.evtIcon {
 .ol-popup-closer:after {
         content: "✖";
 }
-      
+
 #popup-content {
 	padding: 5%;
 	overflow: scroll;
@@ -755,7 +755,7 @@ img.evtIcon {
 
 #popupTitle {
 	width: auto;
-	font-size: 18px; 
+	font-size: 18px;
 	font-weight: bold;
 	padding: auto;
 	color: #008ae6;
@@ -769,9 +769,9 @@ img.evtIcon {
 	height: 150px;
 	left: 20px;
 	bottom: 40px;
-	
+
 	border-radius: 10px 10px 10px 10px;
-    
+
     border-style: solid;
     border-width: 2px;
     border-color: lightgrey;
@@ -837,7 +837,7 @@ img.evtIcon {
 }
 
 .eventResourceURL {
-	font-size: 14px; 
+	font-size: 14px;
 	font-weight: bold;
 }
 
@@ -854,9 +854,9 @@ a.eventResourceURL {
 	z-index: 9000000;
 	padding-left: 10px;
 	color:white;
-	
+
 	border-radius: 5px 5px 5px 5px;
-    
+
     border-style: solid;
     border-width: 2px;
     border-color: lightgrey;
@@ -872,9 +872,9 @@ a.eventResourceURL {
 	z-index: 9000000;
 	padding-left: 10px;
 	color:white;
-	
+
 	border-radius: 5px 5px 5px 5px;
-    
+
     border-style: solid;
     border-width: 2px;
     border-color: lightgrey;
@@ -886,50 +886,50 @@ a.eventResourceURL {
 	position: absolute;
 	top: 150px;
 	left: 20px;
-	
+
 	width: 28px;
 	height: 76px;
-	
+
 	color:lightgrey;
-	
+
 	border-radius: 3px 3px 3px 3px;
-    
+
     background-color: rgba(255, 255, 255, 0.4);
 }
 
 #drawExtentMainMap {
 	position: absolute;
-	
+
 	width: 22px;
 	height: 22px;
-	
+
 	top: 4px;
 	left: 3px;
-	
+
 	color:lightgrey;
-	
+
 	border-radius: 3px 3px 0px 0px;
-    
+
     border-style: solid;
     border-width: 0px;
     border-color: lightgrey;
     background-color: rgba(185, 106, 139, 0.7);
-	
+
 }
 
 #popChangesetModal {
 	position: absolute;
-	
+
 	width: 22px;
 	height: 22px;
-	
+
 	top: 27px;
 	left: 3px;
-	
+
 	color:lightgrey;
-	
+
 	border-radius: 0px 0px 0px 0px;
-    
+
     border-style: solid;
     border-width: 0px;
     border-color: lightgrey;
@@ -938,17 +938,17 @@ a.eventResourceURL {
 
 #popEventsModal {
 	position: absolute;
-	
+
 	width: 22px;
 	height: 22px;
-	
+
 	top: 50px;
 	left: 3px;
-	
+
 	color:lightgrey;
-	
+
 	border-radius: 0px 0px 3px 3px;
-    
+
     border-style: solid;
     border-width: 0px;
     border-color: lightgrey;
@@ -965,8 +965,22 @@ a.eventResourceURL {
 	color: white;
 }
 
-#mapCanvas2 {	
+#mapCanvas2 {
 	width: 100%;
 	height:100%;
 	overflow: hidden;
+}
+
+.loader {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

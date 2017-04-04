@@ -14,8 +14,8 @@ parser.add_argument('-i', '--input', required=True, type=str,
 opts = parser.parse_args()
 getter = attrgetter('input')
 file = getter(opts)
-path = '/mnt/disk1/thanasis/data/wrf/nc/'
-out = '/mnt/disk1/thanasis/data/wrf/nc2/'
+path = ''
+out = ''
 print file
 dataset = Dataset(path+file, 'r')
 dsout = Dataset(path+'test2.nc', 'w',format='NETCDF3_CLASSIC')

@@ -529,23 +529,37 @@ function pollcheckedVal() {
     }
 }
 
+function resetWeatherFiles() {
+    var rlist = document.getElementById('radiofiles');
+    for (var i = 0; i < rlist.length; i++) {
+        rlist[i].checked = false;
+    }
+}
+
 
 function estimateLocation() {
+    clearDispersion();
+    var res = document.getElementById('source_result');
+    res.innerHTML = '';
     if (isFileChecked() && isPollChecked()) {
         var locs = []
         vector.getSource().forEachFeature(function(feature) {
             try {
                 var id = feature.getId();
-                if (id.includes('detection'))
-                {
-                var coord = ol.proj.transform(feature.getGeometry().getCoordinates(), 'EPSG:3857', 'EPSG:4326');
-                locs.push({
-                    lat: String(coord[1]),
-                    lon: String(coord[0])
-                }); }
-            } catch(e) { //do nothing
+                if (id.includes('detection')) {
+                    var coord = ol.proj.transform(feature.getGeometry().getCoordinates(), 'EPSG:3857', 'EPSG:4326');
+                    locs.push({
+                        lat: String(coord[1]),
+                        lon: String(coord[0])
+                    });
+                }
+            } catch (e) { //do nothing
             }
         });
+        var loader = document.getElementById('loader_ic');
+        var eheader = document.getElementById('estimate');
+        loader.style.display = 'block';
+        eheader.style.display = 'none';
         var req = new XMLHttpRequest();
         req.open("POST", "http://127.0.0.1:5000/detections/" + filecheckedVal() + "/" + pollcheckedVal(), true);
         req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
@@ -555,12 +569,12 @@ function estimateLocation() {
             var label = 'dispersion';
             resp = JSON.parse(req.responseText);
             image_str = resp["station"] + "-" + resp["date"] + "_" + resp["pollutant"].toLowerCase() + ".json";
-            alert(image_str);
+            res.innerHTML = 'Estimated source '+resp["station"];
             var layer = new ol.layer.Image({
                 title: label,
                 source: new ol.source.ImageVector({
                     source: new ol.source.Vector({
-                        url: 'http://localhost:9999/Sextant_v2.0/data/json/' + image_str,
+                        url: './data/cluster_json/' + image_str,
                         format: new ol.format.GeoJSON()
                     }),
                     style: ((styling != null) ? styling : defaultVectorStyle)
@@ -579,15 +593,17 @@ function estimateLocation() {
                             break;
                         }
                     }
+                    var zoomOn = 0;
+                    vector.getSource().forEachFeature(function(feature) { zoomOn = feature.getGeometry().getCoordinates(); });
 
-                    map.getView().fit(layer.getSource().getSource().getExtent(), map.getSize());
+                    map.getView().centerOn(zoomOn,map.getSize(), [570, 500])
 
                     //Unregister the "change" listener
                     layer.getSource().unByKey(listenerKey);
                 }
             });
-
-
+            loader.style.display = 'none';
+            eheader.style.display = 'block';
         };
     } else {
         alert('You should choose a weather file & pollutant before estimating the source\'s location');
@@ -615,41 +631,41 @@ function showfilelist() {
 
 
 function drawWindDir() {
-    var req = new XMLHttpRequest();
-    req.open("GET", "./data/" + filecheckedVal() + "/data.json", true);
-    req.onreadystatechange = function() {
-        if (req.readyState == XMLHttpRequest.DONE) {
-            vector.getSource().clear();
-            try {
-                var geo = JSON.parse(req.responseText);
-                alert("Currently drawing wind direction please be patient!");
-                for (var i = 0; i < geo.length; i++) {
-                    lnglt = [parseFloat(geo[i]["lon"]), parseFloat(geo[i]["lat"])];
-                    var feat = new ol.Feature(new ol.geom.Point(ol.proj.transform(lnglt, 'EPSG:4326', 'EPSG:3857')));
-                    var style = new ol.style.Style({
-                        image: new ol.style.Icon({
-                            src: './data/' + filecheckedVal() + '/' + geo[i]["lat"] + '_' + geo[i]["lon"] + '.png',
-                        })
-                    });
-                    feat.setStyle(style);
-                    var vec = vector.getSource();
-                    vec.addFeature(feat);
+    clearWindDir();
+    var styling = new ol.style.Style({
+        stroke: new ol.style.Stroke({
+            color: [255, 255, 255, 1],
+            width: 2
+        })
+    });
+    var label = 'wind_direction';
+    var layer = new ol.layer.Image({
+        title: label,
+        source: new ol.source.ImageVector({
+            source: new ol.source.Vector({
+                url: './data/test_json/' + filecheckedVal() + '.json',
+                format: new ol.format.GeoJSON()
+            }),
+            style: ((styling != null) ? styling : defaultVectorStyle)
+        })
+    });
+
+    mapFilter.addLayer(layer);
+    var listenerKey = layer.getSource().on('change', function(e) {
+        if (layer.getSource().getState() == 'ready') {
+            updateLayerStats(label);
+
+            for (var i = 0; i < mapLayers.length; i++) {
+                if ((mapLayers[i].name === label) && (label != 'userInfo')) {
+                    mapLayers[i].features = getLayerFeatureNames(layer);
+                    break;
                 }
-            } catch (e) {
-                alert("Wind direction for this weather file has not been pre calculated!Calculating now....");
-                var req2 = new XMLHttpRequest();
-                req2.open("GET", "http://127.0.0.1:5000/calc_winddir/" + filecheckedVal(), true);
-                req2.setRequestHeader('Content-Type', 'plain/text; charset=utf-8');
-                req2.onreadystatechange = function() {
-                    if (req2.readyState == XMLHttpRequest.DONE) {
-                        alert('Wind direction was calculated!');
-                    }
-                }
-                req2.send();
             }
 
-        }
+            // map.getView().fit(layer.getSource().getSource().getExtent(), map.getSize());
 
-    }
-    req.send();
+            //Unregister the "change" listener
+            layer.getSource().unByKey(listenerKey);
+        }
+    });
 }

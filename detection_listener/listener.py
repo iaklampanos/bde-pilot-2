@@ -83,12 +83,6 @@ def detections(file_name, pollutant):
     send["score"] = str(results[0][1])
     return json.dumps(send)
 
-@app.route('/calc_winddir/<file_name>', methods=['GET'])
-def calc_winddir(file_name):
-    os.system("python "+parameters['calc_script_path']+"netcdf_to_direction2.py -i "+file_name)
-    os.system("docker cp "+parameters['png_path']+file_name+" "+parameters['docker_id']+":/tomcat/webapps/Sextant_v2.0/data/")
-
-
 @app.route('/test_files', methods=['GET'])
 def getfilelist():
     return json.dumps(sorted(os.listdir(parameters['test_netcdf_path'])))

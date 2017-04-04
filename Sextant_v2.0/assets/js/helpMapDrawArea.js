@@ -64,40 +64,17 @@ function PaddInteractionMainMap() {
     if (trigger) {
         trigger = false;
         document.getElementById('drawExtentMainMap').style.backgroundColor = 'rgba(185, 106, 139, 0.7)';
-        document.getElementById('map_canvas').style.display = 'block';
-        document.getElementById('map_canvas2').style.display = 'none';
-        mapFilter.getLayers().forEach(function(layer) {
-            if (layer.get('title') == 'dispersion') {
-                mapFilter.removeLayer(layer);
-            }
-        });
+        // document.getElementById('map_canvas').style.display = 'block';
+        // document.getElementById('map_canvas2').style.display = 'none';
+        vector.getSource().clear();
+        clearDispersion();
+        clearWindDir();
+        resetWeatherFiles();
+        mapFilter.removeInteraction(draw);
     } else {
         trigger = true;
         document.getElementById('drawExtentMainMap').style.backgroundColor = 'rgba(38, 166, 154, 0.7)';
         vector.getSource().clear();
-        document.getElementById('map_canvas').style.display = 'none';
-        document.getElementById('map_canvas2').style.display = 'block';
-        //Initialize map
-        var baseType = getBaseMapType();
-        //var currentView = map.getView().getCenter();
-        //var currentZoom = map.getView().getZoom();
-        mouseControl = new ol.control.MousePosition({
-            coordinateFormat: ol.coordinate.createStringXY(4),
-            projection: 'EPSG:4326',
-            target: document.getElementById('coordinates'),
-            undefinedHTML: '&nbsp;'
-        });
-
-        var scaleLineControl = new ol.control.ScaleLine();
-
-        mapFilter = new ol.Map({
-            layers: [baseType, vector],
-            target: 'map_canvas2',
-            view: map.getView(),
-            controls: ol.control.defaults().extend([mouseControl, scaleLineControl]),
-            renderer: 'webgl'
-        });
-        //mapFilter.getView().setZoom(currentZoom);
         var value = 'Point';
 
         draw = new ol.interaction.Draw({
@@ -115,6 +92,32 @@ function PaddInteractionMainMap() {
         });
 
     }
+}
+
+function mapF() {
+  vector.getSource().clear();
+  document.getElementById('map_canvas').style.display = 'none';
+  document.getElementById('map_canvas2').style.display = 'block';
+  //Initialize map
+  var baseType = getBaseMapType();
+  //var currentView = map.getView().getCenter();
+  //var currentZoom = map.getView().getZoom();
+  mouseControl = new ol.control.MousePosition({
+      coordinateFormat: ol.coordinate.createStringXY(4),
+      projection: 'EPSG:4326',
+      target: document.getElementById('coordinates'),
+      undefinedHTML: '&nbsp;'
+  });
+
+  var scaleLineControl = new ol.control.ScaleLine();
+
+  mapFilter = new ol.Map({
+      layers: [baseType, vector],
+      target: 'map_canvas2',
+      view: map.getView(),
+      controls: ol.control.defaults().extend([mouseControl, scaleLineControl])
+  });
+  //mapFilter.getView().setZoom(currentZoom);
 }
 
 function addInteractionMainMap() {
@@ -195,4 +198,21 @@ function getBaseMapType() {
         case 'road':
             return bingRoads;
     }
+}
+
+
+function clearDispersion(){
+  mapFilter.getLayers().forEach(function(layer) {
+      if (layer.get('title') == 'dispersion') {
+          mapFilter.removeLayer(layer);
+      }
+  });
+}
+
+function clearWindDir(){
+  mapFilter.getLayers().forEach(function(layer) {
+      if (layer.get('title') == 'wind_direction') {
+          mapFilter.removeLayer(layer);
+      }
+  });
 }
