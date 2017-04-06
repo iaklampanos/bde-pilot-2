@@ -2343,7 +2343,7 @@
 	      <button type="button" id="animateStatsPanelButton" title="Show Stats" class="btn btn-primary" onClick="animateStatsPanel()"><i class="fa fa-chevron-left fa-lg"></i></button>
 	    <div class="container" id="sextantPanels">
 
-	      <div id="layerspageHeader" data-toggle="collapse" data-target="#layerspage" aria-expanded="false" aria-controls="layerspage">
+	      <!-- <div id="layerspageHeader" data-toggle="collapse" data-target="#layerspage" aria-expanded="false" aria-controls="layerspage">
 		      <div class="page-header">
 		      	  <div class="row" style="margin-right:5px">
 		      	  	  <div class="col-md-11 col-sm-11">
@@ -2354,26 +2354,26 @@
 				      </div>
 		      	  </div>
 		      </div>
-		  </div>
-	      <div id="layerspage" class="collapse">
+		  </div> -->
+	      <!-- <div id="layerspage" class="collapse">
 		      <div id="layerInformationTable">
-			      <!-- Table with the layers of the map and the functions we can apply on them -->
+
 			      <table class="table table-striped" id="layerTable">
 			          <tbody>
-			              <!-- Content is dynamically created with javascript when a layer is added -->
+
 			          </tbody>
 			      </table>
 			  </div>
-	      </div>
+	      </div> -->
 	      <!-- end of layers panel  -->
 
 	      <!-- Manage mapInfo view -->
-	      <div id="mapPageHeader" data-toggle="collapse" data-target="#mapPage" aria-expanded="false" aria-controls="mapPage">
+	      <!-- <div id="mapPageHeader" data-toggle="collapse" data-target="#mapPage" aria-expanded="false" aria-controls="mapPage">
 	      	  <div class="page-header">
 	              <h4>Map Information</h4>
 	          </div>
-	      </div>
-	      <div id="mapPage" class="collapse">
+	      </div> -->
+	      <!-- <div id="mapPage" class="collapse">
 	          <div id="mapPageTable">
 		          <dl class="dl-horizontal">
 		          	  <dt>Title:</dt>
@@ -2399,9 +2399,8 @@
 				  	  <dt>Extent:</dt>
 				  	  <dd id="infoExtentDD"><textarea id="infoExtent" rows="3" class="form-control"></textarea></dd>
 				  </dl>
-				  <!-- <div id="map_extent"></div> -->
 			  </div>
-	       </div>
+	       </div> -->
          <div id="explorePanel" data-toggle="collapse" data-target="#exploreBody" aria-expanded="false" aria-controls="exploreBody">
          <div class="page-header">
                  <div class="row" style="margin-right:5px">
@@ -2430,6 +2429,15 @@
                     </form>
                   </div>
                   </div>
+                  <h4>Clustering method</h4>
+                  <div class="col-md-11 col-sm-11">
+                    <div style="height:200px;width:200px;border:1px solid #ccc;font:16px/26px Georgia, Garamond, Serif;overflow:auto;">
+                    <form action="" id="clust">
+                      <input type="radio" name="cluster" value="kmeans">K-means<br>
+                      <input type="radio" name="cluster" value="autoenc">Autoencoder and kmeans<br>
+                    </form>
+                  </div>
+                  </div>
               </div>
           </div>
       </div>
@@ -2439,7 +2447,7 @@
 		              <div class="row" style="margin-right:5px">
 		      	  	  <div class="col-md-11 col-sm-11">
 		      	  	      <a onClick="estimateLocation()" title="Help"><h4 id="estimate">Estimate source location</h4></a><div id="loader_ic" class="loader" style="display:none;"></div></a>
-                      <br><h4 id="source_result"></h4>
+                      <br><h4 id="source_result"></h4> <img src="" id="plantimg" height="150" width="300" style="display:none;">
 		      	  	  </div>
 		      	  </div>
 		      </div>

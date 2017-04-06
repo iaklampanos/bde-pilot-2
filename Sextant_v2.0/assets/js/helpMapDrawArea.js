@@ -71,10 +71,13 @@ function PaddInteractionMainMap() {
         clearWindDir();
         resetWeatherFiles();
         mapFilter.removeInteraction(draw);
+        drawStations();
+        addSelect()
     } else {
         trigger = true;
         document.getElementById('drawExtentMainMap').style.backgroundColor = 'rgba(38, 166, 154, 0.7)';
-        vector.getSource().clear();
+        // vector.getSource().clear();
+        removeSelect();
         var value = 'Point';
 
         draw = new ol.interaction.Draw({

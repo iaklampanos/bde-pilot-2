@@ -529,6 +529,26 @@ function pollcheckedVal() {
     }
 }
 
+
+function isMethodChecked() {
+    var rlist = document.getElementById('clust');
+    for (var i = 0; i < rlist.length; i++) {
+        if (rlist[i].checked) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function methodcheckedVal() {
+    var rlist = document.getElementById('clust');
+    for (var i = 0; i < rlist.length; i++) {
+        if (rlist[i].checked) {
+            return rlist[i].value;
+        }
+    }
+}
+
 function resetWeatherFiles() {
     var rlist = document.getElementById('radiofiles');
     for (var i = 0; i < rlist.length; i++) {
@@ -541,7 +561,9 @@ function estimateLocation() {
     clearDispersion();
     var res = document.getElementById('source_result');
     res.innerHTML = '';
-    if (isFileChecked() && isPollChecked()) {
+    var resimg = document.getElementById('plantimg');
+    resimg.style.display = 'none';
+    if (isFileChecked() && isPollChecked() && isMethodChecked()) {
         var locs = []
         vector.getSource().forEachFeature(function(feature) {
             try {
@@ -560,53 +582,150 @@ function estimateLocation() {
         var eheader = document.getElementById('estimate');
         loader.style.display = 'block';
         eheader.style.display = 'none';
+        if (methodcheckedVal() == 'kmeans') {
+            var req = new XMLHttpRequest();
+            req.open("POST", "http://127.0.0.1:5000/detections/" + filecheckedVal() + "/" + pollcheckedVal(), true);
+            req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+            req.send(JSON.stringify(locs));
+            req.onloadend = function() {
+                var styling = null;
+                var label = 'dispersion';
+                resp = JSON.parse(req.responseText);
+                if (resp['score'] != '0.0')
+                {
+                  image_str = resp["station"] + "-" + resp["date"] + "_" + resp["pollutant"].toLowerCase() + ".json";
+                  res.innerHTML = 'Estimated source '+resp["station"];
+                  var req3 = new XMLHttpRequest();
+                  req3.open("GET", "./data/stat_info.json", true);
+                  req3.setRequestHeader('Content-Type', 'plain/text; charset=utf-8');
+                  req3.onreadystatechange = function() {
+                      if (req3.readyState == XMLHttpRequest.DONE) {
+                          var stations = JSON.parse(req3.responseText);
+                          for (var i = 0; i < stations.length; i++) {
+                            if (stations[i]['name'] == resp['station'])
+                            {
+                              resimg.src = stations[i]['image'];
+                              resimg.style.display = 'block';
+                            }
+                          }
+                        }
+                      }
+                  req3.send();
+                  var layer = new ol.layer.Image({
+                      title: label,
+                      source: new ol.source.ImageVector({
+                          source: new ol.source.Vector({
+                              url: './data/kmeans_json/' + image_str,
+                              format: new ol.format.GeoJSON()
+                          }),
+                          style: ((styling != null) ? styling : defaultVectorStyle)
+                      })
+                  });
+
+                  mapFilter.addLayer(layer);
+
+                  var listenerKey = layer.getSource().on('change', function(e) {
+                      if (layer.getSource().getState() == 'ready') {
+                          updateLayerStats(label);
+
+                          for (var i = 0; i < mapLayers.length; i++) {
+                              if ((mapLayers[i].name === label) && (label != 'userInfo')) {
+                                  mapLayers[i].features = getLayerFeatureNames(layer);
+                                  break;
+                              }
+                          }
+                          var zoomOn = 0;
+                          vector.getSource().forEachFeature(function(feature) { zoomOn = feature.getGeometry().getCoordinates(); });
+
+                          map.getView().centerOn(zoomOn,map.getSize(), [570, 500])
+
+                          //Unregister the "change" listener
+                          layer.getSource().unByKey(listenerKey);
+                      }
+                  });
+                  loader.style.display = 'none';
+                  eheader.style.display = 'block';
+              }
+              else {
+                   alert('Detection is out of grid or there is no overlap between the detection points and the precalculated dispersions');
+                   loader.style.display = 'none';
+                   eheader.style.display = 'block';
+                }
+            };
+      }
+      else if (methodcheckedVal() == 'autoenc') {
         var req = new XMLHttpRequest();
-        req.open("POST", "http://127.0.0.1:5000/detections/" + filecheckedVal() + "/" + pollcheckedVal(), true);
+        req.open("POST", "http://127.0.0.1:5001/detections/" + filecheckedVal() + "/" + pollcheckedVal(), true);
         req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
         req.send(JSON.stringify(locs));
         req.onloadend = function() {
             var styling = null;
             var label = 'dispersion';
             resp = JSON.parse(req.responseText);
-            image_str = resp["station"] + "-" + resp["date"] + "_" + resp["pollutant"].toLowerCase() + ".json";
-            res.innerHTML = 'Estimated source '+resp["station"];
-            var layer = new ol.layer.Image({
-                title: label,
-                source: new ol.source.ImageVector({
-                    source: new ol.source.Vector({
-                        url: './data/cluster_json/' + image_str,
-                        format: new ol.format.GeoJSON()
-                    }),
-                    style: ((styling != null) ? styling : defaultVectorStyle)
-                })
-            });
-
-            mapFilter.addLayer(layer);
-
-            var listenerKey = layer.getSource().on('change', function(e) {
-                if (layer.getSource().getState() == 'ready') {
-                    updateLayerStats(label);
-
-                    for (var i = 0; i < mapLayers.length; i++) {
-                        if ((mapLayers[i].name === label) && (label != 'userInfo')) {
-                            mapLayers[i].features = getLayerFeatureNames(layer);
-                            break;
+            if (resp['score'] != '0.0')
+            {
+              image_str = resp["station"] + "-" + resp["date"] + "_" + resp["pollutant"].toLowerCase() + ".json";
+              res.innerHTML = 'Estimated source '+resp["station"];
+              var req3 = new XMLHttpRequest();
+              req3.open("GET", "./data/stat_info.json", true);
+              req3.setRequestHeader('Content-Type', 'plain/text; charset=utf-8');
+              req3.onreadystatechange = function() {
+                  if (req3.readyState == XMLHttpRequest.DONE) {
+                      var stations = JSON.parse(req3.responseText);
+                      for (var i = 0; i < stations.length; i++) {
+                        if (stations[i]['name'] == resp['station'])
+                        {
+                          resimg.src = stations[i]['image'];
+                          resimg.style.display = 'block';
                         }
+                      }
                     }
-                    var zoomOn = 0;
-                    vector.getSource().forEachFeature(function(feature) { zoomOn = feature.getGeometry().getCoordinates(); });
+                  }
+              req3.send();
+              var layer = new ol.layer.Image({
+                  title: label,
+                  source: new ol.source.ImageVector({
+                      source: new ol.source.Vector({
+                          url: './data/autoenc_json/' + image_str,
+                          format: new ol.format.GeoJSON()
+                      }),
+                      style: ((styling != null) ? styling : defaultVectorStyle)
+                  })
+              });
 
-                    map.getView().centerOn(zoomOn,map.getSize(), [570, 500])
+              mapFilter.addLayer(layer);
 
-                    //Unregister the "change" listener
-                    layer.getSource().unByKey(listenerKey);
-                }
-            });
-            loader.style.display = 'none';
-            eheader.style.display = 'block';
+              var listenerKey = layer.getSource().on('change', function(e) {
+                  if (layer.getSource().getState() == 'ready') {
+                      updateLayerStats(label);
+
+                      for (var i = 0; i < mapLayers.length; i++) {
+                          if ((mapLayers[i].name === label) && (label != 'userInfo')) {
+                              mapLayers[i].features = getLayerFeatureNames(layer);
+                              break;
+                          }
+                      }
+                      var zoomOn = 0;
+                      vector.getSource().forEachFeature(function(feature) { zoomOn = feature.getGeometry().getCoordinates(); });
+
+                      map.getView().centerOn(zoomOn,map.getSize(), [570, 500])
+
+                      //Unregister the "change" listener
+                      layer.getSource().unByKey(listenerKey);
+                  }
+              });
+              loader.style.display = 'none';
+              eheader.style.display = 'block';
+            }
+            else {
+              alert('Detection is out of grid or there is no overlap between the detection points and the precalculated dispersions');
+              loader.style.display = 'none';
+              eheader.style.display = 'block';
+            }
         };
+      }
     } else {
-        alert('You should choose a weather file & pollutant before estimating the source\'s location');
+        alert('You should choose a weather file, pollutant & clustering method before estimating the source\'s location');
     }
 
 }

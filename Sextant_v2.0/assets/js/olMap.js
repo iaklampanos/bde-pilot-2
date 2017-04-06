@@ -219,6 +219,7 @@ function initialize() {
 	loadBingsSearchEvents();
 	loadBingsSearchLoadMap();
   showfilelist();
+  drawStations();
 	animateLegendPanel();
 	if (!map){
 		document.getElementById('tmContainer').style.right = '-3000px';
@@ -630,6 +631,7 @@ function initialize() {
     document.getElementsByClassName('timeline-band-0')[0].style.backgroundColor = 'rgba(255,255,255,0)';
     document.getElementsByClassName('timeline-band-1')[0].style.backgroundColor = 'rgba(255,255,255,0)';
     mapF();
+    addSelect();
 
 }
 
@@ -913,4 +915,44 @@ function checkURLError(jqXHR, textStatus, errorThrown) {
     }
     tableRef.deleteRow(index);
     mapLayers.splice(index, 1);
+}
+
+function drawStations(){
+  var req = new XMLHttpRequest();
+  req.open("GET", "./data/stat_info.json", true);
+  req.setRequestHeader('Content-Type', 'plain/text; charset=utf-8');
+  req.onreadystatechange = function() {
+      if (req.readyState == XMLHttpRequest.DONE) {
+          var stations = JSON.parse(req.responseText);
+          for (var i = 0; i < stations.length; i++) {
+            lnglt = [parseFloat(stations[i]["lon"]),parseFloat(stations[i]["lat"])];
+            var feat = new ol.Feature(new ol.geom.Point(ol.proj.transform(lnglt, 'EPSG:4326', 'EPSG:3857')));
+            feat.setId(stations[i]['name'])
+            var style = new ol.style.Style({
+                      image: new ol.style.Icon({
+                          src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Crystal_energy.svg/29px-Crystal_energy.svg.png',
+                      })
+                  });
+            feat.setStyle(style);
+            var vec = vector.getSource();
+            vec.addFeature(feat);
+          }
+      }
+  }
+  req.send();
+}
+
+var select = new ol.interaction.Select({
+    condition: ol.events.condition.click
+});
+
+function addSelect(){
+  mapFilter.addInteraction(select);
+  select.on('select', function(e) {
+    alert(e.selected[0].getId());
+  });
+}
+
+function removeSelect(){
+  mapFilter.removeInteraction(select);
 }
