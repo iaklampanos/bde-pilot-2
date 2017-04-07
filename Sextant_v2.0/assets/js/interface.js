@@ -645,6 +645,19 @@ function estimateLocation() {
                   });
                   loader.style.display = 'none';
                   eheader.style.display = 'block';
+                  vector.getSource().forEachFeature(function(feature) {
+                    var fid = feature.getId();
+                    if (fid == resp["station"]){
+                      var style = new ol.style.Style({
+                              image: new ol.style.Icon({
+                                  src: 'http://maplacejs.com/website/images/red-dot.png',
+                                  size: [200, 200],
+                                  scale: 0.2
+                              })
+                          });
+                      feature.setStyle(style);
+                    }
+                  });
               }
               else {
                    alert('Detection is out of grid or there is no overlap between the detection points and the precalculated dispersions');
@@ -716,6 +729,19 @@ function estimateLocation() {
               });
               loader.style.display = 'none';
               eheader.style.display = 'block';
+              vector.getSource().forEachFeature(function(feature) {
+                var fid = feature.getId();
+                if (fid == resp["station"]){
+                  var style = new ol.style.Style({
+                          image: new ol.style.Icon({
+                              src: 'http://maplacejs.com/website/images/red-dot.png',
+                              size: [200, 200],
+                              scale: 0.2
+                          })
+                      });
+                  feature.setStyle(style);
+                }
+              });
             }
             else {
               alert('Detection is out of grid or there is no overlap between the detection points and the precalculated dispersions');

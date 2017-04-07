@@ -2277,7 +2277,7 @@
 
 
 	  <div id="statsContainer" class="container">
-	  	  <div id="selectChartAttr" class="row">
+	  	  <div id="selectChartAttr" class="row" style="display: none">
 	  	  	  <div class="col-md-1 col-sm-1" id="helpTimeline">
 	      	  	    <a onClick="showHelpPage('statsChart.html')" title="Help"><i class="fa fa-question-circle fa-2x"></i></a>
       	  	  </div>
@@ -2297,10 +2297,10 @@
     		  <div class="handle move-bar" title="Scroll chart"></div>
   		  </div>
 
-	  	  <button type="button" id="downloadStatChart" title="Download chart" class="btn btn-default btn-lg" onClick="downloadStatsChart()" disabled><i class="fa fa-download fa-2x"></i></button>
+	  	  <button type="button" id="downloadStatChart" title="Download chart" class="btn btn-default btn-lg" style="display: none" onClick="downloadStatsChart()" disabled><i class="fa fa-download fa-2x"></i></button>
 
 	  	  <div id="statsChart">
-	  	  	  <canvas id="myNewStatsCanvas"></canvas>
+          <div id="stat_info" style="height:100%;width:100%;border:1px solid #ccc;font:16px/26px Georgia, Garamond, Serif;overflow:auto;"></div>
 	  	  </div>
 	  </div>
 
@@ -2339,7 +2339,7 @@
       <!-- Manage Layers View. This div acts as another .html page by using style:display so that we dont lose the map that is loaded -->
       <div id="legendPanel">
 	      <button type="button" id="animatePanelButton" title="Hide Panel" class="btn btn-danger" onClick="animateLegendPanel()"><i class="fa fa-chevron-right fa-lg"></i></button>
-	      <button type="button" id="animateTimelineButton" title="Show Timeline" class="btn btn-info" onClick="animateTimePanel()"><i class="fa fa-chevron-left fa-lg"></i></button>
+	      <button type="button" id="animateTimelineButton" style="display: none" title="Show Timeline" class="btn btn-info" onClick="animateTimePanel()"><i class="fa fa-chevron-left fa-lg"></i></button>
 	      <button type="button" id="animateStatsPanelButton" title="Show Stats" class="btn btn-primary" onClick="animateStatsPanel()"><i class="fa fa-chevron-left fa-lg"></i></button>
 	    <div class="container" id="sextantPanels">
 
@@ -2422,21 +2422,17 @@
               <div class="col-md-11 col-sm-11">
                   <h4>Pollutant</h4>
                   <div class="col-md-11 col-sm-11">
-                    <div style="height:100px;width:100px;border:1px solid #ccc;font:16px/26px Georgia, Garamond, Serif;overflow:auto;">
                     <form action="" id="poll">
-                      <input type="radio" name="pollutant" value="C137">C137<br>
+                      <input type="radio" name="pollutant" value="C137">C137
                       <input type="radio" name="pollutant" value="I131">I131<br>
                     </form>
                   </div>
-                  </div>
                   <h4>Clustering method</h4>
                   <div class="col-md-11 col-sm-11">
-                    <div style="height:200px;width:200px;border:1px solid #ccc;font:16px/26px Georgia, Garamond, Serif;overflow:auto;">
                     <form action="" id="clust">
-                      <input type="radio" name="cluster" value="kmeans">K-means<br>
-                      <input type="radio" name="cluster" value="autoenc">Autoencoder and kmeans<br>
+                      <input type="radio" name="cluster" value="kmeans">K-means
+                      <input type="radio" name="cluster" value="autoenc">Autoencoder<br>
                     </form>
-                  </div>
                   </div>
               </div>
           </div>

@@ -1,0 +1,17 @@
+{
+  "test_netcdf_path":"/mnt/disk1/thanasis/data/wrf/nc/",
+  "export_netcdf":"/mnt/disk1/thanasis/data/train.nc",
+  "cluster_obj":"/mnt/disk1/thanasis/Clustering_evaluation/raw_kmeans/Clustering_object.zip",
+  "dispersion_path":"/mnt/disk1/thanasis/hysplit/hysplit/trunk/exec/raw_kmeans",
+  "calc_script_path":"/mnt/disk1/thanasis/data/wrf/",
+  "var":"GHT",
+  "level":700,
+  "stations":[
+    {"name":"CERNAVODA"},{"name":"KOZLODUY"},{"name":"GROHNDE"}
+    ,{"name":"EMSLAND"},{"name":"SIZEWELL"},{"name":"HINKLEY"}
+    ,{"name":"COFRENTES"},{"name":"ALMARAZ"},{"name":"LOVIISA"}
+    ,{"name":"FORSMARK"},{"name":"RINGHALS"},{"name":"SUKRAINE"}
+    ,{"name":"KHMELNITSKY"},{"name":"PAKS"},{"name":"KRSKO"}
+    ,{"name":"VANDELLOS"},{"name":"DOEL"},{"name":"HEYSHAM"}
+  ]
+}

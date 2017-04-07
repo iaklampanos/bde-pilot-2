@@ -64,6 +64,7 @@ def detections(file_name, pollutant):
     cluster_date = utils.reconstruct_date(clust_obj._desc_date[cd[0][0]])
     path = parameters['dispersion_path'] + '/' + cluster_date
     results = []
+    results2 = []
     for station in parameters['stations']:
         nc_file = Dataset(
             path + '/' + station['name'] + '-' + cluster_date + '.nc', 'r')
@@ -73,7 +74,11 @@ def detections(file_name, pollutant):
         det_obj.get_indices()
         det_obj.calculate_concetration()
         det_obj.create_detection_map()
-        results.append((station['name'], det_obj.calc_score()))
+        results.append((station['name'], det_obj.calc()))
+        # results.append((station['name'], det_obj.calc_score()))
+        # results2.append((station['name'], det_obj.calc_score2()))
+    # print sorted(results2, key=lambda k: k[1], reverse=False)
+    # results = sorted(results, key=lambda k: k[1], reverse=False)
     results = sorted(results, key=lambda k: k[1], reverse=True)
     print results
     send = {}
@@ -86,7 +91,6 @@ def detections(file_name, pollutant):
 @app.route('/test_files', methods=['GET'])
 def getfilelist():
     return json.dumps(sorted(os.listdir(parameters['test_netcdf_path'])))
-
 
 if __name__ == '__main__':
     inp = 'parameters.json'

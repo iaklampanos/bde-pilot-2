@@ -38,10 +38,26 @@ class Detection(object):
         det_map = gaussian_filter(det_map,0.3)
         self._det_map = det_map
 
-    def calc_score(self):
+    def calc(self):
         nonzero_det = np.nonzero(self._det_map)
         nonzero_points = [(nonzero_det[0][i],nonzero_det[1][i]) for i in range(0,len(nonzero_det[0]))]
         score = 0
         for i in range(0,len(nonzero_points)):
             score += self._conc[nonzero_points[i]]
         return score
+
+    def KL(self):
+        det = np.add(self._det_map,1e-12)
+        conc = np.add(self._conc,1e-12)
+        return scipy.stats.entropy(det.flatten(),conc.flatten())
+
+    def cosine(self):
+        conc = []
+        nonzero_det = np.nonzero(self._det_map)
+        nonzero_points = [(nonzero_det[0][i],nonzero_det[1][i]) for i in range(0,len(nonzero_det[0]))]
+        score = 0
+        for i in range(0,len(nonzero_points)):
+            conc.append(self._conc[nonzero_points[i]])
+        conc = np.add(conc,1e-12)
+        detnon = np.add(self._det_map[np.nonzero(self._det_map)],1e-12)
+        return 1-scipy.spatial.distance.cosine(conc.flatten(),detnon.flatten())

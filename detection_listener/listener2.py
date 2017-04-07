@@ -73,7 +73,7 @@ def detections(file_name, pollutant):
         det_obj.get_indices()
         det_obj.calculate_concetration()
         det_obj.create_detection_map()
-        results.append((station['name'], det_obj.calc_score()))
+        results.append((station['name'], det_obj.calc()))
     results = sorted(results, key=lambda k: k[1], reverse=True)
     print results
     send = {}
