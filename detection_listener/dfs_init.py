@@ -9,6 +9,11 @@ resp = req.json()
 if resp['boolean'] == 'false':
     print '> Error on initializing directory '
     exit(-1)
+req = requests.put('http://namenode:50070/webhdfs/v1/sc5/clusters?op=MKDIRS')
+resp = req.json()
+if resp['boolean'] == 'false':
+    print '> Error on initializing directory '
+    exit(-1)
 while True:
     print 'Database IP: '
     dip = raw_input()
@@ -34,7 +39,9 @@ with open('db_info.json', 'w') as outfile2:
     json.dump(dbobj, outfile2)
 cur = conn.cursor()
 cur.execute("CREATE TABLE weather (filename varchar(500),\
-            hdfs_path varchar(2000),date varchar(500),hour varchar(50),PRIMARY KEY(date,hour))")
+            hdfs_path varchar(2000),date timestamp,wind_dir json, PRIMARY KEY(date))")
+cur.execute("CREATE TABLE cluster (filename varchar(500),\
+            hdfs_path varchar(2000),station varchar(100),date timestamp,origin varchar(500),disp_vis json,c137 json,i131 json, PRIMARY KEY(station,date,origin))")
 conn.commit()
 cur.close()
 conn.close()
