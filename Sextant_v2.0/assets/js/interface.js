@@ -540,6 +540,7 @@ function estimateLocation() {
     var hour = hourdiv.options[hourdiv.selectedIndex].value;
     var timestamp = date+" "+hour+":00:00";
     clearDispersion();
+    drawStations();
     var res = document.getElementById('source_result');
     res.innerHTML = '';
     var resimg = document.getElementById('plantimg');
@@ -657,8 +658,8 @@ function drawWindDir() {
           geobj = JSON.parse(req.responseText);
           var styling = new ol.style.Style({
               stroke: new ol.style.Stroke({
-                  color: [255, 255, 255, 1],
-                  width: 2
+                  color: [255, 255, 255, 0.65],
+                  width: 1
               })
           });
           var label = 'wind_direction';

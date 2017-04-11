@@ -78,7 +78,7 @@ body {
 
 #legendPanel {
 	position: absolute;
-	width: 40%;
+	width: 30%;
 	height: 100%;
 	top: 0;
 	right: 0;
@@ -87,7 +87,7 @@ body {
 }
 
 #sextantPanels {
-	position: absolute;
+	position: relative;
 	width: 100%;
 	height:90%;
 	right: 0;
@@ -634,9 +634,8 @@ img.evtIcon {
 
 #statsChart {
 	position: absolute;
-	width: 72%;
+	width: 60%;
 	height: 90%;
-	right: 60px;
 	bottom:5%;
 
 	border-radius: 10px 10px 10px 10px;

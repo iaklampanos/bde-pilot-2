@@ -2,91 +2,109 @@
     "lat": "44.321",
     "lon": "28.054",
     "name": "CERNAVODA",
+    "country":"ROMANIA",
     "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Cernavod%C4%83-AEC.jpg/1200px-Cernavod%C4%83-AEC.jpg"
 }, {
     "lat": "43.7402",
     "lon": "23.7806",
     "name": "KOZLODUY",
+    "country":"BULGARIA",
     "image":"https://upload.wikimedia.org/wikipedia/commons/4/4c/NPP_Kozloduy_5-6.jpg"
 }, {
     "lat": "52.035",
     "lon": "9.41",
     "name": "GROHNDE",
+    "country":"GERMANY",
     "image":"https://upload.wikimedia.org/wikipedia/commons/8/83/KKW_Grohnde.jpg"
 }, {
     "lat": "52.472",
     "lon": "7.321",
     "name": "EMSLAND",
+    "country":"GERMANY",
     "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Kkw_ems_pano2.jpg/220px-Kkw_ems_pano2.jpg"
 }, {
     "lat": "52.211",
     "lon": "1.622",
     "name": "SIZEWELL",
+    "country":"ENGLAND",
     "image":"https://upload.wikimedia.org/wikipedia/commons/f/fb/Nuclear_power_station_at_Sizewell_-_geograph.org.uk_-_210830_retouched.jpg"
 }, {
     "lat": "51.208",
     "lon": "-3.127",
     "name": "HINKLEY",
+    "country":"ENGLAND",
     "image":"https://upload.wikimedia.org/wikipedia/commons/3/35/HinkleyPointCoast.jpg"
 }, {
     "lat": "39.211",
     "lon": "-1.0514",
     "name": "COFRENTES",
+    "country":"SPAIN",
     "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Cofrentes_nuclear_power_plant_cooling_towers.jpg/1024px-Cofrentes_nuclear_power_plant_cooling_towers.jpg"
 }, {
     "lat": "39.8072",
     "lon": "-5.6983",
     "name": "ALMARAZ",
+    "country":"SPAIN",
     "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Centranuclearalmaraz2.JPG/1024px-Centranuclearalmaraz2.JPG"
 }, {
     "lat": "60.367",
     "lon": "26.35",
     "name": "LOVIISA",
+    "country":"FINLAND",
     "image":"https://upload.wikimedia.org/wikipedia/commons/e/ec/Loviisan_voimalaitos_ilmasta.png"
 }, {
     "lat": "60.4",
     "lon": "18.167",
     "name": "FORSMARK",
+    "country":"SWEDEN",
     "image":"https://upload.wikimedia.org/wikipedia/commons/1/15/Forsmark3.jpg"
 }, {
     "lat": "57.25",
     "lon": "12.117",
     "name": "RINGHALS",
+    "country":"SWEDEN",
     "image":"https://upload.wikimedia.org/wikipedia/commons/1/1d/Ringhals.JPG"
 }, {
     "lat": "47.817",
     "lon": "31.217",
-    "name": "SUKRAINE",
+    "name": "SOUTH UKRAINE",
+    "country":"UKRAINE",
     "image":"http://www.world-nuclear-news.org/uploadedImages/wnn/Images/South%20Ukraine%20NPP%20460%20(Energoatom).jpg"
 
 }, {
     "lat": "50.3023",
     "lon": "26.517",
     "name": "KHMELNITSKY",
+    "country":"UKRAINE",
     "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Khnpp_2013_-_2.jpg/1024px-Khnpp_2013_-_2.jpg"
 }, {
     "lat": "46.574",
     "lon": "18.853",
     "name": "PAKS",
+    "country":"HUNGARY",
     "image":"https://upload.wikimedia.org/wikipedia/commons/9/96/Paksi_atomer%C5%91m%C5%B1.JPG"
 }, {
     "lat": "46.9384",
     "lon": "15.5154",
     "name": "KRSKO",
+    "country":"SLOVENIA",
     "image":"https://upload.wikimedia.org/wikipedia/commons/0/02/2010_floods_in_Slovenia_%2815%29.jpg"
 }, {
     "lat": "40.9507",
     "lon": "0.8652",
     "name": "VANDELLOS",
+    "country":"SPAIN",
     "image":"https://upload.wikimedia.org/wikipedia/commons/f/fb/Central_nuclear_de_Vandell%C3%B3s-Flickr-nirvanis-233233876.jpg"
 }, {
     "lat": "51.33",
     "lon": "4.25",
     "name": "DOEL",
+    "country":"BELGIUM",
     "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Doel_Kerncentrale_2.JPG/1024px-Doel_Kerncentrale_2.JPG"
 }, {
     "lat": "54.031",
     "lon": "-2.916",
     "name": "HEYSHAM",
+    "country":"ENGLAND",
     "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Heysham_Power_Station%2C_from_dockside.jpg/1024px-Heysham_Power_Station%2C_from_dockside.jpg"
 }]

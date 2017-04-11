@@ -156,7 +156,7 @@ var container, content, closer, overlay;
 /**
  * Map center on load
  */
-var center = ol.proj.transform([23.631, 38.091], 'EPSG:4326', 'EPSG:3857');
+var center = ol.proj.transform([11.0, 55.0], 'EPSG:4326', 'EPSG:3857');
 
 function getBingKey() {
 	$.ajax({
@@ -276,7 +276,7 @@ function initialize() {
 	        view: new ol.View({
 	          projection: 'EPSG:3857',
 	          center: center,
-	          zoom: 6
+	          zoom: 4
 	        }),
 	        interactions: ol.interaction.defaults().extend([dragAndDropInteraction]),
 	        controls: ol.control.defaults().extend([mouseControl, scaleLineControl])
@@ -591,7 +591,7 @@ function initialize() {
 	}
 
 	//Set parameters for calendars
-  
+
     // $('.datetimepicker').datetimepicker({
     //     format: 'YYYY-MM-DD',
     //     ignoreReadonly: true
@@ -935,11 +935,11 @@ function drawStations(){
                           size: [186, 297],
                           scale: 0.1
                       })
-                  });
+                  });``
             feat.setStyle(style);
             var vec = vector.getSource();
             vec.addFeature(feat);
-            inner += '<div id="'+stations[i]['name']+'" style="display:none;"><h2>Station name: '+stations[i]['name']+'</h2><br><img src="'+stations[i]['image']+'" id="plantimg" height="150" width="300"></img></div>';
+            inner += '<div id="'+stations[i]['name']+'" style="display:none;"><h2>Station name: '+stations[i]['name']+' ('+stations[i]['country']+')</h2>Coordinates (latitude,longitude): '+stations[i]['lat']+', '+stations[i]['lon']+'<br><img src="'+stations[i]['image']+'" id="plantimg" height="150" width="300"></img></div>';
           }
           chart.innerHTML = inner;
       }
@@ -952,7 +952,18 @@ function drawStations(){
 
 
 var select = new ol.interaction.Select({
-    condition: ol.events.condition.click
+    condition: ol.events.condition.click,
+    filter: function(feature) {
+        try{
+           var id = feature.getId();
+           var s = document.getElementById('stat_info');
+             for(i=0; i<s.childNodes.length; i++) {
+               if (s.childNodes[i].id == id)
+               {return true;}
+             }
+        }
+        catch (e) { return false;}
+    }
 });
 
 function addSelect(){
