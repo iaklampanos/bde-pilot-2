@@ -217,7 +217,6 @@ function initialize() {
 	loadBingsSearchChangeset();
 	loadBingsSearchEvents();
 	loadBingsSearchLoadMap();
-  showfilelist();
   drawStations();
 	animateLegendPanel();
 	if (!map){
@@ -592,34 +591,35 @@ function initialize() {
 	}
 
 	//Set parameters for calendars
-    $('.datetimepicker').datetimepicker({
-        format: 'YYYY-MM-DD',
-        ignoreReadonly: true
-    });
-
-    $('.wmsDate').datetimepicker({
-        format: 'YYYY-MM-DDTHH:mm:ssZ',
-        ignoreReadonly: true
-    });
-
-    var nowDate = new Date();
-    var today = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate(), 0, 0, 0, 0);
-
-    var copernicusMinEventDate = new Date(1900, 0, 1, 0, 0, 0, 0);
-    $('.copernicusEventDate').datetimepicker({
-            format: 'YYYY-MM-DD',
-            minDate: copernicusMinEventDate,
-            maxDate: today,
-            ignoreReadonly: true
-    });
-
-    var copernicusMinReferenceDate = new Date(1900, 0, 1, 0, 0, 0, 0);
-    $('.copernicusReferenceDate').datetimepicker({
-            format: 'YYYY-MM-DD',
-             minDate: copernicusMinReferenceDate,
-             maxDate: today,
-             ignoreReadonly: true
-    });
+  
+    // $('.datetimepicker').datetimepicker({
+    //     format: 'YYYY-MM-DD',
+    //     ignoreReadonly: true
+    // });
+    //
+    // $('.wmsDate').datetimepicker({
+    //     format: 'YYYY-MM-DDTHH:mm:ssZ',
+    //     ignoreReadonly: true
+    // });
+    //
+    // var nowDate = new Date();
+    // var today = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate(), 0, 0, 0, 0);
+    //
+    // var copernicusMinEventDate = new Date(1900, 0, 1, 0, 0, 0, 0);
+    // $('.copernicusEventDate').datetimepicker({
+    //         format: 'YYYY-MM-DD',
+    //         minDate: copernicusMinEventDate,
+    //         maxDate: today,
+    //         ignoreReadonly: true
+    // });
+    //
+    // var copernicusMinReferenceDate = new Date(1900, 0, 1, 0, 0, 0, 0);
+    // $('.copernicusReferenceDate').datetimepicker({
+    //         format: 'YYYY-MM-DD',
+    //          minDate: copernicusMinReferenceDate,
+    //          maxDate: today,
+    //          ignoreReadonly: true
+    // });
 
     disableFeatures(disableAll, disableSaveMap);
 

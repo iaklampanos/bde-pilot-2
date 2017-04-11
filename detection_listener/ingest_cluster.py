@@ -20,31 +20,34 @@ if __name__ == '__main__':
     getter = attrgetter('input','method','hdfs_path')
     inp,method,hp = getter(opts)
     local_filelist = sorted(os.listdir(inp))
-    # req = requests.get('http://namenode:50070/webhdfs/v1/sc5/clusters/'+hp+'?op=LISTATUS')
+    # req = requests.get('http://namenode:50070/webhdfs/v1'+hp+'?op=LISTATUS')
+    # resp = req.json()
     # fl = resp['FileStatuses']['FileStatus']
     # hdfs_list = []
     # for file in fl:
     #     hdfs_list.append(file['pathSuffix'])
-    # intersect = list(set(local_filelist).intersection(hdfs_list))
-    # with open('db_info.json','r') as data_file:
-    #     dbpar = json.load(data_file)
-    # dpass = getpass.getpass()
-    # conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
-    #                         "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + dpass + "'")
-    # cur = conn.cursor()
-    # hdfs = PyWebHdfsClient(host='namenode', port='50070')
-    for lfl in local_filelist:
-        print lfl
-        for nc in sorted(os.listdir(lfl)):
-            if nc.endswith('.nc'):
-                print nc
 
-            # if lfl not in intersect:
-            # print lfl
-            # hdfs.create_file('/sc5/weather/'+lfl, open(inp+lfl,'rb'))
-            # path = "http://namenode:50070/webhdfs/v1/sc5/weather/"+lfl+"?op=OPEN"
-            # date = datetime.datetime.strptime(lfl.split('.')[0],'%Y-%m-%d_%H-%M-%S')
-            # cur.execute("INSERT INTO weather(filename,hdfs_path,date,wind_dir) VALUES(\'"+lfl+"\',\'"+path+"\', TIMESTAMP \'"+datetime.datetime.strftime(date,'%m-%d-%Y %H:%M:%S')+"\',null)")
-    # conn.commit()
-    # cur.close()
-    # conn.close()
+    with open('db_info.json','r') as data_file:
+        dbpar = json.load(data_file)
+    dpass = getpass.getpass()
+    conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
+                            "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + dpass + "'")
+    cur = conn.cursor()
+    hdfs = PyWebHdfsClient(host='namenode', port='50070')
+    for lfl in local_filelist:
+        # intersect = list(set(os.listdir(inp+'/'+lfl)).intersection(hdfs_list))
+        for nc in sorted(os.listdir(inp+'/'+lfl)):
+            if nc.endswith("nc"):
+            #    if nc not in intersect:
+               loc_path = inp+'/'+lfl+'/'+nc
+               print loc_path
+               print hp+'/'+nc
+               hdfs.create_file(hp+'/'+nc, open(loc_path,'rb'))
+               path = "http://namenode:50070/webhdfs/v1"+hp+"/"+nc+"?op=OPEN"
+               date = datetime.datetime.strptime(lfl,'%y-%m-%d-%H')
+               print date
+               cur.execute("INSERT INTO cluster(filename,hdfs_path,station,date,origin,c137,i131) \
+                VALUES(\'"+nc+"\',\'"+path+"\',\'"+nc.split('-')[0]+"\',TIMESTAMP \'"+datetime.datetime.strftime(date,'%m-%d-%Y %H:%M:%S')+"\',\'"+method+"\',null,null)")
+    conn.commit()
+    cur.close()
+    conn.close()

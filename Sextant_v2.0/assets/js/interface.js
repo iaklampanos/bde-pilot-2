@@ -491,24 +491,6 @@ function showHelpPage(pageId) {
     showManualPages();
 }
 
-function isFileChecked() {
-    var rlist = document.getElementById('radiofiles');
-    for (var i = 0; i < rlist.length; i++) {
-        if (rlist[i].checked) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function filecheckedVal() {
-    var rlist = document.getElementById('radiofiles');
-    for (var i = 0; i < rlist.length; i++) {
-        if (rlist[i].checked) {
-            return rlist[i].value;
-        }
-    }
-}
 
 function isPollChecked() {
     var rlist = document.getElementById('poll');
@@ -549,21 +531,20 @@ function methodcheckedVal() {
     }
 }
 
-function resetWeatherFiles() {
-    var rlist = document.getElementById('radiofiles');
-    for (var i = 0; i < rlist.length; i++) {
-        rlist[i].checked = false;
-    }
-}
-
+var geo = undefined;
+var resp = undefined;
 
 function estimateLocation() {
+    var date = $('#datepicker').datepicker().val();
+    var hourdiv = document.getElementById("hourpicker");
+    var hour = hourdiv.options[hourdiv.selectedIndex].value;
+    var timestamp = date+" "+hour+":00:00";
     clearDispersion();
     var res = document.getElementById('source_result');
     res.innerHTML = '';
     var resimg = document.getElementById('plantimg');
     resimg.style.display = 'none';
-    if (isFileChecked() && isPollChecked() && isMethodChecked()) {
+    if (isPollChecked() && isMethodChecked()) {
         var locs = []
         vector.getSource().forEachFeature(function(feature) {
             try {
@@ -584,7 +565,7 @@ function estimateLocation() {
         eheader.style.display = 'none';
         if (methodcheckedVal() == 'kmeans') {
             var req = new XMLHttpRequest();
-            req.open("POST", "http://127.0.0.1:5000/detections/" + filecheckedVal() + "/" + pollcheckedVal(), true);
+            req.open("POST", "http://127.0.0.1:5000/detections/" + timestamp + "/" + pollcheckedVal(), true);
             req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
             req.send(JSON.stringify(locs));
             req.onloadend = function() {
@@ -593,34 +574,22 @@ function estimateLocation() {
                 resp = JSON.parse(req.responseText);
                 if (resp['score'] != '0.0')
                 {
-                  image_str = resp["station"] + "-" + resp["date"] + "_" + resp["pollutant"].toLowerCase() + ".json";
                   res.innerHTML = 'Estimated source '+resp["station"];
-                  var req3 = new XMLHttpRequest();
-                  req3.open("GET", "./data/stat_info.json", true);
-                  req3.setRequestHeader('Content-Type', 'plain/text; charset=utf-8');
-                  req3.onreadystatechange = function() {
-                      if (req3.readyState == XMLHttpRequest.DONE) {
-                          var stations = JSON.parse(req3.responseText);
-                          for (var i = 0; i < stations.length; i++) {
-                            if (stations[i]['name'] == resp['station'])
-                            {
-                              resimg.src = stations[i]['image'];
-                              resimg.style.display = 'block';
-                            }
-                          }
-                        }
-                      }
-                  req3.send();
+                  geo = JSON.parse(resp['dispersion']);
+                  var features = new ol.format.GeoJSON().readFeatures(geo, {
+                      featureProjection: 'EPSG:3857'
+                  });
+                  var source = new ol.source.Vector({
+                    features: features
+                  });
+
                   var layer = new ol.layer.Image({
                       title: label,
                       source: new ol.source.ImageVector({
-                          source: new ol.source.Vector({
-                              url: './data/kmeans_json/' + image_str,
-                              format: new ol.format.GeoJSON()
-                          }),
-                          style: ((styling != null) ? styling : defaultVectorStyle)
-                      })
-                  });
+                        source: source,
+                            style: defaultVectorStyle
+                        })
+                    });
 
                   mapFilter.addLayer(layer);
 
@@ -666,90 +635,6 @@ function estimateLocation() {
                 }
             };
       }
-      else if (methodcheckedVal() == 'autoenc') {
-        var req = new XMLHttpRequest();
-        req.open("POST", "http://127.0.0.1:5001/detections/" + filecheckedVal() + "/" + pollcheckedVal(), true);
-        req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
-        req.send(JSON.stringify(locs));
-        req.onloadend = function() {
-            var styling = null;
-            var label = 'dispersion';
-            resp = JSON.parse(req.responseText);
-            if (resp['score'] != '0.0')
-            {
-              image_str = resp["station"] + "-" + resp["date"] + "_" + resp["pollutant"].toLowerCase() + ".json";
-              res.innerHTML = 'Estimated source '+resp["station"];
-              var req3 = new XMLHttpRequest();
-              req3.open("GET", "./data/stat_info.json", true);
-              req3.setRequestHeader('Content-Type', 'plain/text; charset=utf-8');
-              req3.onreadystatechange = function() {
-                  if (req3.readyState == XMLHttpRequest.DONE) {
-                      var stations = JSON.parse(req3.responseText);
-                      for (var i = 0; i < stations.length; i++) {
-                        if (stations[i]['name'] == resp['station'])
-                        {
-                          resimg.src = stations[i]['image'];
-                          resimg.style.display = 'block';
-                        }
-                      }
-                    }
-                  }
-              req3.send();
-              var layer = new ol.layer.Image({
-                  title: label,
-                  source: new ol.source.ImageVector({
-                      source: new ol.source.Vector({
-                          url: './data/autoenc_json/' + image_str,
-                          format: new ol.format.GeoJSON()
-                      }),
-                      style: ((styling != null) ? styling : defaultVectorStyle)
-                  })
-              });
-
-              mapFilter.addLayer(layer);
-
-              var listenerKey = layer.getSource().on('change', function(e) {
-                  if (layer.getSource().getState() == 'ready') {
-                      updateLayerStats(label);
-
-                      for (var i = 0; i < mapLayers.length; i++) {
-                          if ((mapLayers[i].name === label) && (label != 'userInfo')) {
-                              mapLayers[i].features = getLayerFeatureNames(layer);
-                              break;
-                          }
-                      }
-                      var zoomOn = 0;
-                      vector.getSource().forEachFeature(function(feature) { zoomOn = feature.getGeometry().getCoordinates(); });
-
-                      map.getView().centerOn(zoomOn,map.getSize(), [570, 500])
-
-                      //Unregister the "change" listener
-                      layer.getSource().unByKey(listenerKey);
-                  }
-              });
-              loader.style.display = 'none';
-              eheader.style.display = 'block';
-              vector.getSource().forEachFeature(function(feature) {
-                var fid = feature.getId();
-                if (fid == resp["station"]){
-                  var style = new ol.style.Style({
-                          image: new ol.style.Icon({
-                              src: 'http://maplacejs.com/website/images/red-dot.png',
-                              size: [200, 200],
-                              scale: 0.2
-                          })
-                      });
-                  feature.setStyle(style);
-                }
-              });
-            }
-            else {
-              alert('Detection is out of grid or there is no overlap between the detection points and the precalculated dispersions');
-              loader.style.display = 'none';
-              eheader.style.display = 'block';
-            }
-        };
-      }
     } else {
         alert('You should choose a weather file, pollutant & clustering method before estimating the source\'s location');
     }
@@ -757,60 +642,69 @@ function estimateLocation() {
 }
 
 
-function showfilelist() {
-    var req = new XMLHttpRequest();
-    req.open("GET", "http://127.0.0.1:5000/test_files", true);
-    req.setRequestHeader('Content-Type', 'plain/text; charset=utf-8');
-    req.onreadystatechange = function() {
-        if (req.readyState == XMLHttpRequest.DONE) {
-            var filelist = JSON.parse(req.responseText);
-            str = '';
-            for (var i = 0; i < filelist.length; i++) {
-                str += '<input type="radio" name="file" value="' + filelist[i] + '" onclick="drawWindDir()">' + filelist[i] + '<br>';
-            }
-            document.getElementById('radiofiles').innerHTML = str;
-        }
-    }
-    req.send();
-}
-
 
 function drawWindDir() {
+    var date = $('#datepicker').datepicker().val();
+    var hourdiv = document.getElementById("hourpicker");
+    var hour = hourdiv.options[hourdiv.selectedIndex].value;
+    var timestamp = date+" "+hour+":00:00";
     clearWindDir();
-    var styling = new ol.style.Style({
-        stroke: new ol.style.Stroke({
-            color: [255, 255, 255, 1],
-            width: 2
-        })
-    });
-    var label = 'wind_direction';
-    var layer = new ol.layer.Image({
-        title: label,
-        source: new ol.source.ImageVector({
-            source: new ol.source.Vector({
-                url: './data/test_json/' + filecheckedVal() + '.json',
-                format: new ol.format.GeoJSON()
-            }),
-            style: ((styling != null) ? styling : defaultVectorStyle)
-        })
-    });
+    var req = new XMLHttpRequest();
+    req.open("GET", "http://127.0.0.1:5000/getClosest/"+timestamp, true);
+    req.setRequestHeader('Content-Type', 'plain/text; charset=utf-8');
+    req.onreadystatechange = function() {
+      if (req.readyState == XMLHttpRequest.DONE) {
+          geobj = JSON.parse(req.responseText);
+          var styling = new ol.style.Style({
+              stroke: new ol.style.Stroke({
+                  color: [255, 255, 255, 1],
+                  width: 2
+              })
+          });
+          var label = 'wind_direction';
+            var geojsonObject = {
+                  'type': 'FeatureCollection',
+                  'crs': {
+                      'type': 'name',
+                      'properties': {
+                          'name': 'EPSG:4326'
+                      }
+                  },
+                  'features': [ geobj ]
+                };
+                var features = new ol.format.GeoJSON().readFeatures(geojsonObject, {
+                    featureProjection: 'EPSG:3857'
+                });
+                var source = new ol.source.Vector({
+                  features: features
+                });
 
-    mapFilter.addLayer(layer);
-    var listenerKey = layer.getSource().on('change', function(e) {
-        if (layer.getSource().getState() == 'ready') {
-            updateLayerStats(label);
+          var layer = new ol.layer.Image({
+              title: label,
+              source: new ol.source.ImageVector({
+                source: source,
+                    style: styling
+                })
+            });
+          mapFilter.addLayer(layer);
+          var listenerKey = layer.getSource().on('change', function(e) {
+              if (layer.getSource().getState() == 'ready') {
+                  updateLayerStats(label);
 
-            for (var i = 0; i < mapLayers.length; i++) {
-                if ((mapLayers[i].name === label) && (label != 'userInfo')) {
-                    mapLayers[i].features = getLayerFeatureNames(layer);
-                    break;
-                }
-            }
+                  for (var i = 0; i < mapLayers.length; i++) {
+                      if ((mapLayers[i].name === label) && (label != 'userInfo')) {
+                          mapLayers[i].features = getLayerFeatureNames(layer);
+                          break;
+                      }
+                  }
 
-            // map.getView().fit(layer.getSource().getSource().getExtent(), map.getSize());
+                  // map.getView().fit(layer.getSource().getSource().getExtent(), map.getSize());
 
-            //Unregister the "change" listener
-            layer.getSource().unByKey(listenerKey);
+                  //Unregister the "change" listener
+                  layer.getSource().unByKey(listenerKey);
+              }
+          });
         }
-    });
+      }
+      req.send();
 }

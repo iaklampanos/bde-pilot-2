@@ -67,13 +67,12 @@ function PaddInteractionMainMap() {
         // document.getElementById('map_canvas').style.display = 'block';
         // document.getElementById('map_canvas2').style.display = 'none';
         vector.getSource().clear();
-        clearDispersion();
         clearWindDir();
-        resetWeatherFiles();
-        mapFilter.removeInteraction(draw);
         drawStations();
+        mapFilter.removeInteraction(draw);
         addSelect()
     } else {
+        clearDispersion();
         trigger = true;
         document.getElementById('drawExtentMainMap').style.backgroundColor = 'rgba(38, 166, 154, 0.7)';
         // vector.getSource().clear();
