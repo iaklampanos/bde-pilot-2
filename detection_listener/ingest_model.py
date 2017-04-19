@@ -11,18 +11,19 @@ from pywebhdfs.webhdfs import PyWebHdfsClient
 if __name__ == '__main__':
     parser = ArgumentParser(description='Extract variables from netcdf file')
     parser.add_argument('-i', '--input', required=True, type=str,
-                        help='input path')
+                        help='model path')
+    parser.add_argument('-m', '--method', required=True, type=str,
+                        help='clustering method')
     opts = parser.parse_args()
-    getter = attrgetter('input')
-    inp = getter(opts)
+    getter = attrgetter('input','method')
+    inp,method = getter(opts)
     local_filelist = sorted(os.listdir(inp))
-    req = requests.get('http://namenode:50070/webhdfs/v1/sc5/weather?op=LISTSTATUS')
+    req = requests.get('http://namenode:50070/webhdfs/v1/sc5/models?op=LISTSTATUS')
     resp = req.json()
     fl = resp['FileStatuses']['FileStatus']
     hdfs_list = []
     for file in fl:
         hdfs_list.append(file['pathSuffix'])
-    intersect = list(set(local_filelist).intersection(hdfs_list))
     with open('db_info.json','r') as data_file:
         dbpar = json.load(data_file)
     dpass = getpass.getpass()
@@ -31,12 +32,11 @@ if __name__ == '__main__':
     cur = conn.cursor()
     hdfs = PyWebHdfsClient(host='namenode', port='50070')
     for lfl in local_filelist:
-        if lfl not in intersect:
+        if lfl not in hdfs_list:
             print lfl
-            hdfs.create_file('/sc5/weather/'+lfl, open(inp+lfl,'rb'))
-            path = "http://namenode:50070/webhdfs/v1/sc5/weather/"+lfl+"?op=OPEN"
-            date = datetime.datetime.strptime(lfl.split('.')[0],'%Y-%m-%d_%H-%M-%S')
-            cur.execute("INSERT INTO weather(filename,hdfs_path,date,wind_dir500,wind_dir700,wind_dir900) VALUES(\'"+lfl+"\',\'"+path+"\', TIMESTAMP \'"+datetime.datetime.strftime(date,'%m-%d-%Y %H:%M:%S')+"\',null,null,null)")
+            hdfs.create_file('/sc5/models/'+lfl, open(inp+lfl,'rb'))
+            path = "http://namenode:50070/webhdfs/v1/sc5/models/"+lfl+"?op=OPEN"
+            cur.execute("INSERT INTO models(origin,filename,hdfs_path) VALUES(\'"+method+"\',\'"+lfl+"\',\'"+path+"\')")
     conn.commit()
     cur.close()
     conn.close()

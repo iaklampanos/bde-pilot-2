@@ -7,9 +7,8 @@ import scipy
 
 class Detection(object):
 
-    def __init__(self, dispersion_file, pollutant, filelat, filelon, llat, llon):
-        self._dis = dispersion_file
-        self._pollutant = pollutant
+    def __init__(self, dispersion, filelat, filelon, llat, llon):
+        self._conc = dispersion
         self._filelat = filelat
         self._filelon = filelon
         self._lats = llat
@@ -25,13 +24,9 @@ class Detection(object):
         self._lat_idx = lat_idx
         self._lon_idx = lon_idx
 
-    def calculate_concetration(self):
-        pollutant_array = self._dis.variables[self._pollutant][:]
-        self._conc = np.sum(pollutant_array,axis=0).reshape(pollutant_array.shape[2],pollutant_array.shape[3])
-
     def create_detection_map(self):
-        pollutant_array = self._dis.variables[self._pollutant][:]
-        det_map = np.zeros(shape=(pollutant_array.shape[2] ,pollutant_array.shape[3]))
+        pollutant_array = self._conc
+        det_map = np.zeros(shape=(pollutant_array.shape[0] ,pollutant_array.shape[1]))
         for lat in self._lat_idx:
             for lon in self._lon_idx:
                 det_map[lat,lon] = 1
@@ -60,4 +55,4 @@ class Detection(object):
             conc.append(self._conc[nonzero_points[i]])
         conc = np.add(conc,1e-12)
         detnon = np.add(self._det_map[np.nonzero(self._det_map)],1e-12)
-        return 1-scipy.spatial.distance.cosine(conc.flatten(),detnon.flatten())
+        return scipy.spatial.distance.cosine(conc.flatten(),detnon.flatten())

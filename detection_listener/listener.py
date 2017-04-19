@@ -23,6 +23,8 @@ import math
 import datetime
 import time
 from geojson import Feature, Point, MultiPoint, MultiLineString, LineString, FeatureCollection
+import cPickle
+import gzip
 
 BOOTSTRAP_SERVE_LOCAL = True
 app = Flask(__name__)
@@ -41,21 +43,23 @@ cur = None
 # dpass = getpass.getpass()
 dpass = 'postgres'
 APPS_ROOT = os.path.dirname(os.path.abspath(__file__))
-
+VARS = ['GHT']
+LEVELS = [700]
 
 def dispersion_integral(dataset_name):
-    dataset = Dataset(APPS_ROOT+'/'+dataset_name,'r')
-    dsout = Dataset(APPS_ROOT+'/'+'int_'+dataset_name,'w',format='NETCDF3_CLASSIC')
+    dataset = Dataset(APPS_ROOT + '/' + dataset_name, 'r')
+    dsout = Dataset(APPS_ROOT + '/' + 'int_' + dataset_name,
+                    'w', format='NETCDF3_CLASSIC')
     c137 = dataset.variables['C137'][:]
     i131 = dataset.variables['I131'][:]
-    c137 = np.sum(c137,axis=0).reshape(501,501)
-    i131 = np.sum(i131,axis=0).reshape(501,501)
+    c137 = np.sum(c137, axis=0).reshape(501, 501)
+    i131 = np.sum(i131, axis=0).reshape(501, 501)
     for gattr in dataset.ncattrs():
         gvalue = dataset.getncattr(gattr)
         dsout.setncattr(gattr, gvalue)
     for dname, dim in dataset.dimensions.iteritems():
         if dname == 'time':
-            dsout.createDimension(dname,1 if not dim.isunlimited() else None)
+            dsout.createDimension(dname, 1 if not dim.isunlimited() else None)
         else:
             dsout.createDimension(dname, len(
                 dim) if not dim.isunlimited() else None)
@@ -63,20 +67,20 @@ def dispersion_integral(dataset_name):
     for v_name, varin in dataset.variables.iteritems():
         if v_name == 'C137':
             outVar = dsout.createVariable(
-                        v_name, varin.datatype, varin.dimensions)
+                v_name, varin.datatype, varin.dimensions)
             outVar.setncatts({k: varin.getncattr(k)
                               for k in varin.ncattrs()})
             outVar[:] = c137[:]
         elif v_name == 'I131':
             outVar = dsout.createVariable(
-                        v_name, varin.datatype, varin.dimensions)
+                v_name, varin.datatype, varin.dimensions)
             outVar.setncatts({k: varin.getncattr(k)
                               for k in varin.ncattrs()})
             outVar[:] = i131[:]
         else:
             try:
                 outVar = dsout.createVariable(
-                            v_name, varin.datatype, varin.dimensions)
+                    v_name, varin.datatype, varin.dimensions)
                 outVar.setncatts({k: varin.getncattr(k)
                                   for k in varin.ncattrs()})
                 outVar[:] = varin[:]
@@ -84,10 +88,11 @@ def dispersion_integral(dataset_name):
                 outVar[:] = varin[0]
     dsout.close()
 
-def calc_winddir(dataset_name):
+
+def calc_winddir(dataset_name,level):
     dataset = Dataset(APPS_ROOT + '/' + dataset_name, 'r')
-    u = dataset.variables['UU'][:, 27, :, range(0, 64)].reshape(13, 4096)
-    v = dataset.variables['VV'][:, 27, range(0, 64), :].reshape(13, 4096)
+    u = dataset.variables['UU'][:, level, :, range(0, 64)].reshape(13, 4096)
+    v = dataset.variables['VV'][:, level, range(0, 64), :].reshape(13, 4096)
     lat = dataset.variables['XLAT_M'][0, :, :].flatten()
     lon = dataset.variables['XLONG_M'][0, :, :].flatten()
     u = np.sum(u, axis=0)
@@ -138,21 +143,19 @@ def calc_winddir(dataset_name):
     return json.dumps(feature)
 
 
-@app.route('/detections/<date>/<pollutant>', methods=['POST'])
-def detections(date, pollutant):
-    start = time.time()
+@app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
+def detections(date, pollutant, metric, origin):
     lat_lon = request.get_json(force=True)
     llat = []
     llon = []
     for llobj in lat_lon:
         llat.append(float(llobj['lat']))
         llon.append(float(llobj['lon']))
-    cur.execute("select filename,hdfs_path,wind_dir,EXTRACT(EPOCH FROM TIMESTAMP '" +
+    cur.execute("select filename,hdfs_path,EXTRACT(EPOCH FROM TIMESTAMP '" +
                 date + "' - date)/3600/24 as diff from weather order by diff desc;")
     res = cur.fetchone()
     urllib.urlretrieve(res[1], res[0])
-    test_dict = netCDF_subset(APPS_ROOT + '/' + res[0], [
-        parameters['level']], [parameters['var']], lvlname='num_metgrid_levels', timename='Times')
+    test_dict = netCDF_subset(APPS_ROOT + '/' + res[0], LEVELS, VARS, lvlname='num_metgrid_levels', timename='Times')
     items = [test_dict.extract_data()]
     items = np.array(items)
     ds = Dataset_transformations(items, 1000, items.shape)
@@ -160,54 +163,65 @@ def detections(date, pollutant):
     y = items.shape[5]
     ds.twod_transformation()
     ds.normalize()
-    try:
-        if parameters['autoenc'] == 'simple':
-            ds.shift()
-            ds._items = exper._nnet.get_hidden(np.transpose(ds.get_items()))
-            print ds._items.shape
-            cd = clust_obj.centroids_distance(ds, features_first=False)
-        elif parameters['autoenc'] == 'conv':
-            ds.shift()
-            items = ds.get_items()
-            items = items.reshape(items.shape[1], 1, x, y)
-            print items.shape
-            ds._items = exper._nnet.get_hidden(items)
-            ds._items = ds._items.astype(np.float32)
-            cd = clust_obj.centroids_distance(ds, features_first=False)
-    except:
-        cd = clust_obj.centroids_distance(ds, features_first=True)
+    for m in models:
+        if origin in m:
+            if m[0] != 'kmeans':
+                clust_obj = m[1]._clustering
+                ds.shift()
+                ds._items = exper._nnet.get_hidden(
+                    np.transpose(ds.get_items()))
+            else:
+                clust_obj = m[1]
+            cd = clust_obj.centroids_distance(ds, features_first=True)
     cluster_date = utils.reconstruct_date(clust_obj._desc_date[cd[0][0]])
     results = []
     results2 = []
     timestamp = datetime.datetime.strptime(cluster_date, '%y-%m-%d-%H')
-    cur.execute("select filename,hdfs_path,station from cluster where date=TIMESTAMP \'" +
-                datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='kmeans'")
+    cur.execute("select filename,hdfs_path,station,c137_pickle,i131_pickle from cluster where date=TIMESTAMP \'" +
+                datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "'")
     for row in cur:
-        urllib.urlretrieve(row[1], row[0])
-        nc_file = Dataset(APPS_ROOT + '/' + row[0], 'r')
-        filelat = nc_file.variables['latitude'][:]
-        filelon = nc_file.variables['longitude'][:]
-        det_obj = Detection(nc_file, pollutant, filelat, filelon, llat, llon)
-        det_obj.get_indices()
-        det_obj.calculate_concetration()
-        det_obj.create_detection_map()
-        results.append((row[2], det_obj.calc()))
-        # results.append((row[2], det_obj.calc_score()))
-        # results2.append((row[2], det_obj.calc_score2()))
-        os.system('rm ' + APPS_ROOT + '/' + row[0])
-    # print sorted(results2, key=lambda k: k[1], reverse=False)
-    # results = sorted(results, key=lambda k: k[1], reverse=False)
-    results = sorted(results, key=lambda k: k[1], reverse=True)
-    print results
-    print time.time() - start
+        urllib.urlretrieve(
+            'http://namenode:50070/webhdfs/v1/sc5/clusters/kmeans/lat.npy?op=OPEN', 'lat.npy')
+        urllib.urlretrieve(
+            'http://namenode:50070/webhdfs/v1/sc5/clusters/kmeans/lon.npy?op=OPEN', 'lon.npy')
+        filelat = np.load('lat.npy')
+        filelon = np.load('lon.npy')
+        if pollutant == 'C137':
+            det_obj = Detection(cPickle.loads(
+                str(row[3])), filelat, filelon, llat, llon)
+            det_obj.get_indices()
+            det_obj.create_detection_map()
+        else:
+            det_obj = Detection(cPickle.loads(
+                str(row[4])), filelat, filelon, llat, llon)
+            det_obj.get_indices()
+            det_obj.create_detection_map()
+        if metric == 'KL':
+            results.append((row[2], det_obj.KL()))
+        else:
+            results.append((row[2], det_obj.cosine()))
+        os.system('rm ' + APPS_ROOT + '/' + 'lat.npy')
+        os.system('rm ' + APPS_ROOT + '/' + 'lon.npy')
+    if metric == 'KL':
+        results = sorted(results, key=lambda k: k[1], reverse=False)
+    else:
+        results = sorted(results, key=lambda k: k[1], reverse=True)
+    top3 = results[:3]
+    print top3
+    top3_names = [top[0] for top in top3]
+    top3_scores = [top[1] for top in top3]
+    stations = []
+    dates = []
+    scores = []
+    dispersions = []
     cur.execute("select filename,hdfs_path,station,c137,i131 from cluster where date=TIMESTAMP \'" +
                 datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\'")
     for row in cur:
-        if row[2] == results[0][0]:
+        if row[2] in top3_names:
             if (row[3] == None) or (row[4] == None):
                 urllib.urlretrieve(row[1], row[0])
                 dispersion_integral(row[0])
-                os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_'+
+                os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
                           row[0] + '\\":C137 ' + row[0].split('.')[0] + '_c137.tiff')
                 os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
                           row[0] + '\\":I131 ' + row[0].split('.')[0] + '_i131.tiff')
@@ -230,47 +244,81 @@ def detections(date, pollutant):
                 os.system('rm ' + APPS_ROOT + '/' +
                           row[0].split('.')[0] + '_i131.json')
                 os.system('rm ' + APPS_ROOT + '/' + row[0])
-                os.system('rm ' + APPS_ROOT + '/' + 'int_'+row[0])
+                os.system('rm ' + APPS_ROOT + '/' + 'int_' + row[0])
                 os.system('rm ' + APPS_ROOT + '/' + res[0])
-                send = {}
-                send["station"] = str(results[0][0])
-                send["date"] = str(utils.reconstruct_date(
-                    clust_obj._desc_date[cd[0][0]]))
-                send["pollutant"] = str(pollutant)
-                send["score"] = str(results[0][1])
+                stations.append(str(row[2]))
+                scores.append(top3_scores[top3_names.index(row[2])])
                 if pollutant == 'C137':
-                    send['dispersion'] = json.dumps(c137_json)
+                    dispersions.append(json.dumps(c137_json))
                 else:
-                    send['dispersion'] = json.dumps(i131_json)
-                return json.dumps(send)
+                    dispersions.append(json.dumps(i131_json))
             else:
                 os.system('rm ' + APPS_ROOT + '/' + res[0])
-                send = {}
-                send["station"] = str(results[0][0])
-                send["date"] = str(utils.reconstruct_date(
-                    clust_obj._desc_date[cd[0][0]]))
-                send["pollutant"] = str(pollutant)
-                send["score"] = str(results[0][1])
+                stations.append(str(row[2]))
+                scores.append(top3_scores[top3_names.index(row[2])])
                 if pollutant == 'C137':
-                    send['dispersion'] = json.dumps(row[3])
+                    dispersions.append(json.dumps(row[3]))
                 else:
-                    send['dispersion'] = json.dumps(row[4])
-                return json.dumps(send)
+                    dispersions.append(json.dumps(row[4]))
+    if metric == 'KL':
+        scores, dispersions, stations = zip(
+            *sorted(zip(scores, dispersions, stations)))
+    else:
+        scores, dispersions, stations = zip(
+            *sorted(zip(scores, dispersions, stations), reverse=True))
+    send = {}
+    send['stations'] = stations
+    send['scores'] = scores
+    send['dispersions'] = dispersions
+    return json.dumps(send)
 
 
-@app.route('/getClosest/<date>', methods=['GET'])
-def get_closest(date):
-    cur.execute("select filename,hdfs_path,wind_dir,EXTRACT(EPOCH FROM TIMESTAMP '" +
-                date + "' - date)/3600/24 as diff from weather order by diff desc;")
+@app.route('/getMethods/', methods=['GET'])
+def get_methods():
+    cur.execute("select DISTINCT origin from cluster;")
+    origins = []
+    for row in cur:
+        origins.append(row[0])
+    return json.dumps(origins)
+
+
+@app.route('/getClosestWeather/<date>/<level>', methods=['GET'])
+def get_closest(date,level):
+    print level,type(level)
+    level = int(level)
+    print level,type(level)
+    if level == 22:
+        cur.execute("select filename,hdfs_path,wind_dir500,EXTRACT(EPOCH FROM TIMESTAMP '" +
+                    date + "' - date)/3600/24 as diff from weather group by date\
+                    having EXTRACT(EPOCH FROM TIMESTAMP '" + date + "' - date)/3600/24 > 0 order by diff;")
+    elif level == 26:
+        cur.execute("select filename,hdfs_path,wind_dir700,EXTRACT(EPOCH FROM TIMESTAMP '" +
+                    date + "' - date)/3600/24 as diff from weather group by date\
+                    having EXTRACT(EPOCH FROM TIMESTAMP '" + date + "' - date)/3600/24 > 0 order by diff;")
+    elif level == 33:
+        cur.execute("select filename,hdfs_path,wind_dir900,EXTRACT(EPOCH FROM TIMESTAMP '" +
+                    date + "' - date)/3600/24 as diff from weather group by date\
+                    having EXTRACT(EPOCH FROM TIMESTAMP '" + date + "' - date)/3600/24 > 0 order by diff;")
     res = cur.fetchone()
+    if res[3] > 5:
+        return json.dumps({'error': 'date is out of bounds'})
     if res[2] == None:
         urllib.urlretrieve(res[1], res[0])
-        json_dir = calc_winddir(res[0])
+        json_dir = calc_winddir(res[0],level)
         os.system('rm ' + APPS_ROOT + '/' + res[0])
-        cur.execute("UPDATE weather SET  wind_dir=\'" +
-                    json_dir + "\' WHERE filename=\'" + res[0] + "\'")
-        conn.commit()
-        return json.dumps(json_dir)
+        if level == 22:
+            cur.execute("UPDATE weather SET  wind_dir500=\'" +
+                        json_dir + "\' WHERE filename=\'" + res[0] + "\'")
+            conn.commit()
+        elif level == 26:
+            cur.execute("UPDATE weather SET  wind_dir700=\'" +
+                        json_dir + "\' WHERE filename=\'" + res[0] + "\'")
+            conn.commit()
+        elif level == 33:
+            cur.execute("UPDATE weather SET  wind_dir900=\'" +
+                        json_dir + "\' WHERE filename=\'" + res[0] + "\'")
+            conn.commit()
+        return json_dir
     else:
         return json.dumps(res[2])
 
@@ -281,17 +329,14 @@ if __name__ == '__main__':
                             "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + dpass + "'")
     cur = conn.cursor()
     inp = 'parameters.json'
-    with open(inp) as data_file:
-        parameters = json.load(data_file)
-    export_template = netCDF_subset(parameters['export_netcdf'],  [parameters['level']], [
-                                    parameters['var']], lvlname='num_metgrid_levels', timename='Times')
-    clust_obj = utils.load_single(parameters['cluster_obj'])
-    clust_obj.desc_date(export_template)
+    models = []
+    cur.execute("SELECT * from models")
+    for row in cur:
+        urllib.urlretrieve(row[2], row[1])
+        fil = gzip.open(row[1])
+        models.append((row[0], cPickle.load(fil)))
+        os.system('rm ' + APPS_ROOT + '/' + row[1])
     try:
-        exper = utils.load_single(parameters['autoenc_model'])
-    except:
-        pass
-    try:
-        app.run(host='0.0.0.0', debug=True)
+        app.run(host='0.0.0.0')
     except Exception:
         pass

@@ -112,10 +112,17 @@ class ConvAutoencoder(object):
             sys.stdout.flush()
         return np.vstack(out)
 
-    def get_hidden(self, X):
-        encode_layer_index = map(lambda pair: pair[0], self.ae.layers).index('encode_layer')
-        encode_layer = self.ae.get_all_layers()[encode_layer_index]
-        return self.get_output_from_nn(encode_layer,X)
+    def get_hidden(self, X, grid_x=self._dataset.shape[4], grid_y=self._dataset.shape[5]):
+        try:
+            encode_layer_index = map(
+                lambda pair: pair[0], self.ae.layers).index('encode_layer')
+            encode_layer = self.ae.get_all_layers()[encode_layer_index]
+        except:
+            X = X.reshape(X.shape[1], 1, grid_x, grid_y)
+            encode_layer_index = map(
+                lambda pair: pair[0], self.ae.layers).index('encode_layer')
+            encode_layer = self.ae.get_all_layers()[encode_layer_index]
+        return self.get_output_from_nn(encode_layer, X)
 
     def get_output(self, X):
         return self.get_output_from_nn(output_layer, X)

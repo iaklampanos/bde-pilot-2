@@ -46,4 +46,5 @@ if __name__ == '__main__':
     exper.clustering()
     exper._clustering.create_descriptors(14)
     utils.export_descriptor_kmeans(outp,data_dict,exper._clustering)
+    #### add desc_date #####
     utils.save('CE_Autoencoder_700_ght.zip',exper)

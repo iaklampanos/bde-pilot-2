@@ -218,6 +218,7 @@ function initialize() {
 	loadBingsSearchEvents();
 	loadBingsSearchLoadMap();
   drawStations();
+  getMethods();
 	animateLegendPanel();
 	if (!map){
 		document.getElementById('tmContainer').style.right = '-3000px';
@@ -935,7 +936,7 @@ function drawStations(){
                           size: [186, 297],
                           scale: 0.1
                       })
-                  });``
+                  });
             feat.setStyle(style);
             var vec = vector.getSource();
             vec.addFeature(feat);
@@ -982,4 +983,21 @@ function addSelect(){
 
 function removeSelect(){
   mapFilter.removeInteraction(select);
+}
+
+function getMethods(){
+  var req = new XMLHttpRequest();
+  req.open("GET", "http://127.0.0.1:5000/getMethods/", true);
+  req.setRequestHeader('Content-Type', 'plain/text; charset=utf-8');
+  req.onreadystatechange = function() {
+      if (req.readyState == XMLHttpRequest.DONE) {
+        var methodlist = JSON.parse(req.responseText);
+        var str = '';
+        for (var i=0;i<methodlist.length;i++){
+           str += '<input type="radio" name="cluster" value="' + methodlist[i] + '">' + methodlist[i] + '<br>';
+        }
+        document.getElementById('clust').innerHTML = str;
+      }
+    }
+    req.send();
 }

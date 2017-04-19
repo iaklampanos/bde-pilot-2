@@ -2414,6 +2414,11 @@
                             <option value="12">12</option>
                             <option value="18">18</option>
                         </select>
+                        <br>Pressure level:<select id='pressure_level'>
+                              <option value="22">500 hPa</option>
+                              <option value="26">700 hPa</option>
+                              <option value="33">900 hPa</option>
+                          </select>
                         <br><button type="button" class="btn btn-primary" onClick="drawWindDir()">Set weather</button>
                      </div>
                  </div>
@@ -2434,8 +2439,13 @@
                   <h4>Clustering method</h4>
                   <div class="col-md-11 col-sm-11">
                     <form action="" id="clust">
-                      <input type="radio" name="cluster" value="kmeans">K-means<br>
-                      <input type="radio" name="cluster" value="autoenc">Autoencoder<br>
+                    </form>
+                  </div>
+                  <h4>Estimation metric</h4>
+                  <div class="col-md-11 col-sm-11">
+                    <form action="" id="est_met">
+                      <input type="radio" name="estimation_metric" value="KL">KL
+                      <input type="radio" name="estimation_metric" value="cosine">cosine<br>
                     </form>
                   </div>
               </div>
@@ -2446,7 +2456,7 @@
 		      <div class="page-header">
 		              <div class="row" style="margin-right:5px">
 		      	  	  <div class="col-md-11 col-sm-11">
-		      	  	      <a onClick="estimateLocation()" title="Help"><h4 id="estimate">Estimate source location</h4></a><div id="loader_ic" class="loader" style="display:none;"></div></a>
+		      	  	      <a onClick="estimateLocation()"><h4 id="estimate">Estimate source location</h4></a><div id="loader_ic" class="loader" style="display:none;"></div></a>
                       <br><h4 id="source_result"></h4> <img src="" id="plantimg" height="150" width="300" style="display:none;">
 		      	  	  </div>
 		      	  </div>
@@ -2534,6 +2544,7 @@
       changeMonth: true,
       changeYear: true,
       yearRange: "1994:1995",
+      defaultDate: "1994-01-01",
       dateFormat: 'yy-mm-dd'
     });
   } );
