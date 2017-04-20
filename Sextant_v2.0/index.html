@@ -134,7 +134,7 @@
               <span class="icon-bar"></span>
               <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="http://sextant.di.uoa.gr/" target="_blank"><img src="./assets/images/SEXTANT.png" width="140" onClick="" id="logo" alt=""></a>
+            <div class="navbar-brand" ><img src="./assets/images/sc5.png" width="500" alt=""></div>
           </div>
           <div class="navbar-collapse collapse">
 
@@ -165,7 +165,7 @@
                 </ul>
               </li>
               <li class="dropdown">
-                  <a class="dropdown-toggle" data-toggle="dropdown" title="Basic layer functions"><span class="glyphicon glyphicon-cog"></span></a>
+                  <a class="dropdown-toggle" data-toggle="dropdown" title="Basic layer functions" style="display:none;"><span class="glyphicon glyphicon-cog"></span></a>
                   <ul class="dropdown-menu" role="menu">
                       <li class="dropdown-header"><b>BASIC FUNCTIONS</b></li>
                       <li><a onClick="hideAllLayers()">Hide All Layers</a></li>
@@ -186,7 +186,7 @@
                   </ul>
               </li>
               <li class="dropdown">
-              	  <a class="dropdown-toggle" data-toggle="dropdown" title="Search functions"><span class="glyphicon glyphicon-search"></span></a>
+              	  <a class="dropdown-toggle" data-toggle="dropdown" title="Search functions" style="display:none;"><span class="glyphicon glyphicon-search"></span></a>
                   <ul class="dropdown-menu" role="menu">
                   	  <li class="dropdown-header"><b>BDE PILOT</b></li>
 					  <li class=""><a onClick="loadMapChangeset()" data-toggle="modal" data-target="#modalChangeset">Change Detection</a></li>
@@ -202,10 +202,9 @@
 
                   </ul>
               </li>
-
               <li class="dropdown">
                   <!-- <li class=""><a href="#" onClick="" data-toggle="modal" data-target="#modalQuery"><span class="glyphicon glyphicon-search"></span></a></li>   -->
-              	  <a class="dropdown-toggle" data-toggle="dropdown" title="Create Charts"><span class="glyphicon glyphicon-stats"></span></a>
+              	  <a class="dropdown-toggle" data-toggle="dropdown" title="Create Charts" style="display:none;"><span class="glyphicon glyphicon-stats"></span></a>
                   <ul class="dropdown-menu" role="menu">
                       <li class="dropdown-header"><b>STATISTICS</b></li>
                       <li class=""><a onClick="" data-toggle="modal" data-target="#modalChartQuery">Create Chart</a></li>
@@ -218,6 +217,7 @@
               <li class=""><a class="dropdown-toggle" onClick=""></a></li>
               <li class="" id="helpPages"><a class="dropdown-toggle" onClick="showManualPages()" title="Manual Pages"><span class="glyphicon glyphicon-question-sign"></span></a></li>
               <li class=""><a class="dropdown-toggle" onClick=""></a></li>
+              <a class="navbar-brand" href="http://sextant.di.uoa.gr/" target="_blank"><img src="./assets/images/SEXTANT.png" width="140" onClick="" id="logo" alt=""></a>
             </ul>
           </div><!--/.nav-collapse -->
         </div><!--/.container-fluid -->

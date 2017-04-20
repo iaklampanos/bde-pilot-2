@@ -677,7 +677,7 @@ function drawDispersion(idx){
        if (fid == resp["stations"][idx]){
          var style = new ol.style.Style({
                  image: new ol.style.Icon({
-                     src: 'http://maplacejs.com/website/images/red-dot.png',
+                     src: './assets/images/pin_red.png',
                      size: [200, 200],
                      scale: 0.2
                  })
