@@ -1,0 +1,20 @@
+{
+  "test_netcdf_path":"/mnt/disk1/thanasis/data/wrf/nc/",
+  "export_netcdf":"/mnt/disk1/thanasis/data/train.nc",
+  "cluster_obj":"/mnt/disk1/thanasis/Clustering_evaluation/conv_autoencoder/Clustering_object.zip",
+  "experiment_obj":"/mnt/disk1/thanasis/Clustering_evaluation/conv_autoencoder/CE_ConvAutoencoder_700_ght.zip",
+  "cluster_disp_path":"/mnt/disk1/thanasis/hysplit/hysplit/trunk/exec/conv/",
+  "test_disp_path":"/mnt/disk1/thanasis/hysplit/hysplit/trunk/test_exec/test/",
+  "export_path":"/mnt/disk1/thanasis/Clustering_evaluation/conv_autoencoder/results",
+  "stations":[
+    {"name":"CERNAVODA"},{"name":"KOZLODUY"},{"name":"GROHNDE"}
+    ,{"name":"EMSLAND"},{"name":"SIZEWELL"},{"name":"HINKLEY"}
+    ,{"name":"COFRENTES"},{"name":"ALMARAZ"},{"name":"LOVIISA"}
+    ,{"name":"FORSMARK"},{"name":"RINGHALS"},{"name":"SUKRAINE"}
+    ,{"name":"KHMELNITSKY"},{"name":"PAKS"},{"name":"KRSKO"}
+    ,{"name":"VANDELLOS"},{"name":"DOEL"},{"name":"HEYSHAM"}
+  ],
+  "pollutants":[
+    {"name":"C137"},{"name":"I131"}
+  ]
+}

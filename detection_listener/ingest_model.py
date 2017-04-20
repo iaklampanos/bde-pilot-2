@@ -7,6 +7,8 @@ import psycopg2
 import datetime
 import getpass
 from pywebhdfs.webhdfs import PyWebHdfsClient
+import gzip,cPickle
+
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Extract variables from netcdf file')
@@ -17,7 +19,6 @@ if __name__ == '__main__':
     opts = parser.parse_args()
     getter = attrgetter('input','method')
     inp,method = getter(opts)
-    local_filelist = sorted(os.listdir(inp))
     req = requests.get('http://namenode:50070/webhdfs/v1/sc5/models?op=LISTSTATUS')
     resp = req.json()
     fl = resp['FileStatuses']['FileStatus']
@@ -31,12 +32,11 @@ if __name__ == '__main__':
                             "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + dpass + "'")
     cur = conn.cursor()
     hdfs = PyWebHdfsClient(host='namenode', port='50070')
-    for lfl in local_filelist:
-        if lfl not in hdfs_list:
-            print lfl
-            hdfs.create_file('/sc5/models/'+lfl, open(inp+lfl,'rb'))
-            path = "http://namenode:50070/webhdfs/v1/sc5/models/"+lfl+"?op=OPEN"
-            cur.execute("INSERT INTO models(origin,filename,hdfs_path) VALUES(\'"+method+"\',\'"+lfl+"\',\'"+path+"\')")
+    if inp not in hdfs_list:
+        print inp
+        hdfs.create_file('/sc5/models/'+inp, open(inp,'rb'))
+        path = "http://namenode:50070/webhdfs/v1/sc5/models/"+inp+"?op=OPEN"
+        cur.execute("INSERT INTO models(origin,filename,hdfs_path) VALUES(\'"+method+"\',\'"+inp+"\',\'"+path+"\')")
     conn.commit()
     cur.close()
     conn.close()

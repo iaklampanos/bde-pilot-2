@@ -67,6 +67,7 @@ function PaddInteractionMainMap() {
         // document.getElementById('map_canvas').style.display = 'block';
         // document.getElementById('map_canvas2').style.display = 'none';
         vector.getSource().clear();
+        clearDispersion();
         clearWindDir();
         drawStations();
         mapFilter.removeInteraction(draw);

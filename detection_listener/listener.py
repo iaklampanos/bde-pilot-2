@@ -2,8 +2,8 @@ import sys
 sys.path.append('..')
 
 import os
-os.environ[
-    'THEANO_FLAGS'] = 'mode=FAST_RUN,device=gpu,floatX=float32,nvcc.flags=-D_FORCE_INLINES'
+os.environ['THEANO_FLAGS'] = 'mode=FAST_RUN,device=gpu,floatX=float32,nvcc.flags=-D_FORCE_INLINES'
+
 
 from web import app
 from flask import Flask, request
@@ -40,8 +40,7 @@ clust_obj = None
 exper = None
 conn = None
 cur = None
-# dpass = getpass.getpass()
-dpass = 'postgres'
+dpass = getpass.getpass()
 APPS_ROOT = os.path.dirname(os.path.abspath(__file__))
 VARS = ['GHT']
 LEVELS = [700]
@@ -168,12 +167,14 @@ def detections(date, pollutant, metric, origin):
             if m[0] != 'kmeans':
                 clust_obj = m[1]._clustering
                 ds.shift()
-                ds._items = exper._nnet.get_hidden(
+                ds._items = m[1]._nnet.get_hidden(
                     np.transpose(ds.get_items()))
+                cd = clust_obj.centroids_distance(ds, features_first=False)
+                cluster_date = utils.reconstruct_date(clust_obj._desc_date[cd[0][0]])
             else:
                 clust_obj = m[1]
-            cd = clust_obj.centroids_distance(ds, features_first=True)
-    cluster_date = utils.reconstruct_date(clust_obj._desc_date[cd[0][0]])
+                cd = clust_obj.centroids_distance(ds, features_first=True)
+                cluster_date = utils.reconstruct_date(clust_obj._desc_date[cd[0][0]])
     results = []
     results2 = []
     timestamp = datetime.datetime.strptime(cluster_date, '%y-%m-%d-%H')
@@ -181,9 +182,9 @@ def detections(date, pollutant, metric, origin):
                 datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "'")
     for row in cur:
         urllib.urlretrieve(
-            'http://namenode:50070/webhdfs/v1/sc5/clusters/kmeans/lat.npy?op=OPEN', 'lat.npy')
+            'http://namenode:50070/webhdfs/v1/sc5/clusters/'+origin+'/lat.npy?op=OPEN', 'lat.npy')
         urllib.urlretrieve(
-            'http://namenode:50070/webhdfs/v1/sc5/clusters/kmeans/lon.npy?op=OPEN', 'lon.npy')
+            'http://namenode:50070/webhdfs/v1/sc5/clusters/'+origin+'/lon.npy?op=OPEN', 'lon.npy')
         filelat = np.load('lat.npy')
         filelon = np.load('lon.npy')
         if pollutant == 'C137':
@@ -209,14 +210,15 @@ def detections(date, pollutant, metric, origin):
     top3 = results[:3]
     print top3
     top3_names = [top[0] for top in top3]
-    top3_scores = [top[1] for top in top3]
+    top3_scores = [round(top[1],3) for top in top3]
     stations = []
     dates = []
     scores = []
     dispersions = []
     cur.execute("select filename,hdfs_path,station,c137,i131 from cluster where date=TIMESTAMP \'" +
-                datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\'")
-    for row in cur:
+                datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "'")
+    rows = cur.fetchall()
+    for row in rows:
         if row[2] in top3_names:
             if (row[3] == None) or (row[4] == None):
                 urllib.urlretrieve(row[1], row[0])
@@ -284,21 +286,19 @@ def get_methods():
 
 @app.route('/getClosestWeather/<date>/<level>', methods=['GET'])
 def get_closest(date,level):
-    print level,type(level)
     level = int(level)
-    print level,type(level)
     if level == 22:
         cur.execute("select filename,hdfs_path,wind_dir500,EXTRACT(EPOCH FROM TIMESTAMP '" +
                     date + "' - date)/3600/24 as diff from weather group by date\
-                    having EXTRACT(EPOCH FROM TIMESTAMP '" + date + "' - date)/3600/24 > 0 order by diff;")
+                    having EXTRACT(EPOCH FROM TIMESTAMP '" + date + "' - date)/3600/24 >= 0 order by diff;")
     elif level == 26:
         cur.execute("select filename,hdfs_path,wind_dir700,EXTRACT(EPOCH FROM TIMESTAMP '" +
                     date + "' - date)/3600/24 as diff from weather group by date\
-                    having EXTRACT(EPOCH FROM TIMESTAMP '" + date + "' - date)/3600/24 > 0 order by diff;")
+                    having EXTRACT(EPOCH FROM TIMESTAMP '" + date + "' - date)/3600/24 >= 0 order by diff;")
     elif level == 33:
         cur.execute("select filename,hdfs_path,wind_dir900,EXTRACT(EPOCH FROM TIMESTAMP '" +
                     date + "' - date)/3600/24 as diff from weather group by date\
-                    having EXTRACT(EPOCH FROM TIMESTAMP '" + date + "' - date)/3600/24 > 0 order by diff;")
+                    having EXTRACT(EPOCH FROM TIMESTAMP '" + date + "' - date)/3600/24 >= 0 order by diff;")
     res = cur.fetchone()
     if res[3] > 5:
         return json.dumps({'error': 'date is out of bounds'})

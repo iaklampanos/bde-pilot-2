@@ -385,13 +385,18 @@ var layerSet = false;
 var baseMapType = null;
 
 function setBaseBingAerial() {
+    var vecLayer = undefined;
+    mapFilter.getLayers().forEach(function(layer) {
+        vecLayer = layer;
+    });
     if (bingMapsKey != null) {
         document.getElementById('coordinates').style.color = '#FFCC66';
-        map.getLayers().setAt(1, bingMap);
+        mapFilter.getLayers().setAt(1, bingMap);
+        mapFilter.addLayer(vecLayer);
         baseMapType = 'bing';
 
         if (!layerSet) {
-            map.addLayer(featureOverlay);
+            mapFilter.addLayer(featureOverlay);
             featureOverlay.setZIndex(5);
             layerSet = true;
         }
@@ -404,13 +409,18 @@ function setBaseBingAerial() {
 }
 
 function setBaseBingAerialLabels() {
+    var vecLayer = undefined;
+    mapFilter.getLayers().forEach(function(layer) {
+        vecLayer = layer;
+    });
     if (bingMapsKey != null) {
         document.getElementById('coordinates').style.color = '#FFCC66';
-        map.getLayers().setAt(1, bingAerialLabels);
+        mapFilter.getLayers().setAt(1, bingAerialLabels);
+        mapFilter.addLayer(vecLayer);
         baseMapType = 'aerial';
 
         if (!layerSet) {
-            map.addLayer(featureOverlay);
+            mapFilter.addLayer(featureOverlay);
             featureOverlay.setZIndex(5);
             layerSet = true;
         }
@@ -423,13 +433,18 @@ function setBaseBingAerialLabels() {
 }
 
 function setBaseBingRoad() {
+    var vecLayer = undefined;
+    mapFilter.getLayers().forEach(function(layer) {
+        vecLayer = layer;
+    });
     if (bingMapsKey != null) {
         document.getElementById('coordinates').style.color = '#A30052';
-        map.getLayers().setAt(1, bingRoads);
+        mapFilter.getLayers().setAt(1, bingRoads);
+        mapFilter.addLayer(vecLayer);
         baseMapType = 'road';
 
         if (!layerSet) {
-            map.addLayer(featureOverlay);
+            mapFilter.addLayer(featureOverlay);
             featureOverlay.setZIndex(5);
             layerSet = true;
         }
@@ -442,12 +457,17 @@ function setBaseBingRoad() {
 }
 
 function setBaseOSM() {
+    var vecLayer = undefined;
+    mapFilter.getLayers().forEach(function(layer) {
+        vecLayer = layer;
+    });
     document.getElementById('coordinates').style.color = '#A30052';
-    map.getLayers().setAt(1, baseOSM);
+    mapFilter.getLayers().setAt(1, baseOSM);
+    mapFilter.addLayer(vecLayer);
     baseMapType = 'OSM';
 
     if (!layerSet) {
-        map.addLayer(featureOverlay);
+        mapFilter.addLayer(featureOverlay);
         featureOverlay.setZIndex(5);
         layerSet = true;
     }
@@ -599,7 +619,7 @@ function estimateLocation() {
               req.send(JSON.stringify(locs));
               req.onloadend = function() {
                   resp = JSON.parse(req.responseText);
-                  if (resp["scores"][0]-resp["scores"][2] > 1 && metriccheckedVal() == 'KL') {
+                  if ( (resp["scores"][0]+resp["scores"][1]+resp["scores"][2])/3 < 13.5 && metriccheckedVal() == 'KL') {
                     res_str = 'Estimated sources: <br> <table style="border-collapse: collapse;"><tr><th style="padding: 8px;">Station<br>name</th><th style="padding: 8px;">Score</th></tr>';
                     for (var i=0; i<resp['scores'].length;i++){
                         res_str += '<tr><td style="padding: 8px;"><a onClick="drawDispersion('+i+')">'+resp['stations'][i]+'</a></td><td style="padding: 8px;">'+resp['scores'][i]+'</td></tr>';
@@ -620,7 +640,7 @@ function estimateLocation() {
                     eheader.style.display = 'block';
                 }
                 else {
-                     alert('Detection is out of grid');
+                     alert('Either detection points are out of grid or there is no overlap between detection points and calculated dispersions');
                      loader.style.display = 'none';
                      eheader.style.display = 'block';
                   }
