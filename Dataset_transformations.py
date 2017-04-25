@@ -60,13 +60,13 @@ class Dataset_transformations(Dataset):
         # print np.min(self._items), np.max(self._items), np.std(self._items)
 
     def shift(self):
-        self._delta = 1e-8
+        # self._delta = 1e-8
         self._items = self._items.flatten()
         self._items_min = np.min(self._items)
         self._items = np.add(self._items, -1 * np.min(self._items))
         self._items_max = np.max(self._items)
         self._items = np.divide(self._items, np.max(self._items))
-        self._items = np.add(self._items, self._delta)
+        # self._items = np.add(self._items, self._delta)
         self._items = self._items.reshape(self._x, self._y)
         # print np.min(self._items), np.max(self._items), np.std(self._items)
 

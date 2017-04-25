@@ -15,7 +15,7 @@ import datetime
 def save(filename, *objects):
     fil = gzip.open(filename, 'wb')
     for obj in objects:
-        cPickle.dump(obj, fil)
+        cPickle.dump(obj, fil,protocol=cPickle.HIGHEST_PROTOCOL)
     fil.close()
 
 
