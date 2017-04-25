@@ -1,9 +1,6 @@
 import sys
 sys.path.append('..')
 
-import os
-os.environ['THEANO_FLAGS'] = 'mode=FAST_RUN,device=gpu,floatX=float32,nvcc.flags=-D_FORCE_INLINES'
-
 
 from web import app
 from flask import Flask, request
