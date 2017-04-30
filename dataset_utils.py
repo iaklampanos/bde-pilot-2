@@ -67,6 +67,14 @@ def plot_pixel_image(image, image2, x, y):
     plt.plot()
     plt.show()
 
+def plot_image(image, x, y):
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 2, 1)
+    pixels = image.reshape((x, y))
+    ax.matshow(pixels, cmap=matplotlib.cm.binary)
+    plt.plot()
+    plt.show()
+
 def plot_loss(A):
     oc = oct2py.Oct2Py()
     oc.push('loss',A.loss)

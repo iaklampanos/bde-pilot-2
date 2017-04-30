@@ -1,6 +1,6 @@
 import numpy as np
 from Dataset import Dataset
-
+from sklearn.preprocessing import normalize
 
 class Dataset_transformations(Dataset):
 

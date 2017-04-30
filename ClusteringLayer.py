@@ -27,12 +27,12 @@ class ClusteringLayer(lasagne.layers.Layer):
         num_inputs = self.input_shape[1]
         self.num_units = num_units
         self.alpha = alpha
-        self.W = self.add_param(W,shape,name='W')
+        self.W = self.add_param(W,shape,name='W',trainable=True)
 
     def get_output_for(self,input, **kwargs):
-        q = 1.0 / (1.0 + T.sqrt((T.square(expand_dims(input, 1) -
+        q = 1.0 / (1.0 + T.sqrt((T.sqr(expand_dims(input, 1) -
                                           self.W).sum(axis=2)))**2 / self.alpha)
-        q = q**((self.alpha + 1.0) / 2.0)
+        q = q**((self.alpha + 1.0) / 2.0000)
         q = (q.T / q.sum(axis=1)).T
         return q
 
