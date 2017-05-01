@@ -13,31 +13,31 @@ import dataset_utils as utils
 import datetime
 from datetime import datetime
 
+
 def log(s, label='INFO'):
     sys.stdout.write(label + ' [' + str(datetime.now()) + '] ' + str(s) + '\n')
     sys.stdout.flush()
 
+
 class sda(object):
 
-    def __init__(self, feature_shape, encoder_dims, lr_epoch_decay,
+    def __init__(self, feature_shape, dims, lr_epoch_decay,
                  learning_rate,  mini_batch_size=1000, corruption_factor=0.3):
         self._feature_shape = feature_shape
-        self._encoder_dims = encoder_dims
+        self._dims = dims
         self.learning_rate = learning_rate
         self._corruption_factor = corruption_factor
-        self.INPUT_LAYER = lasagne.layers.InputLayer(
-            shape=(None, feature_shape))
         # self._encoders = []
         # self._decoders = []
         # Init activations
         self.enc_act = []
-        for i in range(0, len(self._encoder_dims)):
-            if i == len(self._encoder_dims) - 1:
+        for i in range(0, len(self._dims)):
+            if i == len(self._dims) - 1:
                 self.enc_act.append(lasagne.nonlinearities.linear)
             else:
                 self.enc_act.append(lasagne.nonlinearities.rectify)
         self.dec_act = []
-        for i in range(0, len(self._encoder_dims)):
+        for i in range(0, len(self._dims)):
             if i == 0:
                 self.dec_act.append(lasagne.nonlinearities.linear)
             else:
@@ -46,40 +46,67 @@ class sda(object):
         self.mini_batch_size = mini_batch_size
         self.lr_epoch_decay = lr_epoch_decay
 
-    def init_lw(self):
+    def init_lw(self, dataset, filename='layerwise_models.zip', lw_epochs=50000):
         # Init layer wise
-        for i in range(0, len(self._encoder_dims)):
-            # Init first autoencoder
-            if i == 0:
-                dropout_layer = lasagne.layers.DropoutLayer(incoming=self.INPUT_LAYER,
-                                                            p=self._corruption_factor)
-                encoder_layer = lasagne.layers.DenseLayer(incoming=dropout_layer,
-                                                          num_units=self._encoder_dims[i],
-                                                          W=lasagne.init.Normal(),
-                                                          nonlinearity=self.enc_act[i])
-                decoder_layer = lasagne.layers.DenseLayer(incoming=encoder_layer,
-                                                          num_units=self._feature_shape,
-                                                          W=lasagne.init.Normal(),
-                                                          nonlinearity=self.dec_act[i])
-                self._layer_wise_autoencoders.append(
-                    {'object': [dropout_layer, encoder_layer, decoder_layer],
-                     'dropout': dropout_layer, 'encoder_layer': encoder_layer,
-                     'decoder_layer': decoder_layer})
-            else:
-                # Init the rest of autoencoders
-                encoder_layer = lasagne.layers.DenseLayer(incoming=self._layer_wise_autoencoders[i - 1]['encoder_layer'],
-                                                          num_units=self._encoder_dims[
-                                                              i],
-                                                          W=lasagne.init.Normal(),
-                                                          nonlinearity=self.enc_act[i])
-                decoder_layer = lasagne.layers.DenseLayer(incoming=encoder_layer,
-                                                          num_units=self._encoder_dims[
-                                                              i - 1],
-                                                          W=lasagne.init.Normal(),
-                                                          nonlinearity=self.dec_act[i])
-                self._layer_wise_autoencoders.append(
-                    {'object': [self._layer_wise_autoencoders[i - 1]['encoder_layer'], encoder_layer, decoder_layer], 'encoder_layer': encoder_layer,
-                     'decoder_layer': decoder_layer})
+        input_var = T.matrix('input_var')
+        index = T.lscalar()
+        current_input = th.shared(name='X', value=np.asarray(dataset,
+                                                             dtype=th.config.floatX),
+                                  borrow=True)
+        for i in range(0, len(self._dims)):
+            base_lr = self.learning_rate
+            # Init lw autoencoders
+            # Initialize layers
+            input_layer = lasagne.layers.InputLayer(
+                shape=(None, self._dims[i][0]), input_var=input_var)
+            dropout_layer = lasagne.layers.DropoutLayer(incoming=input_layer,
+                                                        p=self._corruption_factor)
+            encoder_layer = lasagne.layers.DenseLayer(incoming=dropout_layer,
+                                                      num_units=self._dims[
+                                                          i][1],
+                                                      W=lasagne.init.Normal(),
+                                                      nonlinearity=self.enc_act[i])
+            decoder_layer = lasagne.layers.DenseLayer(incoming=encoder_layer,
+                                                      num_units=self._dims[
+                                                          i][2],
+                                                      W=lasagne.init.Normal(),
+                                                      nonlinearity=self.dec_act[i])
+
+            # Create train function
+            learning_rate = T.scalar(name='learning_rate')
+            prediction = lasagne.layers.get_output(decoder_layer)
+            cost = lasagne.objectives.squared_error(
+                prediction, input_var).mean()
+            l2_penalty = regularize_layer_params(
+                decoder_layer, l2) * (0.001) / 2
+            cost = cost + l2_penalty
+            params = lasagne.layers.get_all_params(
+                decoder_layer, trainable=True)
+            updates = lasagne.updates.sgd(
+                cost, params, learning_rate=learning_rate)
+            train = th.function(
+                inputs=[index, learning_rate], outputs=cost,
+                updates=updates, givens={input_layer.input_var: current_input[index:index + self.mini_batch_size, :]})
+
+            # Start training
+            for epoch in xrange(lw_epochs):
+                for row in xrange(0, dataset.shape[0], self.mini_batch_size):
+                    loss = train(row, base_lr)
+                if epoch % 10 == 0:
+                    log(str(epoch) + ' ' + str(loss),
+                        label='LWT-Layer' + str(i))
+                    # print '>'+str(datetime.datetime.utcnow())+ ' Epoch ' +
+                    # str(epoch) + ' Loss function value.... : ' + str(loss)
+                if epoch % self.lr_epoch_decay == 0:
+                    base_lr = base_lr / 10
+            self.save(filename)
+            input_layer.input_var = current_input
+            current_input = lasagne.layers.get_output(encoder_layer)
+
+            self._layer_wise_autoencoders.append(
+                {'object': [input_layer, dropout_layer, encoder_layer, decoder_layer],
+                 'encoder_layer': encoder_layer,
+                 'decoder_layer': decoder_layer})
 
         # Print layer wise topology
         print '> Layerwise topology'
@@ -88,120 +115,69 @@ class sda(object):
             print lasagne.layers.get_output_shape(self._layer_wise_autoencoders[i]['object'])
         print '----------------------------------'
 
-    def train_lw(self, dataset, filename='layerwise_models.zip', lw_epochs=50000):
-        X = th.shared(name='X', value=np.asarray(dataset,
-                                                 dtype=th.config.floatX),
-                           borrow=True)
-        # Initialize training functions
-        for i in range(0, len(self._encoder_dims)):
-            if i == 0:
-                x = T.matrix('x')
-                index = T.lscalar()
-                learning_rate = T.scalar(name='learning_rate')
-                prediction = lasagne.layers.get_output(
-                    self._layer_wise_autoencoders[i]['decoder_layer'])
-                cost = lasagne.objectives.squared_error(prediction, x).mean()
-                l2_penalty = regularize_layer_params(self._layer_wise_autoencoders[i]['object'], l2) * (0.001) / 2
-                cost = cost + l2_penalty
-                params = lasagne.layers.get_all_params(self._layer_wise_autoencoders[i]['decoder_layer'], trainable=True)
-                updates = lasagne.updates.sgd(
-                    cost, params, learning_rate=learning_rate)
-                train = th.function(
-                    inputs=[index, learning_rate], outputs=cost, 
-                    updates=updates, 
-                    givens={x: X[index:index + self.mini_batch_size, :], 
-                            self.INPUT_LAYER.input_var: X[index:index + self.mini_batch_size,:]})
-                self._layer_wise_autoencoders[i]['train'] = train
-            else:
-                index = T.lscalar()
-                learning_rate = T.scalar(name='learning_rate')
-                x = lasagne.layers.get_output(self._layer_wise_autoencoders[i - 1]['encoder_layer'])
-                prediction = lasagne.layers.get_output(
-                    self._layer_wise_autoencoders[i]['decoder_layer'])
-                cost = lasagne.objectives.squared_error(prediction, x).mean()
-                l2_penalty = regularize_layer_params(self._layer_wise_autoencoders[
-                                                     i]['object'], l2) * (0.001) / 2
-                cost = cost + l2_penalty
-                params = lasagne.layers.get_all_params(self._layer_wise_autoencoders[i]['decoder_layer'], trainable=True)
-                updates = lasagne.updates.sgd(
-                    cost, params, learning_rate=learning_rate)
-                train = th.function(
-                    inputs=[index, learning_rate], outputs=cost, 
-                    updates=updates, 
-                    givens={self.INPUT_LAYER.input_var: X[index:index + self.mini_batch_size,:]})
-                self._layer_wise_autoencoders[i]['train'] = train
-
-        # Start training
-        print '> Layer wise train'
-        dataset = dataset.astype(np.float32)
+    def init_deep(self, dataset, deep_epochs=100000,  filename='predec_model.zip', delete_layerwise=False, labels=None):
+        # Create deep network
+        input_var = T.matrix('input_var')
+        index = T.lscalar()
+        network = []
+        input_layer = lasagne.layers.InputLayer(
+            shape=(None, self._dims[0][0]), input_var=input_var)
+        self.INPUT_LAYER = input_layer
+        network.append(input_layer)
         for i in range(0, len(self._layer_wise_autoencoders)):
-            base_lr = self.learning_rate
-            print '> Autoenconder number : ' + str(i + 1)
-            for epoch in xrange(lw_epochs):
-                for row in xrange(0, dataset.shape[0], self.mini_batch_size):
-                    loss = self._layer_wise_autoencoders[i][
-                        'train'](row, base_lr)
-                if epoch % 10 == 0:
-                    log(str(epoch) + ' ' + str(loss),label='LWT-Layer' + str(i))
-                    # print '>'+str(datetime.datetime.utcnow())+ ' Epoch ' + str(epoch) + ' Loss function value.... : ' + str(loss)
-                if epoch % self.lr_epoch_decay == 0:
-                    base_lr = base_lr / 10
-            self.save(filename)
-
-
-    def init_deep(self):
-        nnet_object = []
-        encoders = []
-        nnet_object.append(self.INPUT_LAYER)
-        for i in range(0, len(self._layer_wise_autoencoders)):
-
-            nnet_object.append(lasagne.layers.DenseLayer(incoming=nnet_object[-1],
-                                                      num_units=self._encoder_dims[i],
-                                                      W=self._layer_wise_autoencoders[i]['encoder_layer'].W,
-                                                      nonlinearity=self.enc_act[i]))
-            # nnet_object.append(encoders[i])
-
+            network.append(lasagne.layers.DenseLayer(incoming=input_layer if i == 0 else network[-1],
+                                                     num_units=self._dims[
+                                                         i][1],
+                                                     W=self._layer_wise_autoencoders[
+                                                         i]['encoder_layer'].W,
+                                                     nonlinearity=self.enc_act[i]))
         for i in reversed(range(0, len(self._layer_wise_autoencoders))):
-            nnet_object.append(lasagne.layers.DenseLayer(incoming=nnet_object[-1],
-                               num_units=self._encoder_dims[i-1] if i!=0 else self._feature_shape,
-                               W=self._layer_wise_autoencoders[i]['decoder_layer'].W,
-                               nonlinearity=self.dec_act[i]))
-        self._deep_ae = {'object': nnet_object,
-                         'encoder_layer': nnet_object[len(self._encoder_dims)], 
-                         'decoder_layer': nnet_object[-1]}
+            network.append(lasagne.layers.DenseLayer(incoming=network[-1],
+                                                     num_units=self._dims[i][
+                                                         2] if i != 0 else self._feature_shape,
+                                                     W=self._layer_wise_autoencoders[
+                                                         i]['decoder_layer'].W,
+                                                     nonlinearity=self.dec_act[i]))
+
+        self._deep_ae = {'object': network,
+                         'encoder_layer': network[len(self._dims)],
+                         'decoder_layer': network[-1]}
+
         print '> Deep neural net Topology'
         print '----------------------------------'
         print lasagne.layers.get_output_shape(lasagne.layers.get_all_layers(self._deep_ae['object']))
         print '----------------------------------'
 
-    def train_deep(self, dataset, deep_epochs=100000,  filename='predec_model.zip', delete_layerwise=False):
+        # Create train function
         base_lr = self.learning_rate
         X = th.shared(name='X', value=np.asarray(dataset,
                                                  dtype=th.config.floatX),
                            borrow=True)
         learning_rate = T.scalar(name='learning_rate')
         index = T.lscalar()
-        x = T.matrix('x')
         prediction = lasagne.layers.get_output(self._deep_ae['decoder_layer'])
-        cost = lasagne.objectives.squared_error(prediction, x).mean()
-        l2_penalty = regularize_layer_params(self._deep_ae['object'], l2) * (0.001) / 2
+        cost = lasagne.objectives.squared_error(
+            prediction, input_layer.input_var).mean()
+        l2_penalty = regularize_layer_params(
+            self._deep_ae['object'], l2) * (0.001) / 2
         cost = cost + l2_penalty
         params = lasagne.layers.get_all_params(
             self._deep_ae['decoder_layer'], trainable=True)
         updates = lasagne.updates.sgd(
             cost, params, learning_rate=learning_rate)
         train = th.function(
-            inputs=[index, learning_rate], outputs=cost, updates=updates, givens={x: X[index:index + self.mini_batch_size, :], self.INPUT_LAYER.input_var: X[index:index + self.mini_batch_size, :]})
-        self._deep_ae['train'] = train
-        # Start training
+            inputs=[index, learning_rate], outputs=cost, updates=updates, givens={input_layer.input_var: X[index:index + self.mini_batch_size, :]})
+
+        # train
         print '> Deep neural net trainining'
         for epoch in xrange(deep_epochs):
             dataset = dataset.astype(np.float32)
             for row in xrange(0, dataset.shape[0], self.mini_batch_size):
-                loss = self._deep_ae['train'](row, base_lr)
+                loss = train(row, base_lr)
             if epoch % 10 == 0:
-                log(str(epoch) + ' ' + str(loss),label='DNT')
-                # print '>'+str(datetime.datetime.utcnow())+ ' Epoch ' + str(epoch) + ' Loss function value.... : ' + str(loss)
+                log(str(epoch) + ' ' + str(loss), label='DNT')
+                # print '>'+str(datetime.datetime.utcnow())+ ' Epoch ' +
+                # str(epoch) + ' Loss function value.... : ' + str(loss)
             if epoch % self.lr_epoch_decay == 0:
                 base_lr = base_lr / 10
             if epoch % 1000 == 0:
@@ -211,11 +187,12 @@ class sda(object):
             del self._layer_wise_autoencoders
 
     def target_dist(self, q):
+        q = (q.T / q.sum(axis=1)).T
         p = (q**2)
         p = (p.T / p.sum(axis=1)).T
         return p
 
-    def init_dec(self, dataset, n_clusters=10, n_init=1000):
+    def init_dec(self, dataset, n_clusters=10, n_init=100):
         kmeans = KMeans(n_clusters=n_clusters, n_init=n_init, n_jobs=-1)
         self.INPUT_LAYER.input_var = th.shared(name='X', value=np.asarray(dataset,
                                                                           dtype=th.config.floatX),
@@ -224,13 +201,15 @@ class sda(object):
             self._deep_ae['encoder_layer']).eval()
         # self.cluster_prediction = kmeans.fit(hidden)
         self.cluster_prediction = kmeans.fit_predict(hidden)
+        print self.cluster_prediction
         self._centroids = kmeans.cluster_centers_
         c_layer = ClusteringLayer(incoming=self._deep_ae[
-                                  'encoder_layer'], num_units=n_clusters, 
-                                  W=self._centroids, 
+                                  'encoder_layer'], num_units=n_clusters,
+                                  W=self._centroids,
                                   shape=(n_clusters, hidden.shape[1]))
         # self._dec = [self._deep_ae['encoder_layer'], c_layer]
-        self._dec = self._deep_ae['object'][0:3]  ## TODO write better
+        self._dec = self._deep_ae['object'][
+            0:len(self._dims) + 1]  # TODO write better
         self._dec.append(c_layer)
         print '> DEC Topology'
         print '----------------------------------'
@@ -254,7 +233,7 @@ class sda(object):
         updates = lasagne.updates.sgd(
             cost, params, learning_rate=base_lr)
         train = th.function(
-            inputs=[], outputs=[cost, prediction.argmax(1), prediction], 
+            inputs=[], outputs=[cost, prediction.argmax(1), prediction],
             updates=updates, givens={self.INPUT_LAYER.input_var: X})
         self._DEC = {'object': self._dec, 'train': train}
         print '> Cluster finetuning'
@@ -263,16 +242,20 @@ class sda(object):
         while train:
             loss, new_pred, prediction = self._DEC[
                 'train']()
+            # print new_pred[0:20]
             delta = ((new_pred != self.cluster_prediction).sum().astype(
-                np.float32) / new_pred.shape[0])
-            print loss, delta, prediction
+                np.float64) / new_pred.shape[0])
+            # print loss, delta, prediction
             if (epochs > dec_epochs) or (delta < tol):
                 train = False
                 self.save(filename)
             else:
                 self.cluster_prediction = new_pred
-            if epochs % 100 == 0:
-                print '> Epoch ' + str(epochs) + ' Change in label assignment.... : ' + str(delta)
+            if epochs % 10 == 0:
+                # print '> Epoch ' + str(epochs) + ' Change in label
+                # assignment.... : ' + str(delta)
+                log(str(epochs) + ' ' + str(loss) + ' ' + str(delta),
+                    label='DEC')
             if epochs % 1000 == 0:
                 self.save(filename)
             epochs += 1
@@ -283,7 +266,6 @@ class sda(object):
         return lasagne.layers.get_output(self._dec['obect'][0])
 
     def save(self, filename='dec_model.zip'):
-        self.INPUT_LAYER.input_var = None
         utils.save(filename, self)
 
     def load(self, filename='dec_model.zip'):
