@@ -1,7 +1,7 @@
 import cPickle
 import gzip
 from netcdf_subset import netCDF_subset
-import oct2py
+# import oct2py
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -36,22 +36,22 @@ def load_single(filename):
     return c
 
 
-def export_timebars(outp, start_date, nc_sub, clust_obj):
-    oc = oct2py.Oct2Py()
-    time_diagram = nc_sub.get_time_diagram(
-        start_date, clust_obj._index_list)
-    for n_clust, index in enumerate(time_diagram):
-        oc.push('x', index)
-        a = oc.eval('x*4;')
-        oc.push('a', a)
-        a = oc.eval('a+1;')
-        oc.push('a', a)
-        y = oc.zeros(1, clust_obj.get_items().shape[0])
-        oc.push('y', y)
-        oc.eval('y(a)=1;')
-        oc.eval('bar(y)',
-                plot_dir=outp, plot_name='cluster' + str(int(n_clust)) + '_timebar', plot_format='jpeg',
-                plot_width='2048', plot_height='1536')
+# def export_timebars(outp, start_date, nc_sub, clust_obj):
+#     oc = oct2py.Oct2Py()
+#     time_diagram = nc_sub.get_time_diagram(
+#         start_date, clust_obj._index_list)
+#     for n_clust, index in enumerate(time_diagram):
+#         oc.push('x', index)
+#         a = oc.eval('x*4;')
+#         oc.push('a', a)
+#         a = oc.eval('a+1;')
+#         oc.push('a', a)
+#         y = oc.zeros(1, clust_obj.get_items().shape[0])
+#         oc.push('y', y)
+#         oc.eval('y(a)=1;')
+#         oc.eval('bar(y)',
+#                 plot_dir=outp, plot_name='cluster' + str(int(n_clust)) + '_timebar', plot_format='jpeg',
+#                 plot_width='2048', plot_height='1536')
 
 
 def plot_pixel_image(image, image2, x, y):
@@ -75,10 +75,10 @@ def plot_image(image, x, y):
     plt.plot()
     plt.show()
 
-def plot_loss(A):
-    oc = oct2py.Oct2Py()
-    oc.push('loss',A.loss)
-    oc.eval('plot(loss)',plot_width='2048', plot_height='1536')
+# def plot_loss(A):
+#     oc = oct2py.Oct2Py()
+#     oc.push('loss',A.loss)
+#     oc.eval('plot(loss)',plot_width='2048', plot_height='1536')
 
 def reconstruct_date(date_str, dot_nc=False):
     if dot_nc:

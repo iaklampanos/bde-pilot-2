@@ -3,7 +3,7 @@ from Dataset import Dataset
 from sklearn.cluster import KMeans, MiniBatchKMeans, AgglomerativeClustering
 from sklearn import metrics
 import dataset_utils as utils
-import oct2py
+# import oct2py
 
 
 class Clustering(Dataset):
@@ -88,19 +88,19 @@ class Clustering(Dataset):
         self._clustering_dist = sort_obd_dev
         self._index_list = clut_list
 
-    def plot_cluster_distirbution(self, outp=None):
-        lens = []
-        oc = oct2py.Oct2Py()
-        for i in self._clustering_dist:
-            lens.append(i[1])
-        oc.push('lens', lens)
-        oc.push('xlens', range(0, self._n_clusters))
-        if outp is None:
-            oc.eval('plot(xlens,lens)',plot_width='2048', plot_height='1536')
-        else:
-            oc.eval('plot(xlens,lens)',
-                    plot_dir=outp, plot_name='clustering_frequency', plot_format='jpeg',
-                    plot_width='2048', plot_height='1536')
+    # def plot_cluster_distirbution(self, outp=None):
+    #     lens = []
+    #     oc = oct2py.Oct2Py()
+    #     for i in self._clustering_dist:
+    #         lens.append(i[1])
+    #     oc.push('lens', lens)
+    #     oc.push('xlens', range(0, self._n_clusters))
+    #     if outp is None:
+    #         oc.eval('plot(xlens,lens)',plot_width='2048', plot_height='1536')
+    #     else:
+    #         oc.eval('plot(xlens,lens)',
+    #                 plot_dir=outp, plot_name='clustering_frequency', plot_format='jpeg',
+    #                 plot_width='2048', plot_height='1536')
 
     def centroids_distance(self, dataset,features_first=False):
         items = dataset.get_items()
