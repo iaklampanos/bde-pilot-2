@@ -4,6 +4,7 @@ import theano as th
 import theano.tensor as T
 from lasagne.regularization import regularize_layer_params_weighted, l2
 from lasagne.regularization import regularize_layer_params
+from sklearn.utils.linear_assignment_ import linear_assignment
 import lasagne
 from ClusteringLayer import ClusteringLayer
 from sklearn.cluster import KMeans
@@ -17,6 +18,16 @@ from datetime import datetime
 def log(s, label='INFO'):
     sys.stdout.write(label + ' [' + str(datetime.now()) + '] ' + str(s) + '\n')
     sys.stdout.flush()
+
+
+def cluster_acc(y_true, y_pred):
+    assert y_pred.size == y_true.size
+    D = max(y_pred.max(), y_true.max())+1
+    w = np.zeros((D, D), dtype=np.int64)
+    for i in range(y_pred.size):
+        w[y_pred[i], y_true[i]] += 1
+    ind = linear_assignment(w.max() - w)
+    return sum([w[i, j] for i, j in ind])*1.0/y_pred.size
 
 
 class sda(object):
@@ -90,10 +101,13 @@ class sda(object):
 
             # Start training
             for epoch in xrange(lw_epochs):
+                epoch_loss = 0
                 for row in xrange(0, dataset.shape[0], self.mini_batch_size):
                     loss = train(row, base_lr)
+                    epoch_loss += loss
+                epoch_loss = float(epoch_loss) / (dataset.shape[0]/self.mini_batch_size)
                 if epoch % 10 == 0:
-                    log(str(epoch) + ' ' + str(loss),
+                    log(str(epoch) + ' ' + str(epoch_loss),
                         label='LWT-Layer' + str(i))
                     # print '>'+str(datetime.datetime.utcnow())+ ' Epoch ' +
                     # str(epoch) + ' Loss function value.... : ' + str(loss)
@@ -101,7 +115,10 @@ class sda(object):
                     base_lr = base_lr / 10
             self.save(filename)
             input_layer.input_var = current_input
-            current_input = lasagne.layers.get_output(encoder_layer)
+            hidden = lasagne.layers.get_output(encoder_layer).eval()
+            current_input = th.shared(name='X', value=np.asarray(hidden,
+                                                                 dtype=th.config.floatX),
+                                      borrow=True)
 
             self._layer_wise_autoencoders.append(
                 {'object': [input_layer, dropout_layer, encoder_layer, decoder_layer],
@@ -178,13 +195,20 @@ class sda(object):
                 log(str(epoch) + ' ' + str(loss), label='DNT')
                 # print '>'+str(datetime.datetime.utcnow())+ ' Epoch ' +
                 # str(epoch) + ' Loss function value.... : ' + str(loss)
+            if epoch % 100 == 0:
+                if not(labels is None):
+                    kmeans = KMeans(n_clusters=10, n_init=20, n_jobs=-1)
+                    self.INPUT_LAYER.input_var = X
+                    hidden = lasagne.layers.get_output(
+                        self._deep_ae['encoder_layer']).eval()
+                    cluster_prediction = kmeans.fit_predict(hidden)
+                    acc = cluster_acc(labels,cluster_prediction)
+                    log(str(epoch) + ' ' + str(acc), label='DNT_ACC')
             if epoch % self.lr_epoch_decay == 0:
                 base_lr = base_lr / 10
             if epoch % 1000 == 0:
                 self.save(filename)
         self.save(filename)
-        if delete_layerwise:
-            del self._layer_wise_autoencoders
 
     def target_dist(self, q):
         q = (q.T / q.sum(axis=1)).T
@@ -192,22 +216,19 @@ class sda(object):
         p = (p.T / p.sum(axis=1)).T
         return p
 
-    def init_dec(self, dataset, n_clusters=10, n_init=100):
+    def init_dec(self, dataset, n_clusters=10, n_init=20):
         kmeans = KMeans(n_clusters=n_clusters, n_init=n_init, n_jobs=-1)
         self.INPUT_LAYER.input_var = th.shared(name='X', value=np.asarray(dataset,
                                                                           dtype=th.config.floatX),
                                                borrow=True)
         hidden = lasagne.layers.get_output(
             self._deep_ae['encoder_layer']).eval()
-        # self.cluster_prediction = kmeans.fit(hidden)
         self.cluster_prediction = kmeans.fit_predict(hidden)
-        print self.cluster_prediction
         self._centroids = kmeans.cluster_centers_
         c_layer = ClusteringLayer(incoming=self._deep_ae[
                                   'encoder_layer'], num_units=n_clusters,
                                   W=self._centroids,
                                   shape=(n_clusters, hidden.shape[1]))
-        # self._dec = [self._deep_ae['encoder_layer'], c_layer]
         self._dec = self._deep_ae['object'][
             0:len(self._dims) + 1]  # TODO write better
         self._dec.append(c_layer)
@@ -215,14 +236,14 @@ class sda(object):
         print '----------------------------------'
         print lasagne.layers.get_output_shape(self._dec)
         print '----------------------------------'
-        return [self._centroids, self._deep_ae['encoder_layer'].W]
+
 
     def train_dec(self, dataset, tol=0.01,  filename='dec_model.zip', dec_epochs=100000):
         X = th.shared(name='X', value=np.asarray(dataset,
                                                  dtype=th.config.floatX),
                       borrow=True)
         self.INPUT_LAYER.input_var = X
-        base_lr = 0.01
+        base_lr = 0.2
         x = T.matrix('x')
         prediction = lasagne.layers.get_output(self._dec[-1])
         x = self.target_dist(prediction)
@@ -242,10 +263,9 @@ class sda(object):
         while train:
             loss, new_pred, prediction = self._DEC[
                 'train']()
-            # print new_pred[0:20]
             delta = ((new_pred != self.cluster_prediction).sum().astype(
-                np.float64) / new_pred.shape[0])
-            # print loss, delta, prediction
+                np.float32) / new_pred.shape[0])
+            print new_pred
             if (epochs > dec_epochs) or (delta < tol):
                 train = False
                 self.save(filename)
@@ -255,15 +275,15 @@ class sda(object):
                 # print '> Epoch ' + str(epochs) + ' Change in label
                 # assignment.... : ' + str(delta)
                 log(str(epochs) + ' ' + str(loss) + ' ' + str(delta),
-                    label='DEC')
+                label='DEC')
             if epochs % 1000 == 0:
                 self.save(filename)
             epochs += 1
-        return [lasagne.layers.get_all_param_values(self._DEC['object'][1])[0], self._DEC['object'][len(self._dec) - 1].W]
+
 
     def get_hidden(self, dataset):
         self.INPUT_LAYER.input_var = dataset
-        return lasagne.layers.get_output(self._dec['obect'][0])
+        return lasagne.layers.get_output(self._deep_ae['encoder_layer']).eval()
 
     def save(self, filename='dec_model.zip'):
         utils.save(filename, self)
@@ -271,10 +291,11 @@ class sda(object):
     def load(self, filename='dec_model.zip'):
         self = utils.load_single(filename)
 
-    def save_cpu(self, filename):
+    def save_cpu(self):
+        self.INPUT_LAYER.input_var = None
         lw = []
         if hasattr(self, '_layer_wise_autoencoders'):
-            for i in len(0, len(self._layer_wise_autoencoders)):
+            for i in range(0, len(self._layer_wise_autoencoders)):
                 lw.append(lasagne.layers.get_all_param_values(
                     self._layer_wise_autoencoders[i]['object']))
             utils.save('layer_wise_cpu.zip', lw)
