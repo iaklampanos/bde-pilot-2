@@ -93,7 +93,7 @@ class sda(object):
             cost = cost + l2_penalty
             params = lasagne.layers.get_all_params(
                 decoder_layer, trainable=True)
-            updates = lasagne.updates.sgd(
+            updates = lasagne.updates.momentum(
                 cost, params, learning_rate=learning_rate)
             train = th.function(
                 inputs=[index, learning_rate], outputs=cost,
@@ -180,7 +180,7 @@ class sda(object):
         cost = cost + l2_penalty
         params = lasagne.layers.get_all_params(
             self._deep_ae['decoder_layer'], trainable=True)
-        updates = lasagne.updates.sgd(
+        updates = lasagne.updates.momentum(
             cost, params, learning_rate=learning_rate)
         train = th.function(
             inputs=[index, learning_rate], outputs=cost, updates=updates, givens={input_layer.input_var: X[index:index + self.mini_batch_size, :]})
@@ -251,7 +251,7 @@ class sda(object):
             prediction, x).mean()
         params = lasagne.layers.get_all_params(
             self._dec, trainable=True)
-        updates = lasagne.updates.sgd(
+        updates = lasagne.updates.momentum(
             cost, params, learning_rate=base_lr)
         train = th.function(
             inputs=[], outputs=[cost, prediction.argmax(1), prediction],

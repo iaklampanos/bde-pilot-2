@@ -22,7 +22,7 @@ def cluster_acc(Y_pred, Y):
 
 
 [X,labels] = utils.load_mnist(dataset='testing',path='/mnt/disk1/thanasis/autoencoder/')
-print X.shape
+# print X.shape
 # X = X[0:10000,:]
 # labels = labels[0:10000,:].reshape(10000)
 Sda = utils.load_single('predec_model.zip')
@@ -51,6 +51,12 @@ cluster_prediction = kmeans.fit_predict(hidden)
 acc = cluster_acc(cluster_prediction,labels)
 
 print 'LW',acc
+
+kmeans = KMeans(n_clusters=9, n_init=20, n_jobs=-1)
+cluster_prediction = kmeans.fit_predict(X)
+acc = cluster_acc(cluster_prediction,labels)
+
+print 'K',acc
 
 for i in range(0,100):
     utils.plot_pixel_image(X[i,:],a_out[i,:],28,28)
