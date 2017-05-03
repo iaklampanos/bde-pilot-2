@@ -24,21 +24,22 @@ log('Loading MNIST...')
 log('Done')
 
 
-samples_slice = slice(0, 1000)
+samples_slice = slice(0, 10000)
 X = X[samples_slice,:]
+X = X.astype(np.float64)*0.02
 labels = labels[samples_slice, :]
 print X.shape
 print labels.shape
-# Sda = utils.load_single('predec_model.zip')
+Sda = utils.load_single('layerwise_models.zip')
 
 #
 
-Sda = sda(feature_shape=784,
-          dims=[(784,500,784),(500,500,500),(500,2000,500)], #,500,2000,10],
-          learning_rate=0.1,
-          lr_epoch_decay=2000,
-          mini_batch_size=100,
-          corruption_factor=0.2)
+# Sda = sda(feature_shape=784,
+#           dims=[(784,500,784),(500,500,500),(500,2000,500),(2000,10,2000)], #,500,2000,10],
+#           learning_rate=0.1,
+#           lr_epoch_decay=75,
+#           mini_batch_size=256,
+#           corruption_factor=0.2)
 
 # Sda2 = sda(feature_shape=500,
 #           dims=[(500,500,500)], #,500,2000,10],
@@ -47,7 +48,7 @@ Sda = sda(feature_shape=784,
 #           mini_batch_size=1000,
 #           corruption_factor=0.2)
 
-Sda.init_lw(X,lw_epochs=5000,filename='layerwise_models_784.zip')
+# Sda.init_lw(X,lw_epochs=200,filename='layerwise_models.zip')
 # Sda._layer_wise_autoencoders[0]['object'][0].input_var = th.shared(name='X', value=np.asarray(X,
 #                                               dtype=th.config.floatX),
 #                   borrow=True)
@@ -56,7 +57,7 @@ Sda.init_lw(X,lw_epochs=5000,filename='layerwise_models_784.zip')
 
 
 #
-# Sda.init_deep(X,deep_epochs=10,filename='predec_model_100.zip',labels=labels)
+Sda.init_deep(X,deep_epochs=500,filename='predec_model.zip')
 #
 #
 # Sda.init_dec(X, n_clusters=10)

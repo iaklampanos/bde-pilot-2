@@ -142,18 +142,18 @@ class sda(object):
         self.INPUT_LAYER = input_layer
         network.append(input_layer)
         for i in range(0, len(self._layer_wise_autoencoders)):
+            enc_w = np.array(self._layer_wise_autoencoders[i]['encoder_layer'].W.eval())
             network.append(lasagne.layers.DenseLayer(incoming=input_layer if i == 0 else network[-1],
                                                      num_units=self._dims[
                                                          i][1],
-                                                     W=self._layer_wise_autoencoders[
-                                                         i]['encoder_layer'].W,
+                                                     W=enc_w,
                                                      nonlinearity=self.enc_act[i]))
         for i in reversed(range(0, len(self._layer_wise_autoencoders))):
+            dec_w = np.array(self._layer_wise_autoencoders[i]['decoder_layer'].W.eval())
             network.append(lasagne.layers.DenseLayer(incoming=network[-1],
                                                      num_units=self._dims[i][
                                                          2] if i != 0 else self._feature_shape,
-                                                     W=self._layer_wise_autoencoders[
-                                                         i]['decoder_layer'].W,
+                                                     W=dec_w,
                                                      nonlinearity=self.dec_act[i]))
 
         self._deep_ae = {'object': network,
@@ -176,7 +176,7 @@ class sda(object):
         cost = lasagne.objectives.squared_error(
             prediction, input_layer.input_var).mean()
         l2_penalty = regularize_layer_params(
-            self._deep_ae['object'], l2) * (0.001) / 2
+            self._deep_ae['decoder_layer'], l2) * (0.001) / 2
         cost = cost + l2_penalty
         params = lasagne.layers.get_all_params(
             self._deep_ae['decoder_layer'], trainable=True)

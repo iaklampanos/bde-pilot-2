@@ -23,28 +23,27 @@ def cluster_acc(Y_pred, Y):
 
 [X,labels] = utils.load_mnist(dataset='testing',path='/mnt/disk1/thanasis/autoencoder/')
 print X.shape
-X = X[0:1000,:]
-labels = labels[0:1000,:].reshape(1000)
-Sda = utils.load_single('layerwise_models_784.zip')
+# X = X[0:10000,:]
+# labels = labels[0:10000,:].reshape(10000)
+Sda = utils.load_single('predec_model.zip')
 
-#Sda.INPUT_LAYER.input_var =
-Sda._layer_wise_autoencoders[0]['object'][0].input_var = th.shared(name='X', value=np.asarray(X,
+Sda.INPUT_LAYER.input_var = Sda._layer_wise_autoencoders[0]['object'][0].input_var = th.shared(name='X', value=np.asarray(X,
                                               dtype=th.config.floatX),
                    borrow=True)
 # a_out =  lasagne.layers.get_output(Sda._layer_wise_autoencoders[0]['decoder_layer']).eval()
 
 # a_out =  lasagne.layers.get_output(Sda._layer_wise_autoencoders[0]['decoder_layer']).eval()
 
-# kmeans = KMeans(n_clusters=10, n_init=20, n_jobs=-1)
+kmeans = KMeans(n_clusters=9, n_init=20, n_jobs=-1)
+
+
+hidden = lasagne.layers.get_output(Sda._deep_ae['encoder_layer']).eval()
+cluster_prediction = kmeans.fit_predict(hidden)
+acc = cluster_acc(cluster_prediction,labels)
+
+print 'DEEP',acc
 #
-#
-# hidden = lasagne.layers.get_output(Sda._deep_ae['encoder_layer']).eval()
-# cluster_prediction = kmeans.fit_predict(hidden)
-# acc = cluster_acc(labels,cluster_prediction)
-#
-# print 'DEEP',acc
-#
-kmeans = KMeans(n_clusters=10, n_init=20, n_jobs=-1)
+kmeans = KMeans(n_clusters=9, n_init=20, n_jobs=-1)
 
 
 hidden = lasagne.layers.get_output(Sda._layer_wise_autoencoders[0]['encoder_layer']).eval()
