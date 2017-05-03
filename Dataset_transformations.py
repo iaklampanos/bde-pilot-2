@@ -56,7 +56,7 @@ class Dataset_transformations(Dataset):
             mean = self._items[:, j].mean()
             self._items[:, j] = np.subtract(self._items[:, j], mean)
             self._items[:, j] = np.divide(
-                self._items[:, j], np.std(self._items[:, j]))
+                self._items[:, j], np.sqrt(np.var(self._items[:, j])+10))
         # print np.min(self._items), np.max(self._items), np.std(self._items)
 
     def shift(self):

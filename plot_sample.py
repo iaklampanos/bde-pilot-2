@@ -32,7 +32,7 @@ Sda.INPUT_LAYER.input_var = Sda._layer_wise_autoencoders[0]['object'][0].input_v
                    borrow=True)
 # a_out =  lasagne.layers.get_output(Sda._layer_wise_autoencoders[0]['decoder_layer']).eval()
 
-# a_out =  lasagne.layers.get_output(Sda._layer_wise_autoencoders[0]['decoder_layer']).eval()
+a_out =  lasagne.layers.get_output(Sda._deep_ae['decoder_layer']).eval()
 
 kmeans = KMeans(n_clusters=9, n_init=20, n_jobs=-1)
 
