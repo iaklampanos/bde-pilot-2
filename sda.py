@@ -122,6 +122,13 @@ class sda(object):
                  'encoder_layer': encoder_layer,
                  'decoder_layer': decoder_layer})
 
+        for i in range(0,len(self._layer_wise_autoencoders)):
+            np.save(str(i)+'_enc_W.npy',self._layer_wise_autoencoders[i]['encoder_layer'].W.eval())
+            np.save(str(i)+'_enc_b.npy',self._layer_wise_autoencoders[i]['encoder_layer'].b.eval())
+        for i in range(0,len(self._layer_wise_autoencoders)):
+            np.save(str(i)+'_dec_W.npy',self._layer_wise_autoencoders[i]['decoder_layer'].W.eval())
+            np.save(str(i)+'_dec_b.npy',self._layer_wise_autoencoders[i]['decoder_layer'].b.eval())
+
         # Print layer wise topology
         print '> Layerwise topology'
         print '----------------------------------'
@@ -142,13 +149,15 @@ class sda(object):
             network.append(lasagne.layers.DenseLayer(incoming=input_layer if i == 0 else network[-1],
                                                      num_units=self._dims[
                                                          i][1],
-                                                     W=self._layer_wise_autoencoders[i]['encoder_layer'].W,
+                                                     W=np.load(str(i)+'_enc_W.npy'),
+                                                     b=np.load(str(i)+'_enc_b.npy'),
                                                      nonlinearity=self.enc_act[i]))
         for i in reversed(range(0, len(self._layer_wise_autoencoders))):
             network.append(lasagne.layers.DenseLayer(incoming=network[-1],
                                                      num_units=self._dims[i][
                                                          2] if i != 0 else self._feature_shape,
-                                                     W=self._layer_wise_autoencoders[i]['decoder_layer'].W,
+                                                     W=np.load(str(i)+'_dec_W.npy'),
+                                                     b=np.load(str(i)+'_dec_b.npy'),
                                                      nonlinearity=self.dec_act[i]))
 
         self._deep_ae = {'object': network,
@@ -201,6 +210,7 @@ class sda(object):
             if epoch % 1000 == 0:
                 self.save(filename)
         self.save(filename)
+
 
     def target_dist(self, q):
         q = (q.T / q.sum(axis=1)).T
