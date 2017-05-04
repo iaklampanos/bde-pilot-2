@@ -18,18 +18,13 @@ import dataset_utils as utils
 
 DEF_VARS = ['GHT']
 DEF_LEVELS = [700]
-EXPORT_NC = '/mnt/disk1/thanasis/data/train.nc'
 MODEL_FILE = ''
 DISPERSION_PATH = '/mnt/disk1/thanasis/hysplit/hysplit/trunk/exec/raw_kmeans'
 NETCDF_PATH = '/mnt/disk1/thanasis/data/wrf/nc/'
 
 
-def load_clustering(clustering_path, clustering_variable=DEF_VARS, level=DEF_LEVELS, export_netcdf=EXPORT_NC):
-    export_template = netCDF_subset(export_netcdf,  [level], [clustering_variable],
-                                    lvlname='num_metgrid_levels', timename='Times')
+def load_clustering(clustering_path):
     clust_obj = utils.load_single(clustering_path)
-    clust_obj.desc_date(export_template)
-    del export_template
     return clust_obj
 
 
@@ -117,18 +112,19 @@ if __name__ == '__main__':
 
 
     clust_obj = load_clustering(clustering_path)
-
+    weather_id = ''
     for line in sys.stdin:
         line = line.strip()
         tokens = line.split(',')
-        weather_id = tokens[0]
-        weather_data = load_weather_data(weather_id)
-        cleaned_weather = clean_weather(weather_data)
+        if tokens[0] != weather_id:
+            weather_id = tokens[0]
+            weather_data = load_weather_data(weather_id)
+            cleaned_weather = clean_weather(weather_data)
 
-        if MODEL_FILE != '':
-            cleaned_weather.shift()
-            cleaned_weather._items = exper._nnet.get_hidden(
-                np.transpose(cleaned_weather.get_items()))
+            if MODEL_FILE != '':
+                cleaned_weather.shift()
+                cleaned_weather._items = exper._nnet.get_hidden(
+                    np.transpose(cleaned_weather.get_items()))
 
         cd = clust_obj.centroids_distance(
             cleaned_weather, features_first=True)  # TODO alternative distances??

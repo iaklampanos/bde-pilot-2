@@ -104,6 +104,42 @@ def init(cp, dataset):
     log(hidden.shape)
     np.save(prefix+'_hidden.npy',hidden)
 
+def init_pretrained(cp, dataset):
+    prefix = cp.get('Experiment','prefix')
+    num = cp.get('Experiment','num')
+    # Initialize theano tensors
+    log(dataset.shape)
+    input_var = theano.shared(name='input_var', value=np.asarray(dataset,
+                              dtype=theano.config.floatX),
+                              borrow=True)
+    index = T.lscalar()
+    # Initialize neural network
+    enc_act = cp.get('NeuralNetwork','encoderactivation')
+    dec_act = cp.get('NeuralNetwork','decoderactivation')
+    relu = lasagne.nonlinearities.rectify
+    linear = lasagne.nonlinearities.linear
+    batch_size = int(cp.get('NeuralNetwork','batchsize'))
+    lr_decay = int(cp.get('NeuralNetwork','lrepochdecay'))
+    # Stacking layers into network
+    input_layer = network = lasagne.layers.InputLayer(shape=(None, int(cp.get('NeuralNetwork','inputlayer'))),
+                                        input_var=input_var)
+    network = lasagne.layers.DropoutLayer(incoming=network,
+                            p=float(cp.get('NeuralNetwork','corruptionfactor')))
+    encoder_layer = network = lasagne.layers.DenseLayer(incoming=network,
+                                          num_units=int(cp.get('NeuralNetwork','hiddenlayer')),
+                                          W=np.load(prefix+'_'+num+'_W1.npy'),
+                                          b=np.load(prefix+'_'+num+'_b1.npy'),
+                                          nonlinearity=relu if enc_act == 'ReLU' else linear )
+    network = lasagne.layers.DenseLayer(incoming=network,
+                                        num_units=int(cp.get('NeuralNetwork','outputlayer')),
+                                        W=np.load(prefix+'_'+num+'_W2.npy'),
+                                        b=np.load(prefix+'_'+num+'_b2.npy'),
+                                        nonlinearity=relu if dec_act == 'ReLU' else linear )
+    hidden = lasagne.layers.get_output(encoder_layer).eval()
+    np.save(prefix+'_hidden.npy',hidden)
+    output = lasagne.layers.get_output(network).eval()
+    np.save(prefix+'_output.npy',output)
+
 def main(path):
     cp = load_config(path)
     try:
