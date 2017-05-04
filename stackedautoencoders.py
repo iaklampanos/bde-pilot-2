@@ -36,10 +36,18 @@ def load_data(cp):
         p = np.random.permutation(X.shape[0])
         X = X[p].astype(np.float32)*0.02
         labels = labels[p]
-        np.save('random_perm.npy',p)
+        prefix = cp.get('Experiment','prefix')
+        num = cp.get('Experiment','num')
+        np.save(prefix+'_sda_random_perm.npy',p)
         return [X,labels]
     else:
         X = np.load(cp[length].get('Experiment','inputfile'))
+        if cp.get('Experiment','train') == 'True':
+             p = np.random.permutation(X.shape[0])
+             X = X[p]
+             prefix = cp.get('Experiment','prefix')
+             num = cp.get('Experiment','num')
+             np.save(prefix+'_'+num+'random_perm.npy',p)
         return X
     log('DONE........')
 
@@ -112,7 +120,7 @@ def init(cp, dataset, length):
         if (epoch % 100 == 0) and (epoch != 0):
             utils.save(prefix+'_sda.zip',network)
     input_layer.input_var = input_var
-    utils.save(prefix+'_sda.zip',network)
+    np.save(prefix+'_sda_model.npy',lasagne.layers.get_all_param_values(network))
     np.save(prefix+'_sda_W1.npy',encoder_layer.W.eval())
     np.save(prefix+'_sda_W2.npy',network.W.eval())
     np.save(prefix+'_sda_b1.npy',encoder_layer.b.eval())
@@ -121,6 +129,46 @@ def init(cp, dataset, length):
     log(hidden.shape)
     np.save(prefix+'_sda_hidden.npy',hidden)
     np.save(prefix+'_sda_output.npy',lasagne.layers.get_output(network).eval())
+
+def init_pretrained(cp, dataset, length):
+    relu = lasagne.nonlinearities.rectify
+    linear = lasagne.nonlinearities.linear
+    batch_size = int(cp[length].get('NeuralNetwork','batchsize'))
+    lr_decay = int(cp[length].get('NeuralNetwork','lrepochdecay'))
+    prefix = cp[length].get('Experiment','prefix')
+    log(dataset.shape)
+    # Create deep network
+    input_var = theano.shared(name='input_var', value=np.asarray(dataset,
+                          dtype=theano.config.floatX),
+                          borrow=True)
+    index = T.lscalar()
+    input_layer = network = lasagne.layers.InputLayer(shape=(None, int(cp[0].get('NeuralNetwork','inputlayer'))),
+                                                    input_var=input_var)
+    # Deep encoders
+    for i in xrange(length):
+        enc_act = cp[i].get('NeuralNetwork','encoderactivation')
+        network = lasagne.layers.DenseLayer(incoming=input_layer if i == 0 else network,
+                                                 num_units=int(cp[i].get('NeuralNetwork','hiddenlayer')),
+                                                 W=np.load(prefix+'_'+str(i)+'_W1.npy'),
+                                                 b=np.load(prefix+'_'+str(i)+'_b1.npy'),
+                                                 nonlinearity=relu if enc_act == 'ReLU' else linear )
+    encoder_layer = network
+
+    # Deep decoders
+    for i in reversed(xrange(length)):
+        dec_act = cp[i].get('NeuralNetwork','decoderactivation')
+        network = lasagne.layers.DenseLayer(incoming=network,
+                                                 num_units=int(cp[i].get('NeuralNetwork','outputlayer')),
+                                                 W=np.load(prefix+'_'+str(i)+'_W2.npy'),
+                                                 b=np.load(prefix+'_'+str(i)+'_b2.npy'),
+                                                 nonlinearity=relu if dec_act == 'ReLU' else linear )
+    lasagne.layers.set_all_param_values(network,np.load(prefix+'_sda_model.npy'))
+    input_layer.input_var = input_var
+    hidden = lasagne.layers.get_output(encoder_layer).eval()
+    np.save(prefix+'_sda_pretrained_hidden.npy',hidden)
+    output = lasagne.layers.get_output(network).eval()
+    np.save(prefix+'_sda_pretrained_output.npy',output)
+
 
 def main(path,length):
     cp = load_config(path,length)

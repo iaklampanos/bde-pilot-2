@@ -32,7 +32,12 @@ def load_data(cp):
         return [X,labels]
     else:
         X = np.load(cp.get('Experiment','inputfile'))
-        np.random.shuffle(X)
+        if cp.get('Experiment','train') == 'True':
+             p = np.random.permutation(X.shape[0])
+             X = X[p]
+             prefix = cp.get('Experiment','prefix')
+             num = cp.get('Experiment','num')
+             np.save(prefix+'_'+num+'random_perm.npy',p)
         return X
     log('DONE........')
 
@@ -96,7 +101,7 @@ def init(cp, dataset):
             utils.save('autoenc_'+num+'.zip',network)
     input_layer.input_var = input_var
     prefix = cp.get('Experiment','prefix')
-    utils.save(prefix+'_autoencoder_'+num+'.zip',network)
+    np.save(prefix+'_'+num+'_model.npy',lasagne.layers.get_all_param_values(network))
     np.save(prefix+'_'+num+'_W1.npy',encoder_layer.W.eval())
     np.save(prefix+'_'+num+'_W2.npy',network.W.eval())
     np.save(prefix+'_'+num+'_b1.npy',encoder_layer.b.eval())
@@ -136,7 +141,7 @@ def init_pretrained(cp, dataset):
                                         W=np.load(prefix+'_'+num+'_W2.npy'),
                                         b=np.load(prefix+'_'+num+'_b2.npy'),
                                         nonlinearity=relu if dec_act == 'ReLU' else linear )
-    lasagne.layers.set_all_param_values(network,np.load('autoenc_values.npy'))
+    lasagne.layers.set_all_param_values(network,np.load(prefix+'_'+num+'_model.npy'))
     input_layer.input_var = input_var
     hidden = lasagne.layers.get_output(encoder_layer).eval()
     np.save(prefix+'_'+num+'_pretrained_hidden.npy',hidden)
