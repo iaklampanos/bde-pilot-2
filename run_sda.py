@@ -20,17 +20,17 @@ def log(s, label='INFO'):
     sys.stderr.write(label + ' [' + str(datetime.now()) + '] ' + str(s) + '\n')
 
 log('Loading MNIST...')
-[X,labels] = utils.load_mnist(path='/mnt/disk1/thanasis/autoencoder')
+[X,labels] = utils.load_mnist(path='/home/ubuntu/data/mnist/')
 log('Done')
 
 
-samples_slice = slice(0, 5000)
-X = X[samples_slice,:]
+#samples_slice = slice(0, 5000)
+#X = X[samples_slice,:]
 X = X.astype(np.float64)*0.02
-labels = labels[samples_slice, :]
+#labels = labels[samples_slice, :]
 print X.shape
 print labels.shape
-# Sda = utils.load_single('layerwise_models.zip')
+#Sda = utils.load_single('layerwise_models.zip')
 
 #
 
@@ -49,6 +49,7 @@ Sda = sda(feature_shape=784,
 #           corruption_factor=0.2)
 
 Sda.init_lw(X,lw_epochs=200,filename='layerwise_models.zip')
+Sda = utils.load_single('layerwise_models.zip')
 # Sda._layer_wise_autoencoders[0]['object'][0].input_var = th.shared(name='X', value=np.asarray(X,
 #                                               dtype=th.config.floatX),
 #                   borrow=True)

@@ -14,6 +14,9 @@ import dataset_utils as utils
 import datetime
 from datetime import datetime
 
+def lse(a,b):
+    a,b = lasagne.objectives.align_targets(a,b)
+    return T.square((a-b).norm(2))
 
 def log(s, label='INFO'):
     sys.stdout.write(label + ' [' + str(datetime.now()) + '] ' + str(s) + '\n')
@@ -86,8 +89,8 @@ class sda(object):
             # Create train function
             learning_rate = T.scalar(name='learning_rate')
             prediction = lasagne.layers.get_output(decoder_layer)
-            cost = lasagne.objectives.squared_error(
-                prediction, input_var).mean()
+            #cost = lasagne.objectives.squared_error(prediction,input_var).mean()
+            cost = lse(prediction, input_layer.input_var)
             params = lasagne.layers.get_all_params(
                 decoder_layer, trainable=True)
             updates = lasagne.updates.momentum(
@@ -177,15 +180,15 @@ class sda(object):
         learning_rate = T.scalar(name='learning_rate')
         index = T.lscalar()
         prediction = lasagne.layers.get_output(self._deep_ae['decoder_layer'])
-        cost = lasagne.objectives.squared_error(
-            prediction, input_layer.input_var).mean()
+        #cost = lasagne.objectives.squared_error(
+        #    prediction.input_layer.input_var).mean()
+        cost = (prediction-input_layer.input_var).norm(2)
         params = lasagne.layers.get_all_params(
             self._deep_ae['decoder_layer'], trainable=True)
         updates = lasagne.updates.momentum(
             cost, params, learning_rate=learning_rate)
         train = th.function(
             inputs=[index, learning_rate], outputs=cost, updates=updates, givens={input_layer.input_var: X[index:index + self.mini_batch_size, :]})
-
         # train
         print '> Deep neural net trainining'
         for epoch in xrange(deep_epochs):

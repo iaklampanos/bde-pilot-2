@@ -1,3 +1,5 @@
+import os
+os.environ['THEANO_FLAGS'] = 'mode=FAST_RUN,device=gpu,floatX=float32,nvcc.flags=-D_FORCE_INLINES'
 import sys
 import ConfigParser
 import numpy as np
@@ -7,8 +9,7 @@ import datetime
 from datetime import datetime
 import dataset_utils as utils
 import lasagne
-import os
-os.environ['THEANO_FLAGS'] = 'mode=FAST_RUN,device=gpu,floatX=float32,nvcc.flags=-D_FORCE_INLINES'
+
 
 def load_config(input_path):
     cp = ConfigParser.ConfigParser()
@@ -21,15 +22,16 @@ def log(s, label='INFO'):
 def load_data(cp):
     log('Loading data........')
     if cp.get('Experiment','inputfile') == '':
-        [X1,labels1] = utils.load_mnist(dataset='training',path='/mnt/disk1/thanasis/autoencoder/')
-        [X2,labels2] = utils.load_mnist(dataset='testing',path='/mnt/disk1/thanasis/autoencoder/')
+        [X1,labels1] = utils.load_mnist(dataset='training',path='/home/ubuntu/data/mnist/')
+        [X2,labels2] = utils.load_mnist(dataset='testing',path='/home/ubuntu/data/mnist/')
         X = np.concatenate((X1,X2),axis=0)
         labels = np.concatenate((labels1,labels2),axis=0)
         X = X.astype(np.float32)*0.02
         np.random.shuffle(X)
-        return [X[0:5000],labels]
+        return [X,labels]
     else:
         X = np.load(cp.get('Experiment','inputfile'))
+        np.random.shuffle(X)
         return X
     log('DONE........')
 
