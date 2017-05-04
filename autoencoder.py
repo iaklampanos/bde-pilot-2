@@ -1,5 +1,6 @@
 import os
 os.environ['THEANO_FLAGS'] = 'mode=FAST_RUN,device=gpu,floatX=float32,nvcc.flags=-D_FORCE_INLINES'
+# os.environ['THEANO_FLAGS'] = 'device=cpu'
 import sys
 import ConfigParser
 import numpy as np
@@ -135,10 +136,12 @@ def init_pretrained(cp, dataset):
                                         W=np.load(prefix+'_'+num+'_W2.npy'),
                                         b=np.load(prefix+'_'+num+'_b2.npy'),
                                         nonlinearity=relu if dec_act == 'ReLU' else linear )
+    lasagne.layers.set_all_param_values(network,np.load('autoenc_values.npy'))
+    input_layer.input_var = input_var
     hidden = lasagne.layers.get_output(encoder_layer).eval()
-    np.save(prefix+'_hidden.npy',hidden)
+    np.save(prefix+'_'+num+'_pretrained_hidden.npy',hidden)
     output = lasagne.layers.get_output(network).eval()
-    np.save(prefix+'_output.npy',output)
+    np.save(prefix+'_'+num+'_pretrained_output.npy',output)
 
 def main(path):
     cp = load_config(path)
@@ -146,7 +149,7 @@ def main(path):
         [X,labels] = load_data(cp)
     except:
         X = load_data(cp)
-    init(cp,X)
+    init_pretrained(cp,X)
 
 
 from operator import attrgetter
