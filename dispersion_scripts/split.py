@@ -20,9 +20,10 @@ if __name__ == '__main__':
     #fidx = lfiles[0::13]
     for pos,f in enumerate(filelist):
         parts = f.split('_')
-        date = parts[3]
-        hours = parts[4]
-        new_hour = parts[4].split('.')[0]
+        print parts
+        date = parts[0]
+        hours = parts[1]
+        new_hour = parts[1].split('.')[0]
         h = hours.split(':')[0]
         nwps = open('template.sh', 'r')
         nwps_new = open('ncsplitcluster.sh', 'w')
@@ -33,9 +34,9 @@ if __name__ == '__main__':
         nwps.close()
         os.system('chmod +x ncsplitcluster.sh')
         os.system('./ncsplitcluster.sh')
-        date = parts[3]+'_'+new_hour
+        date = parts[0]+'_'+new_hour
         nwrf = open('tempnamelist.input','r')
-        nwrf_new = open('/home/wrf/Build_WRF/LIBRARIES/WRFV3/run//WRFV3/run/namelist.input','w')
+        nwrf_new = open('/home/wrf/Build_WRF/LIBRARIES/WRFV3/run/namelist.input','w')
         template = Template(nwrf.read())
         dst = datetime.datetime.strptime(date,'%Y-%m-%d_%H:%M:%S')
         edst = dst+datetime.timedelta(days=3)
@@ -44,10 +45,10 @@ if __name__ == '__main__':
         nwrf_new.write(template.substitute(di))
         nwrf_new.close()
         nwrf.close()
-        os.chdir('/home/wrf/Build_WRF/LIBRARIES/WRFV3/run//WRFV3/run/')
-        os.system('/home/wrf/Build_WRF/LIBRARIES/WRFV3/run//WRFV3/run/./real.exe')
+        os.chdir('/home/wrf/Build_WRF/LIBRARIES/WRFV3/run/')
+        os.system('/home/wrf/Build_WRF/LIBRARIES/WRFV3/run/./real.exe')
         os.environ['OMP_NUM_THREADS'] = '4'
         os.system('echo $OMP_NUM_THREADS')
-        os.system('mpirun -np 4 /home/wrf/Build_WRF/LIBRARIES/WRFV3/run//WRFV3/run/./wrf.exe')
-        os.system('rm /home/wrf/Build_WRF/LIBRARIES/WRFV3/run//WRFV3/run/met_em*')
+        os.system('mpirun -np 4 /home/wrf/Build_WRF/LIBRARIES/WRFV3/run/./wrf.exe')
+        os.system('rm /home/wrf/Build_WRF/LIBRARIES/WRFV3/run/met_em*')
         #os.system('rm /home/wrf/data/nc/*')
