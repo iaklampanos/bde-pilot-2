@@ -4,6 +4,7 @@ import numpy as np
 
 def display_array(a):
     plt.imshow(a, interpolation='nearest')
+    plt.show()
 
 def displayz(a, x, y, startind=0, sizex=12, sizey=12):
     fig = plt.figure(figsize=(sizex, sizey))

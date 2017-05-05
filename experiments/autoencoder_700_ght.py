@@ -29,10 +29,10 @@ if __name__ == '__main__':
     items = [data_dict.extract_piece(range(0,11688),range(0,64),range(0,64))]
     items = np.array(items)
     ds = Dataset_transformations(items, 1000, items.shape)
-    ds.twod_transformation()
-    ds.normalize()
-    ds.shift()
-    clust_obj = Clustering(ds,n_clusters=14,n_init=100,features_first=True)
+    ds.twod_transformation()  # convert to 2-D
+    ds.normalize()  # preparation for learning
+    # ds.shift()
+    clust_obj = Clustering(ds, n_clusters=14, n_init=100, features_first=True)
     A = AutoEncoder(X=np.transpose(ds.get_items()), hidden_size=1000,
                      activation_function=T.nnet.sigmoid,
                      output_function=T.nnet.sigmoid,
@@ -41,10 +41,10 @@ if __name__ == '__main__':
                      corruption_level=0.3,
                      corrupt=True
                      )
-    exper = ClusteringExperiment(ds,A,clust_obj)
+    exper = ClusteringExperiment(ds, A, clust_obj)
     exper.start()
     exper.clustering()
     exper._clustering.create_descriptors(14)
-    utils.export_descriptor_kmeans(outp,data_dict,exper._clustering)
+    utils.export_descriptor_kmeans(outp, data_dict, exper._clustering)
     #### add desc_date #####
     utils.save('CE_Autoencoder_700_ght.zip',exper)
