@@ -102,7 +102,7 @@ class Clustering(Dataset):
         c_descriptors = []  # the cluster descriptors
 
         frames_filled = frames_total = 0
-        
+        # print len(times), len(times_f), len(data), np.max(times_f)
         for c in clusters:
             c_desc = [] # the descriptor of the current cluster
             indexes = np.array([x for x in c])
@@ -127,11 +127,12 @@ class Clustering(Dataset):
             for k in range(frames):
                 frames_total += 1
                 pos.append(start_time_offset + k * snap_duration_hrs)
-                cindices = np.where(np.in1d(ctimes_f, pos[k]))[0] # indices in cluster data list where the offsets occur
-                # print cindices
-                # print ctimes_f[cindices]
+                cindices = np.where(np.in1d(ctimes_f, pos[k]))[0] # indices in cluster data list where the offsets occur - it may be []
+                
                 if len(cindices) > 0:
-                    c_desc.append(list(times_f[cindices]))
+                    gindices = indexes[cindices]
+                    # print times[indexes[cindices]]  # checking real times
+                    c_desc.append(list(gindices))
                     # c_desc.append(np.mean(cdata[cindices], 0))           # ***
                 else:
                     c_desc.append(None)
@@ -153,11 +154,11 @@ class Clustering(Dataset):
             #     display_array(img)
             
             # for displaying the descriptor ranges in the hypothetical year
-            # plt.axvline(x=start_time_offset, color='r', linestyle='--')
-            # plt.axvline(x=end_time_offset, color='r', linestyle='--')
-            # plt.plot(X_plot, dens, 'k-')
-            # plt.show()
-
+            plt.axvline(x=start_time_offset, color='r', linestyle='--')
+            plt.axvline(x=end_time_offset, color='r', linestyle='--')
+            plt.plot(X_plot, dens, 'k-')
+            plt.show() 
+            
             # print c_desc
             c_descriptors.append(c_desc)
         # print np.array(c_desc).shape
@@ -248,5 +249,5 @@ if __name__ == '__main__':
     # print clust_obj._labels.shape
     clust_obj.create_density_descriptors(12, times)
     # clust_obj.create_descriptors(12)
-    # print np.array(clust_obj._descriptors).shape
-    # print clust_obj._descriptors
+    print np.array(clust_obj._descriptors).shape
+    print clust_obj._descriptors
