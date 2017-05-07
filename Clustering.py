@@ -13,7 +13,7 @@ import sys
 def log(s, label='INFO'):
     sys.stdout.write(label + ' [' + str(datetime.now()) + '] ' + str(s) + '\n')
     sys.stdout.flush()
-    
+
 class Clustering(Dataset):
 
     def __init__(self, dataset, n_clusters, n_init,
@@ -79,11 +79,11 @@ class Clustering(Dataset):
                 avg.append(c[idx])
             c_desc.append(avg)
         self._descriptors = c_desc
-    
+
     # TODO: Change name - see comment above
     def create_kmeans_descriptors(self, frames):
         create_descriptors(self, frames)
-    
+
     def create_density_descriptors(self, frames, times):
         """
         Create max-density cluster descriptors.
@@ -95,7 +95,7 @@ class Clustering(Dataset):
         snap_duration_hrs = 6
         # Transpose all dates to a fixed hypothetical year and calculate hour offsets
         refdate = datetime(2020, 1, 1)
-        times_f = np.array([ int((d.replace(year=2020) - 
+        times_f = np.array([ int((d.replace(year=2020) -
                            refdate).total_seconds() / 3600.0) for d in times ])
         data = self.get_items() # samples, features
         clusters = self._index_list[0]
@@ -112,7 +112,7 @@ class Clustering(Dataset):
             kde = KernelDensity(kernel='gaussian', bandwidth=bwdth).fit(
                 ctimes_f[:, np.newaxis])
             dens = np.exp(kde.score_samples(X_plot))
-            
+
             # Choose the descriptor around the point where density is max
             max_den_i = np.argmax(dens)
 
@@ -122,21 +122,21 @@ class Clustering(Dataset):
                 cent_pos += snap_duration_hrs
             start_time_offset = cent_pos - (frames / 2) * snap_duration_hrs  ##
             end_time_offset = start_time_offset + frames * snap_duration_hrs ##
-            
+
             pos = []  # list of time offsets
             for k in range(frames):
                 frames_total += 1
                 pos.append(start_time_offset + k * snap_duration_hrs)
                 cindices = np.where(np.in1d(ctimes_f, pos[k]))[0] # indices in cluster data list where the offsets occur - it may be []
-                
+
                 if len(cindices) > 0:
                     gindices = indexes[cindices]
                     # print times[indexes[cindices]]  # checking real times
-                    c_desc.append(list(gindices))
+                    c_desc.append(np.array(gindices))
                     # c_desc.append(np.mean(cdata[cindices], 0))           # ***
                 else:
                     c_desc.append(None)
-            
+
             # Deal with None by duplicating neighbouring snapshots (shouldn't occur often...)
             for k in range(frames):
                 if c_desc[k] is None and k > 0:
@@ -146,23 +146,23 @@ class Clustering(Dataset):
                 if c_desc[k] is None and k < frames - 1:
                     c_desc[k] = c_desc[k+1]
                     if c_desc[k] is not None: frames_filled += 1
-            
+
             # for displaying data - need to uncommend *** above
             # from disputil import display_array
             # for tmp in c_desc:
             #     img = np.array(tmp).reshape((64,64))
             #     display_array(img)
-            
+
             # for displaying the descriptor ranges in the hypothetical year
             plt.axvline(x=start_time_offset, color='r', linestyle='--')
             plt.axvline(x=end_time_offset, color='r', linestyle='--')
             plt.plot(X_plot, dens, 'k-')
-            plt.show() 
-            
+            plt.show()
+
             # print c_desc
             c_descriptors.append(c_desc)
         # print np.array(c_desc).shape
-        log('Frames filled from neighbours: ' + str(frames_filled) + '/' + 
+        log('Frames filled from neighbours: ' + str(frames_filled) + '/' +
             str(frames_total))
         self._descriptors = c_descriptors
 
@@ -233,7 +233,7 @@ class Clustering(Dataset):
 
 from Dataset_transformations import Dataset_transformations
 from netcdf_subset import netCDF_subset
-import numpy as np        
+import numpy as np
 if __name__ == '__main__':
     data_dict = netCDF_subset(
         'test_modified.nc', [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')

@@ -49,6 +49,6 @@ if __name__ == '__main__':
         os.system('/home/wrf/Build_WRF/LIBRARIES/WRFV3/run/./real.exe')
         os.environ['OMP_NUM_THREADS'] = '4'
         os.system('echo $OMP_NUM_THREADS')
-        os.system('mpirun -np 4 /home/wrf/Build_WRF/LIBRARIES/WRFV3/run/./wrf.exe')
+        os.system('mpirun -np 4 /home/wrf/Build_WRF/LIBRARIES/WRFV3/run/./wrf.exe >> /dev/null')
         os.system('rm /home/wrf/Build_WRF/LIBRARIES/WRFV3/run/met_em*')
         #os.system('rm /home/wrf/data/nc/*')

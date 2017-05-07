@@ -2,8 +2,7 @@ import sys
 import numpy as np
 import theano as th
 import theano.tensor as T
-from lasagne.regularization import regularize_layer_params_weighted, l2
-from lasagne.regularization import regularize_layer_params
+from lasagne.regularization import regularize_layer_params, l2
 from sklearn.utils.linear_assignment_ import linear_assignment
 import lasagne
 from ClusteringLayer import ClusteringLayer

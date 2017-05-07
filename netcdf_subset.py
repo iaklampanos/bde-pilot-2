@@ -161,7 +161,10 @@ class netCDF_subset(object):
         return max_ret_list
 
     def get_times(self):
-        return num2date(self._dataset[self._time_name][:], self._time_unit, self._time_cal)
+        try:
+            return num2date(self._dataset[self._time_name][:], self._time_unit, self._time_cal)
+        except:
+            return self._dataset[self._time_name][:]
 
     def find_time_slot(self, year, month, day, hour, min):
         dat = datetime.datetime(year, month, day, hour, min)
