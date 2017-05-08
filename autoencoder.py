@@ -162,11 +162,11 @@ def init_pretrained(cp, dataset):
     model.save('GHT_700_shallow.zip')
     lasagne.layers.set_all_param_values(
         network, np.load(prefix + '_' + num + '_model.npy'))
-    input_layer.input_var = input_var[90000:96432,:]
+    input_layer.input_var = input_var
     hidden = lasagne.layers.get_output(encoder_layer).eval()
-    np.save(prefix + '_' + num + '_pretrained_hidden96.npy', hidden)
+    np.save(prefix + '_' + num + '_pretrained_hidden.npy', hidden)
     output = lasagne.layers.get_output(network).eval()
-    np.save(prefix + '_' + num + '_pretrained_output96.npy', output)
+    np.save(prefix + '_' + num + '_pretrained_output.npy', output)
 
 
 def main(path, train):
