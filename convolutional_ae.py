@@ -49,7 +49,7 @@ def load_data(cp, train):
         # if train == 'train':
         X = X.astype(np.float32) * 0.02
         #     np.random.shuffle(X)
-        return [X[0:1000], labels]
+        return [X[0:10000], labels]
     else:
         X = np.load(cp.get('Experiment', 'inputfile'))
         # if train == 'train':
@@ -63,7 +63,7 @@ def load_data(cp, train):
 
 
 def init(cp, dataset):
-    batch_size = 100
+    batch_size = 128
     log(dataset.shape)
     print dataset.shape
     input_var = theano.shared(name='input_var', value=np.asarray(dataset,
@@ -82,7 +82,7 @@ def init(cp, dataset):
     network = lasagne.layers.Conv2DLayer(incoming=network,
                                          num_filters=conv_filters, filter_size=(
                                              filter_sizes, filter_sizes),
-                                         stride=1, pad='same',nonlinearity=None)
+                                         stride=1, pad='same')
     network = lasagne.layers.MaxPool2DLayer(incoming=network, pool_size=(2, 2))
     network = Unpool2DLayer(incoming=network, ds=(2, 2))
     flatten = network = lasagne.layers.ReshapeLayer(
@@ -110,7 +110,7 @@ def init(cp, dataset):
     # cost = cost - l2_penalty
     params = lasagne.layers.get_all_params(
         network, trainable=True)
-    updates = lasagne.updates.momentum(
+    updates = lasagne.updates.nesterov_momentum(
         cost, params, learning_rate=learning_rate, momentum=0.975)
     train = theano.function(
         inputs=[index, learning_rate], outputs=cost,
@@ -118,7 +118,7 @@ def init(cp, dataset):
 
     # lw_epochs = int(cp.get('NeuralNetwork', 'maxepochs'))
     # base_lr = float(cp.get('NeuralNetwork', 'learningrate'))
-    base_lr = 0.1
+    base_lr = 0.01
     lw_epochs = 20
     lr_decay = 73
     # Start training
@@ -139,8 +139,8 @@ def init(cp, dataset):
             utils.save('autoenc_' + str(num) + '.zip', network)
     input_layer.input_var = input_var
     a_out = lasagne.layers.get_output(network).eval()
-    dataset = dataset.reshape(100, 784)
-    a_out = a_out.reshape(100, 784)
+    dataset = dataset.reshape(10000, 784)
+    a_out = a_out.reshape(10000, 784)
     for i in range(0, 100):
         utils.plot_pixel_image(dataset[i, :], a_out[i, :], 28, 28)
     [X1, labels1] = utils.load_mnist(
