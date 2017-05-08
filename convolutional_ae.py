@@ -85,6 +85,14 @@ def init(cp, dataset):
                                          num_filters=conv_filters, filter_size=(
                                              filter_sizes, filter_sizes),
                                          stride=1, pad='same')
+    try:
+        dual_conv = int(cp.get('NeuralNetwork','dualconv'))
+        network = lasagne.layers.Conv2DLayer(incoming=network,
+                                             num_filters=conv_filters, filter_size=(
+                                                 dual_conv, dual_conv),
+                                             stride=1, pad='same')
+    except:
+        pass
     network = lasagne.layers.MaxPool2DLayer(incoming=network, pool_size=(pool_size, pool_size))
     pool_shape = lasagne.layers.get_output_shape(network)
     flatten = network = lasagne.layers.ReshapeLayer(
@@ -117,15 +125,10 @@ def init(cp, dataset):
     train = theano.function(
         inputs=[index, learning_rate], outputs=cost,
         updates=updates, givens={input_layer.input_var: input_var[index:index + batch_size, :]})
-
-    # lw_epochs = int(cp.get('NeuralNetwork', 'maxepochs'))
-    # base_lr = float(cp.get('NeuralNetwork', 'learningrate'))
-    base_lr = 0.01
-    lw_epochs = 20
-    lr_decay = 73
+    prefix = cp.get('Experiment', 'prefix')
+    lw_epochs = int(cp.get('NeuralNetwork', 'maxepochs'))
+    base_lr = float(cp.get('NeuralNetwork', 'learningrate'))
     # Start training
-    # num = cp.get('Experiment', 'num')
-    num = 0
     for epoch in xrange(lw_epochs):
         epoch_loss = 0
         for row in xrange(0, dataset.shape[0], batch_size):
@@ -134,16 +137,13 @@ def init(cp, dataset):
         epoch_loss = float(epoch_loss) / (dataset.shape[0]*1.0 / batch_size)
         if epoch % 10 == 0:
             log(str(epoch) + ' ' + str(epoch_loss),
-                label='LWT-Layer' + str(num))
-        if (epoch % lr_decay == 0 and epoch != 0):
-            base_lr = base_lr / 10
+                label='CONV')
         if (epoch % 100 == 0) and (epoch != 0):
-            utils.save('autoenc_' + str(num) + '.zip', network)
+            utils.save(prefix+'_conv.zip', network)
     input_layer.input_var = input_var
     a_out = lasagne.layers.get_output(network).eval
     for i in range(0, 100):
        utils.plot_pixel_image(dataset[i, :], a_out[i, :], 28, 28)
-    prefix = cp.get('Experiment', 'prefix')
     np.save(prefix + '_' + num + '_model.npy',
             lasagne.layers.get_all_param_values(network))
     hidden = lasagne.layers.get_output(encoder_layer).eval()
