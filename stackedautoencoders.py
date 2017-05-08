@@ -13,11 +13,11 @@ import dataset_utils as utils
 import lasagne
 
 
-def load_config(input_path, length):
+def load_config(input_path, prefix, length):
     CP = []
     for i in xrange(length):
         cp = ConfigParser.ConfigParser()
-        cp.read('autoenc' + str(i) + '.ini')
+        cp.read(prefix + '_' + str(i) + '.ini')
         CP.append(cp)
     cp = ConfigParser.ConfigParser()
     cp.read(input_path)
@@ -27,9 +27,9 @@ def load_config(input_path, length):
 
 def log(s, label='INFO'):
     sys.stderr.write(label + ' [' + str(datetime.now()) + '] ' + str(s) + '\n')
+    sys.stdout.flush()
 
-
-def load_data(cp ,train):
+def load_data(cp, length, train):
     log('Loading data........')
     if cp[length].get('Experiment', 'inputfile') == '':
         [X1, labels1] = utils.load_mnist(
@@ -42,8 +42,7 @@ def load_data(cp ,train):
             p = np.random.permutation(X.shape[0])
             X = X[p].astype(np.float32) * 0.02
             labels = labels[p]
-            prefix = cp.get('Experiment', 'prefix')
-            num = cp.get('Experiment', 'num')
+            prefix = cp[length].get('Experiment','prefix')
             np.save(prefix + '_sda_random_perm.npy', p)
         return [X, labels]
     else:
@@ -51,9 +50,8 @@ def load_data(cp ,train):
         if train == 'train':
             p = np.random.permutation(X.shape[0])
             X = X[p]
-            prefix = cp.get('Experiment', 'prefix')
-            num = cp.get('Experiment', 'num')
-            np.save(prefix + '_' + num + 'random_perm.npy', p)
+            prefix = cp[length].get('Experiment', 'prefix')
+            np.save(prefix + '_sda_random_perm.npy', p)
         return X
     log('DONE........')
 
@@ -130,7 +128,8 @@ def init(cp, dataset, length):
         if (epoch % lr_decay == 0 and epoch != 0):
             base_lr = base_lr / 10
         if (epoch % 100 == 0) and (epoch != 0):
-            utils.save(prefix + '_sda.zip', network)
+           np.save(prefix + '_sda_model.npy',
+            lasagne.layers.get_all_param_values(network))
     input_layer.input_var = input_var
     np.save(prefix + '_sda_model.npy',
             lasagne.layers.get_all_param_values(network))
@@ -192,12 +191,12 @@ def init_pretrained(cp, dataset, length):
     np.save(prefix + '_sda_pretrained_output.npy', output)
 
 
-def main(path, length, train):
-    cp = load_config(path, length)
+def main(path, length, train, pref):
+    cp = load_config(path, pref, length)
     try:
-        [X, labels] = load_data(cp, train)
+        [X, labels] = load_data(cp, length, train)
     except:
-        X = load_data(cp, train)
+        X = load_data(cp, length, train)
     if train == 'train':
         init(cp, X, length)
     else:
@@ -214,7 +213,9 @@ if __name__ == "__main__":
                         help='number of autoencoders ')
     parser.add_argument('-t', '--train', required=True, type=str,
                         help='training/testing')
+    parser.add_argument('-p', '--prefix', required=True, type=str,
+                        help='sbufiles prefix')
     opts = parser.parse_args()
-    getter = attrgetter('input', 'number', 'train')
-    inp, length, train = getter(opts)
-    main(inp, length, train)
+    getter = attrgetter('input', 'number', 'train','prefix')
+    inp, length, train, pref= getter(opts)
+    main(inp, length, train, pref)
