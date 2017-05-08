@@ -41,9 +41,9 @@ def load_data(cp, train):
     log('Loading data........')
     if cp.get('Experiment', 'inputfile') == '':
         [X1, labels1] = utils.load_mnist(
-            dataset='training', path='/mnt/disk1/thanasis/autoencoder/')
+            dataset='training', path='/home/ubuntu/data/mnist/')
         [X2, labels2] = utils.load_mnist(
-            dataset='testing', path='/mnt/disk1/thanasis/autoencoder/')
+            dataset='testing', path='/home/ubuntu/data/mnist/')
         X = np.concatenate((X1, X2), axis=0)
         labels = np.concatenate((labels1, labels2), axis=0)
         # if train == 'train':
@@ -141,9 +141,9 @@ def init(cp, dataset):
         if (epoch % 100 == 0) and (epoch != 0):
             utils.save(prefix+'_conv.zip', network)
     input_layer.input_var = input_var
-    a_out = lasagne.layers.get_output(network).eval
-    for i in range(0, 100):
-       utils.plot_pixel_image(dataset[i, :], a_out[i, :], 28, 28)
+    #a_out = lasagne.layers.get_output(network).eval()
+    #for i in range(0, 100):
+    #   utils.plot_pixel_image(dataset[i, :], a_out[i, :], 28, 28)
     np.save(prefix + '_' + num + '_model.npy',
             lasagne.layers.get_all_param_values(network))
     hidden = lasagne.layers.get_output(encoder_layer).eval()
