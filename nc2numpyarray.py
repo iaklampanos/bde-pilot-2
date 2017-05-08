@@ -26,7 +26,7 @@ def main():
             np.save(npyfilename, nparr[s])
 
         os.system('rm ' + ncfilename)
-    
+
 
 if __name__ == "__main__":
     main()

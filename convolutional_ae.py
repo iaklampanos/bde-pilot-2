@@ -17,6 +17,7 @@ from sklearn.utils.linear_assignment_ import linear_assignment
 from lasagne.regularization import regularize_layer_params, l2
 from modeltemplate import Model
 
+
 def cluster_acc(y_true, y_pred):
     assert y_pred.size == y_true.size
     D = max(y_pred.max(), y_true.max()) + 1
@@ -63,53 +64,80 @@ def load_data(cp, train):
 
 
 def init(cp, dataset):
-    batch_size = int(cp.get('NeuralNetwork','batchsize'))
+    batch_size = int(cp.get('NeuralNetwork', 'batchsize'))
     log(dataset.shape)
     print dataset.shape
     input_var = theano.shared(name='input_var', value=np.asarray(dataset,
                                                                  dtype=theano.config.floatX),
                               borrow=True)
     index = T.lscalar()
-    conv_filters = int(cp.get('NeuralNetwork','convfilters'))
+    conv_filters = int(cp.get('NeuralNetwork', 'convfilters'))
     deconv_filters = conv_filters
-    filter_sizes = int(cp.get('NeuralNetwork','filtersize'))
-    featurex = int(cp.get('NeuralNetwork','feature_x'))
-    featurey = int(cp.get('NeuralNetwork','feature_y'))
-    channels = int(cp.get('NeuralNetwork','channels'))
-    pool_size = int(cp.get('NeuralNetwork','pool'))
-    input_layer = network = lasagne.layers.InputLayer(shape=(None, featurex*featurey),
+    filter_sizes = int(cp.get('NeuralNetwork', 'filtersize'))
+    featurex = int(cp.get('NeuralNetwork', 'feature_x'))
+    featurey = int(cp.get('NeuralNetwork', 'feature_y'))
+    channels = int(cp.get('NeuralNetwork', 'channels'))
+    pool_size = int(cp.get('NeuralNetwork', 'pool'))
+    input_layer = network = lasagne.layers.InputLayer(shape=(None, featurex * featurey),
                                                       input_var=input_var)
     network = lasagne.layers.ReshapeLayer(
-            incoming=network, shape=([0], channels, featurex , featurey))
+        incoming=network, shape=([0], channels, featurex, featurey))
     network = lasagne.layers.Conv2DLayer(incoming=network,
                                          num_filters=conv_filters, filter_size=(
                                              filter_sizes, filter_sizes),
-                                         stride=int(cp.get('NeuralNetwork','stride')), pad='same')
+                                         stride=int(cp.get('NeuralNetwork', 'stride')), pad='same')
     try:
-        dual_conv = int(cp.get('NeuralNetwork','dualconv'))
+        dual_conv = int(cp.get('NeuralNetwork', 'dualconv'))
         network = lasagne.layers.Conv2DLayer(incoming=network,
                                              num_filters=conv_filters, filter_size=(
                                                  dual_conv, dual_conv),
                                              stride=1, pad='same')
     except:
         pass
-    network = lasagne.layers.MaxPool2DLayer(incoming=network, pool_size=(pool_size, pool_size))
+    network = lasagne.layers.MaxPool2DLayer(
+        incoming=network, pool_size=(pool_size, pool_size))
     pool_shape = lasagne.layers.get_output_shape(network)
     flatten = network = lasagne.layers.ReshapeLayer(
         incoming=network, shape=([0], -1))
     network = lasagne.layers.DropoutLayer(incoming=network,
                                           p=float(cp.get('NeuralNetwork', 'corruptionfactor')))
-    encoder_layer = network = lasagne.layers.DenseLayer(incoming=network,
-                                                        num_units=int(cp.get('NeuralNetwork','hidden_units')),
-                                                        )
-    hidden = network = lasagne.layers.DenseLayer(incoming=network,
-                                                 num_units=lasagne.layers.get_output_shape(flatten)[1],
-                                                 )
+    network = lasagne.layers.DenseLayer(incoming=network,
+                                        num_units=int(
+                                            cp.get('NeuralNetwork', 'hidden0')),
+                                        )
+    network = lasagne.layers.DenseLayer(incoming=network,
+                                        num_units=int(
+                                            cp.get('NeuralNetwork', 'hidden1')),
+                                        )
+    network = lasagne.layers.DenseLayer(incoming=network,
+                                        num_units=int(
+                                            cp.get('NeuralNetwork', 'hidden2')),
+                                        )
+    network = lasagne.layers.DenseLayer(incoming=network,
+                                        num_units=int(
+                                            cp.get('NeuralNetwork', 'hidden3')),
+                                        )
+    network = lasagne.layers.DenseLayer(incoming=network,
+                                        num_units=int(
+                                            cp.get('NeuralNetwork', 'dec3')),
+                                        )
+    network = lasagne.layers.DenseLayer(incoming=network,
+                                        num_units=int(
+                                            cp.get('NeuralNetwork', 'dec2')),
+                                        )
+    network = lasagne.layers.DenseLayer(incoming=network,
+                                        num_units=int(
+                                            cp.get('NeuralNetwork', 'dec1')),
+                                        )
+    network = lasagne.layers.DenseLayer(incoming=network,
+                                        num_units=lasagne.layers.get_output_shape(flatten)[
+                                            1],
+                                        )
     network = lasagne.layers.ReshapeLayer(
-            incoming=network, shape=([0], deconv_filters, pool_shape[2], pool_shape[3] ))
-    network = Unpool2DLayer(incoming=network,ds=(pool_size,pool_size))
+        incoming=network, shape=([0], deconv_filters, pool_shape[2], pool_shape[3]))
+    network = Unpool2DLayer(incoming=network, ds=(pool_size, pool_size))
     network = lasagne.layers.Conv2DLayer(incoming=network,
-                                         num_filters=1, filter_size=(filter_sizes, filter_sizes),stride=int(cp.get('NeuralNetwork','stride')),pad='same',nonlinearity=None)
+                                         num_filters=1, filter_size=(filter_sizes, filter_sizes), stride=int(cp.get('NeuralNetwork', 'stride')), pad='same', nonlinearity=None)
     network = lasagne.layers.ReshapeLayer(
         incoming=network, shape=([0], -1))
     print lasagne.layers.get_output_shape(lasagne.layers.get_all_layers(network))
@@ -134,21 +162,22 @@ def init(cp, dataset):
         for row in xrange(0, dataset.shape[0], batch_size):
             loss = train(row, base_lr)
             epoch_loss += loss
-        epoch_loss = float(epoch_loss) / (dataset.shape[0]*1.0 / batch_size)
+        epoch_loss = float(epoch_loss) / (dataset.shape[0] * 1.0 / batch_size)
         if epoch % 10 == 0:
             log(str(epoch) + ' ' + str(epoch_loss),
                 label='CONV')
         if (epoch % 100 == 0) and (epoch != 0):
-            utils.save(prefix+'_conv.zip', network)
+            utils.save(prefix + '_conv.zip', network)
     input_layer.input_var = input_var
     #a_out = lasagne.layers.get_output(network).eval()
-    #for i in range(0, 100):
+    # for i in range(0, 100):
     #   utils.plot_pixel_image(dataset[i, :], a_out[i, :], 28, 28)
     np.save(prefix + '_model.npy',
             lasagne.layers.get_all_param_values(network))
     hidden = lasagne.layers.get_output(encoder_layer).eval()
     log(hidden.shape)
     np.save(prefix + '_hidden.npy', hidden)
+
 
 def init_pretrained(cp, dataset):
 
@@ -157,49 +186,53 @@ def init_pretrained(cp, dataset):
                                                                  dtype=theano.config.floatX),
                               borrow=True)
     index = T.lscalar()
-    conv_filters = int(cp.get('NeuralNetwork','convfilters'))
+    conv_filters = int(cp.get('NeuralNetwork', 'convfilters'))
     deconv_filters = conv_filters
-    filter_sizes = int(cp.get('NeuralNetwork','filtersize'))
-    featurex = int(cp.get('NeuralNetwork','feature_x'))
-    featurey = int(cp.get('NeuralNetwork','feature_y'))
-    channels = int(cp.get('NeuralNetwork','channels'))
-    pool_size = int(cp.get('NeuralNetwork','pool'))
-    input_layer = network = lasagne.layers.InputLayer(shape=(None, featurex*featurey),
+    filter_sizes = int(cp.get('NeuralNetwork', 'filtersize'))
+    featurex = int(cp.get('NeuralNetwork', 'feature_x'))
+    featurey = int(cp.get('NeuralNetwork', 'feature_y'))
+    channels = int(cp.get('NeuralNetwork', 'channels'))
+    pool_size = int(cp.get('NeuralNetwork', 'pool'))
+    input_layer = network = lasagne.layers.InputLayer(shape=(None, featurex * featurey),
                                                       input_var=input_var)
     network = lasagne.layers.ReshapeLayer(
-            incoming=network, shape=([0], channels, featurex , featurey))
+        incoming=network, shape=([0], channels, featurex, featurey))
     network = lasagne.layers.Conv2DLayer(incoming=network,
                                          num_filters=conv_filters, filter_size=(
                                              filter_sizes, filter_sizes),
-                                         stride=int(cp.get('NeuralNetwork','stride')), pad='same')
+                                         stride=int(cp.get('NeuralNetwork', 'stride')), pad='same')
     try:
-        dual_conv = int(cp.get('NeuralNetwork','dualconv'))
+        dual_conv = int(cp.get('NeuralNetwork', 'dualconv'))
         network = lasagne.layers.Conv2DLayer(incoming=network,
                                              num_filters=conv_filters, filter_size=(
                                                  dual_conv, dual_conv),
                                              stride=1, pad='same')
     except:
         pass
-    network = lasagne.layers.MaxPool2DLayer(incoming=network, pool_size=(pool_size, pool_size))
+    network = lasagne.layers.MaxPool2DLayer(
+        incoming=network, pool_size=(pool_size, pool_size))
     pool_shape = lasagne.layers.get_output_shape(network)
     flatten = network = lasagne.layers.ReshapeLayer(
         incoming=network, shape=([0], -1))
     network = lasagne.layers.DropoutLayer(incoming=network,
                                           p=float(cp.get('NeuralNetwork', 'corruptionfactor')))
     encoder_layer = network = lasagne.layers.DenseLayer(incoming=network,
-                                                        num_units=int(cp.get('NeuralNetwork','hidden_units')),
+                                                        num_units=int(
+                                                            cp.get('NeuralNetwork', 'hidden_units')),
                                                         )
     hidden = network = lasagne.layers.DenseLayer(incoming=network,
-                                                 num_units=lasagne.layers.get_output_shape(flatten)[1],
+                                                 num_units=lasagne.layers.get_output_shape(flatten)[
+                                                     1],
                                                  )
     network = lasagne.layers.ReshapeLayer(
-            incoming=network, shape=([0], deconv_filters, pool_shape[2], pool_shape[3] ))
-    network = Unpool2DLayer(incoming=network,ds=(pool_size,pool_size))
+        incoming=network, shape=([0], deconv_filters, pool_shape[2], pool_shape[3]))
+    network = Unpool2DLayer(incoming=network, ds=(pool_size, pool_size))
     network = lasagne.layers.Conv2DLayer(incoming=network,
-                                         num_filters=1, filter_size=(filter_sizes, filter_sizes),stride=int(cp.get('NeuralNetwork','stride')),pad='same',nonlinearity=None)
+                                         num_filters=1, filter_size=(filter_sizes, filter_sizes), stride=int(cp.get('NeuralNetwork', 'stride')), pad='same', nonlinearity=None)
     network = lasagne.layers.ReshapeLayer(
         incoming=network, shape=([0], -1))
-    model = Model(input_layer=input_layer,encoder_layer=encoder_layer,decoder_layer=network,network=network)
+    model = Model(input_layer=input_layer, encoder_layer=encoder_layer,
+                  decoder_layer=network, network=network)
     model.save('GHT_700_shallow.zip')
     lasagne.layers.set_all_param_values(
         network, np.load(prefix + '_model.npy'))
@@ -208,7 +241,6 @@ def init_pretrained(cp, dataset):
     np.save(prefix + '_pretrained_hidden.npy', hidden)
     output = lasagne.layers.get_output(network).eval()
     np.save(prefix + '_pretrained_output.npy', output)
-
 
 
 def main(path, train):
