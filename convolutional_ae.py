@@ -63,39 +63,43 @@ def load_data(cp, train):
 
 
 def init(cp, dataset):
-    batch_size = 128
+    batch_size = int(cp.get('NeuralNetwork','batchsize'))
     log(dataset.shape)
     print dataset.shape
     input_var = theano.shared(name='input_var', value=np.asarray(dataset,
                                                                  dtype=theano.config.floatX),
                               borrow=True)
     index = T.lscalar()
-    conv_filters = 30
-    deconv_filters = 30
-    filter_sizes = 3
-    # batch_size = int(cp.get('NeuralNetwork', 'batchsize'))
-    # lr_decay = int(cp.get('NeuralNetwork', 'lrepochdecay'))
-    input_layer = network = lasagne.layers.InputLayer(shape=(None, 784),
+    conv_filters = int(cp.get('NeuralNetwork','convfilters'))
+    deconv_filters = conv_filters
+    filter_sizes = int(cp.get('NeuralNetwork','filtersize'))
+    featurex = int(cp.get('NeuralNetwork','feature_x'))
+    featurey = int(cp.get('NeuralNetwork','feature_y'))
+    channels = int(cp.get('NeuralNetwork','channels'))
+    pool_size = int(cp.get('NeuralNetwork','pool'))
+    input_layer = network = lasagne.layers.InputLayer(shape=(None, featurex*featurey),
                                                       input_var=input_var)
     network = lasagne.layers.ReshapeLayer(
-            incoming=network, shape=([0], 1, 28 , 28))
+            incoming=network, shape=([0], channels, featurex , featurey))
     network = lasagne.layers.Conv2DLayer(incoming=network,
                                          num_filters=conv_filters, filter_size=(
                                              filter_sizes, filter_sizes),
                                          stride=1, pad='same')
-    network = lasagne.layers.MaxPool2DLayer(incoming=network, pool_size=(2, 2))
-    network = Unpool2DLayer(incoming=network, ds=(2, 2))
+    network = lasagne.layers.MaxPool2DLayer(incoming=network, pool_size=(pool_size, pool_size))
+    pool_shape = lasagne.layers.get_output_shape(network)
     flatten = network = lasagne.layers.ReshapeLayer(
         incoming=network, shape=([0], -1))
+    network = lasagne.layers.DropoutLayer(incoming=network,
+                                          p=float(cp.get('NeuralNetwork', 'corruptionfactor')))
     encoder_layer = network = lasagne.layers.DenseLayer(incoming=network,
-                                                        num_units=40,
+                                                        num_units=int(cp.get('NeuralNetwork','hidden_units')),
                                                         )
     hidden = network = lasagne.layers.DenseLayer(incoming=network,
-                                                 num_units=deconv_filters * (28 + filter_sizes - 1) ** 2 / 4,
+                                                 num_units=lasagne.layers.get_output_shape(flatten)[1],
                                                  )
     network = lasagne.layers.ReshapeLayer(
-            incoming=network, shape=([0], deconv_filters, (28 + filter_sizes - 1) / 2, (28 + filter_sizes - 1) / 2 ))
-    network = Unpool2DLayer(incoming=network,ds=(2,2))
+            incoming=network, shape=([0], deconv_filters, pool_shape[2], pool_shape[3] ))
+    network = Unpool2DLayer(incoming=network,ds=(pool_size,pool_size))
     network = lasagne.layers.Conv2DLayer(incoming=network,
                                          num_filters=1, filter_size=(filter_sizes, filter_sizes),nonlinearity=None)
     network = lasagne.layers.ReshapeLayer(
@@ -106,8 +110,6 @@ def init(cp, dataset):
     prediction = lasagne.layers.get_output(network)
     cost = lasagne.objectives.squared_error(
         prediction, input_layer.input_var).mean()
-    # l2_penalty = regularize_layer_params(network, l2) * (0.001) / 2
-    # cost = cost - l2_penalty
     params = lasagne.layers.get_all_params(
         network, trainable=True)
     updates = lasagne.updates.nesterov_momentum(
@@ -138,39 +140,15 @@ def init(cp, dataset):
         if (epoch % 100 == 0) and (epoch != 0):
             utils.save('autoenc_' + str(num) + '.zip', network)
     input_layer.input_var = input_var
-    a_out = lasagne.layers.get_output(network).eval()
-    dataset = dataset.reshape(10000, 784)
-    a_out = a_out.reshape(10000, 784)
+    a_out = lasagne.layers.get_output(network).eval
     for i in range(0, 100):
-        utils.plot_pixel_image(dataset[i, :], a_out[i, :], 28, 28)
-    [X1, labels1] = utils.load_mnist(
-        dataset='training', path='/mnt/disk1/thanasis/autoencoder/')
-    [X2, labels2] = utils.load_mnist(
-        dataset='testing', path='/mnt/disk1/thanasis/autoencoder/')
-    X = np.concatenate((X1, X2), axis=0)
-    labels = np.concatenate((labels1, labels2), axis=0)
-    labels = labels.reshape(70000)
-    kmeans = KMeans(n_clusters=10, n_init=20, n_jobs=-1)
-    hidden = np.load('MNIST_0_pretrained_hidden.npy')
-    cluster_prediction = kmeans.fit_predict(hidden)
-    acc = cluster_acc(labels, cluster_prediction)
-    print 'LW', acc
-    input_layer.input_var = input_var
-    kmeans = KMeans(n_clusters=10, n_init=20, n_jobs=-1)
-    hidden = lasagne.layers.get_output(encoder_layer)
-    cluster_prediction = kmeans.fit_predict(hidden)
-    acc = cluster_acc(labels, cluster_prediction)
-    print 'Conv', acc
-    # prefix = cp.get('Experiment', 'prefix')
-    # np.save(prefix + '_' + num + '_model.npy',
-    #         lasagne.layers.get_all_param_values(network))
-    # np.save(prefix + '_' + num + '_W1.npy', encoder_layer.W.eval())
-    # np.save(prefix + '_' + num + '_W2.npy', network.W.eval())
-    # np.save(prefix + '_' + num + '_b1.npy', encoder_layer.b.eval())
-    # np.save(prefix + '_' + num + '_b2.npy', network.b.eval())
-    # hidden = lasagne.layers.get_output(encoder_layer).eval()
-    # log(hidden.shape)
-    # np.save(prefix + '_hidden.npy', hidden)
+       utils.plot_pixel_image(dataset[i, :], a_out[i, :], 28, 28)
+    prefix = cp.get('Experiment', 'prefix')
+    np.save(prefix + '_' + num + '_model.npy',
+            lasagne.layers.get_all_param_values(network))
+    hidden = lasagne.layers.get_output(encoder_layer).eval()
+    log(hidden.shape)
+    np.save(prefix + '_hidden.npy', hidden)
 
 
 def main(path, train):

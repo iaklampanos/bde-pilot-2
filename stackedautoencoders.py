@@ -11,7 +11,7 @@ import datetime
 from datetime import datetime
 import dataset_utils as utils
 import lasagne
-
+from modeltemplate import Model
 
 def load_config(input_path, prefix, length):
     CP = []
@@ -182,6 +182,8 @@ def init_pretrained(cp, dataset, length):
                                             b=np.load(
                                                 prefix + '_' + str(i) + '_b2.npy'),
                                             nonlinearity=relu if dec_act == 'ReLU' else linear)
+    model = Model(input_layer=input_layer,encoder_layer=encoder_layer,decoder_layer=network,network=network)
+    model.save('GHT_700_deep.zip')
     lasagne.layers.set_all_param_values(
         network, np.load(prefix + '_sda_model.npy'))
     input_layer.input_var = input_var
