@@ -160,11 +160,11 @@ def init_pretrained(cp, dataset):
                                         nonlinearity=relu if dec_act == 'ReLU' else linear)
     lasagne.layers.set_all_param_values(
         network, np.load(prefix + '_' + num + '_model.npy'))
-    input_layer.input_var = input_var
+    input_layer.input_var = input_var[90000:96432,:]
     hidden = lasagne.layers.get_output(encoder_layer).eval()
-    np.save(prefix + '_' + num + '_pretrained_hidden.npy', hidden)
+    np.save(prefix + '_' + num + '_pretrained_hidden96.npy', hidden)
     output = lasagne.layers.get_output(network).eval()
-    np.save(prefix + '_' + num + '_pretrained_output.npy', output)
+    np.save(prefix + '_' + num + '_pretrained_output96.npy', output)
 
 
 def main(path, train):
