@@ -135,11 +135,11 @@ def init(cp, dataset):
                                         )
     network = lasagne.layers.ReshapeLayer(
         incoming=network, shape=([0], deconv_filters, pool_shape[2], pool_shape[3]))
-    network = Unpool2DLayer(incoming=network, ds=(pool_size, pool_size))
+    network = lasagne.layers.Upscale2DLayer(incoming=network, scale_factor=(pool_size, pool_size))
     try:
         dual_conv = int(cp.get('NeuralNetwork', 'dualconv'))
         network = lasagne.layers.TransposedConv2DLayer(incoming=network,
-                                            num_filters=1, filter_size=(dual_conv+1, dual_conv+1), stride=int(cp.get('NeuralNetwork', 'dualstride')), nonlinearity=None)
+                                            num_filters=1, filter_size=(dual_conv, dual_conv), stride=int(cp.get('NeuralNetwork', 'dualstride')), nonlinearity=None)
     except:
         pass
     network = lasagne.layers.TransposedConv2DLayer(incoming=network,
@@ -172,12 +172,11 @@ def init(cp, dataset):
         if epoch % 10 == 0:
             log(str(epoch) + ' ' + str(epoch_loss),
                 label='CONV')
+        if (epoch % lr_decay == 0 and epoch != 0):
+            base_lr = base_lr / 10
         if (epoch % 100 == 0) and (epoch != 0):
             utils.save(prefix + '_conv.zip', network)
     input_layer.input_var = input_var
-    #a_out = lasagne.layers.get_output(network).eval()
-    # for i in range(0, 100):
-    #   utils.plot_pixel_image(dataset[i, :], a_out[i, :], 28, 28)
     np.save(prefix + '_model.npy',
             lasagne.layers.get_all_param_values(network))
     hidden = lasagne.layers.get_output(encoder_layer).eval()
@@ -255,11 +254,11 @@ def init_pretrained(cp, dataset):
                                         )
     network = lasagne.layers.ReshapeLayer(
         incoming=network, shape=([0], deconv_filters, pool_shape[2], pool_shape[3]))
-    network = Unpool2DLayer(incoming=network, ds=(pool_size, pool_size))
+    network = lasagne.layers.Upscale2DLayer(incoming=network, scale_factor=(pool_size, pool_size))
     try:
         dual_conv = int(cp.get('NeuralNetwork', 'dualconv'))
         network = lasagne.layers.TransposedConv2DLayer(incoming=network,
-                                            num_filters=1, filter_size=(dual_conv+1, dual_conv+1), stride=int(cp.get('NeuralNetwork', 'dualstride')), nonlinearity=None)
+                                            num_filters=1, filter_size=(dual_conv, dual_conv), stride=int(cp.get('NeuralNetwork', 'dualstride')), nonlinearity=None)
     except:
         pass
     network = lasagne.layers.TransposedConv2DLayer(incoming=network,
