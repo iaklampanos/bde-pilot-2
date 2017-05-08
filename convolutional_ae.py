@@ -85,13 +85,13 @@ def init(cp, dataset):
     network = lasagne.layers.Conv2DLayer(incoming=network,
                                          num_filters=conv_filters, filter_size=(
                                              filter_sizes, filter_sizes),
-                                         stride=int(cp.get('NeuralNetwork', 'stride')), pad='same')
+                                         stride=int(cp.get('NeuralNetwork', 'stride')))
     try:
         dual_conv = int(cp.get('NeuralNetwork', 'dualconv'))
         network = lasagne.layers.Conv2DLayer(incoming=network,
                                              num_filters=conv_filters, filter_size=(
                                                  dual_conv, dual_conv),
-                                             stride=1, pad='same')
+                                             stride=int(cp.get('NeuralNetwork', 'dualstride')))
     except:
         pass
     network = lasagne.layers.MaxPool2DLayer(
@@ -136,8 +136,14 @@ def init(cp, dataset):
     network = lasagne.layers.ReshapeLayer(
         incoming=network, shape=([0], deconv_filters, pool_shape[2], pool_shape[3]))
     network = Unpool2DLayer(incoming=network, ds=(pool_size, pool_size))
-    network = lasagne.layers.Conv2DLayer(incoming=network,
-                                         num_filters=1, filter_size=(filter_sizes, filter_sizes), stride=int(cp.get('NeuralNetwork', 'stride')), pad='same', nonlinearity=None)
+    try:
+        dual_conv = int(cp.get('NeuralNetwork', 'dualconv'))
+        network = lasagne.layers.TransposedConv2DLayer(incoming=network,
+                                            num_filters=1, filter_size=(dual_conv+1, dual_conv+1), stride=int(cp.get('NeuralNetwork', 'dualstride')), nonlinearity=None)
+    except:
+        pass
+    network = lasagne.layers.TransposedConv2DLayer(incoming=network,
+                                         num_filters=1, filter_size=(filter_sizes, filter_sizes), stride=int(cp.get('NeuralNetwork', 'stride')), nonlinearity=None)
     network = lasagne.layers.ReshapeLayer(
         incoming=network, shape=([0], -1))
     print lasagne.layers.get_output_shape(lasagne.layers.get_all_layers(network))
