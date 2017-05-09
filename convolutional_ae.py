@@ -35,9 +35,8 @@ def load_config(input_path):
 
 
 def log(s, label='INFO'):
-    sys.stderr.write(label + ' [' + str(datetime.now()) + '] ' + str(s) + '\n')
+    sys.stdout.write(label + ' [' + str(datetime.now()) + '] ' + str(s) + '\n')
     sys.stdout.flush()
-
 
 def load_data(cp, train):
     log('Loading data........')
@@ -79,7 +78,7 @@ def init(cp, dataset):
     featurey = int(cp.get('NeuralNetwork', 'feature_y'))
     channels = int(cp.get('NeuralNetwork', 'channels'))
     pool_size = int(cp.get('NeuralNetwork', 'pool'))
-    input_layer = network = lasagne.layers.InputLayer(shape=(None, featurex * featurey),
+    input_layer = network = lasagne.layers.InputLayer(shape=(None, channels * featurex * featurey),
                                                       input_var=input_var)
     network = lasagne.layers.ReshapeLayer(
         incoming=network, shape=([0], channels, featurex, featurey))
@@ -200,7 +199,7 @@ def init_pretrained(cp, dataset):
     featurey = int(cp.get('NeuralNetwork', 'feature_y'))
     channels = int(cp.get('NeuralNetwork', 'channels'))
     pool_size = int(cp.get('NeuralNetwork', 'pool'))
-    input_layer = network = lasagne.layers.InputLayer(shape=(None, featurex * featurey),
+    input_layer = network = lasagne.layers.InputLayer(shape=(None, channels * featurex * featurey),
                                                       input_var=input_var)
     network = lasagne.layers.ReshapeLayer(
         incoming=network, shape=([0], channels, featurex, featurey))
@@ -261,18 +260,18 @@ def init_pretrained(cp, dataset):
     try:
         dual_conv = int(cp.get('NeuralNetwork', 'dualconv'))
         network = lasagne.layers.TransposedConv2DLayer(incoming=network,
-                                            num_filters=1, filter_size=(dual_conv, dual_conv), stride=int(cp.get('NeuralNetwork', 'dualstride')), nonlinearity=None)
+                                            num_filters=channels, filter_size=(dual_conv, dual_conv), stride=int(cp.get('NeuralNetwork', 'dualstride')), nonlinearity=None)
     except:
         pass
     network = lasagne.layers.TransposedConv2DLayer(incoming=network,
-                                         num_filters=1, filter_size=(filter_sizes, filter_sizes), stride=int(cp.get('NeuralNetwork', 'stride')), nonlinearity=None)
+                                         num_filters=channels, filter_size=(filter_sizes, filter_sizes), stride=int(cp.get('NeuralNetwork', 'stride')), nonlinearity=None)
     network = lasagne.layers.ReshapeLayer(
         incoming=network, shape=([0], -1))
+    lasagne.layers.set_all_param_values(
+        network, np.load(prefix + '_model.npy'))
     model = Model(input_layer=input_layer, encoder_layer=encoder_layer,
                   decoder_layer=network, network=network)
     model.save(prefix+'_model.zip')
-    lasagne.layers.set_all_param_values(
-        network, np.load(prefix + '_model.npy'))
     input_layer.input_var = input_var
     hidden = lasagne.layers.get_output(encoder_layer).eval()
     np.save(prefix + '_pretrained_hidden.npy', hidden)
