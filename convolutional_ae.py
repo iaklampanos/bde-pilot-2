@@ -114,7 +114,7 @@ def init(cp, dataset):
                                         num_units=int(
                                             cp.get('NeuralNetwork', 'hidden2')),
                                         )
-    network = lasagne.layers.DenseLayer(incoming=network,
+    encoder_layer = network = lasagne.layers.DenseLayer(incoming=network,
                                         num_units=int(
                                             cp.get('NeuralNetwork', 'hidden3')),
                                         )
@@ -187,6 +187,7 @@ def init(cp, dataset):
 
 
 def init_pretrained(cp, dataset):
+    prefix = cp.get('Experiment', 'prefix')
     print dataset.shape
     input_var = theano.shared(name='input_var', value=np.asarray(dataset,
                                                                  dtype=theano.config.floatX),
@@ -234,7 +235,7 @@ def init_pretrained(cp, dataset):
                                         num_units=int(
                                             cp.get('NeuralNetwork', 'hidden2')),
                                         )
-    network = lasagne.layers.DenseLayer(incoming=network,
+    encoder_layer = network = lasagne.layers.DenseLayer(incoming=network,
                                         num_units=int(
                                             cp.get('NeuralNetwork', 'hidden3')),
                                         )
