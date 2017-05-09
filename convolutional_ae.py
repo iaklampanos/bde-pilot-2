@@ -140,11 +140,11 @@ def init(cp, dataset):
     try:
         dual_conv = int(cp.get('NeuralNetwork', 'dualconv'))
         network = lasagne.layers.TransposedConv2DLayer(incoming=network,
-                                            num_filters=1, filter_size=(dual_conv, dual_conv), stride=int(cp.get('NeuralNetwork', 'dualstride')), nonlinearity=None)
+                                            num_filters=channels, filter_size=(dual_conv, dual_conv), stride=int(cp.get('NeuralNetwork', 'dualstride')), nonlinearity=None)
     except:
         pass
     network = lasagne.layers.TransposedConv2DLayer(incoming=network,
-                                         num_filters=1, filter_size=(filter_sizes, filter_sizes), stride=int(cp.get('NeuralNetwork', 'stride')), nonlinearity=None)
+                                         num_filters=channels, filter_size=(filter_sizes, filter_sizes), stride=int(cp.get('NeuralNetwork', 'stride')), nonlinearity=None)
     network = lasagne.layers.ReshapeLayer(
         incoming=network, shape=([0], -1))
     print lasagne.layers.get_output_shape(lasagne.layers.get_all_layers(network))
