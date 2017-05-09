@@ -270,7 +270,7 @@ def init_pretrained(cp, dataset):
         incoming=network, shape=([0], -1))
     model = Model(input_layer=input_layer, encoder_layer=encoder_layer,
                   decoder_layer=network, network=network)
-    model.save('GHT_700_shallow.zip')
+    model.save(prefix+'_model.zip')
     lasagne.layers.set_all_param_values(
         network, np.load(prefix + '_model.npy'))
     input_layer.input_var = input_var
