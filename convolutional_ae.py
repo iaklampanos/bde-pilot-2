@@ -36,6 +36,7 @@ def load_config(input_path):
 
 def log(s, label='INFO'):
     sys.stderr.write(label + ' [' + str(datetime.now()) + '] ' + str(s) + '\n')
+    sys.stdout.flush()
 
 
 def load_data(cp, train):
@@ -163,6 +164,7 @@ def init(cp, dataset):
     lw_epochs = int(cp.get('NeuralNetwork', 'maxepochs'))
     base_lr = float(cp.get('NeuralNetwork', 'learningrate'))
     # Start training
+    lr_decay = int(cp.get('NeuralNetwork', 'lrepochdecay'))
     for epoch in xrange(lw_epochs):
         epoch_loss = 0
         for row in xrange(0, dataset.shape[0], batch_size):

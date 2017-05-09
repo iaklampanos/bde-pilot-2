@@ -21,6 +21,7 @@ def load_config(input_path):
 
 def log(s, label='INFO'):
     sys.stderr.write(label + ' [' + str(datetime.now()) + '] ' + str(s) + '\n')
+    sys.stdout.flush()
 
 
 def load_data(cp, train):
