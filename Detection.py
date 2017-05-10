@@ -42,9 +42,9 @@ class Detection(object):
         return score
 
     def KL(self):
-        det = np.add(self._det_map,1e-12)
-        conc = np.add(self._conc,1e-12)
-        return scipy.stats.entropy(det.flatten(),conc.flatten())
+        det = np.add(self._det_map, 1e-12)
+        conc = np.add(self._conc, 1e-12)
+        return scipy.stats.entropy(det.flatten(), conc.flatten())
 
     def cosine(self):
         conc = []

@@ -92,7 +92,6 @@ def rank_dispersions(dispersions, points, station_id,criteria):
     return results
 
 
-
 if __name__ == '__main__':
     parser = ArgumentParser(description='Extract variables from netcdf file')
     parser.add_argument('-m', '--model', type=str,

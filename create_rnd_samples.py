@@ -9,13 +9,13 @@ import sys
 import os
 from datetime import datetime
 import numpy as np
-from glob import glob
 import random
 from scipy.ndimage.filters import gaussian_filter
 from scipy.misc import imresize
 
-NUM_SAMPLES=50
-NUM_POINTS=20
+NUM_SAMPLES=20
+NUM_POINTS=5
+RESIZE_DISPERSION = True
 TARGET_SIZE = (167, 167)
 GFILTER = True
 GFILTER_SIGMA = 1
@@ -87,8 +87,11 @@ def main():
         
         # Prepare the memmap to store the tuples
         totnumsamples = len(data) * NUM_SAMPLES
-        weather_size = 64**2
-        disp_size = TARGET_SIZE[0] * TARGET_SIZE[1]
+        weather_size = 4096  # 64**2
+        if RESIZE_DISPERSION:
+            disp_size = TARGET_SIZE[0] * TARGET_SIZE[1]
+        else:
+            disp_size = 251001  # 501 * 501
         fk_size = 1
         origin_size = 1
         mm_spec, mm_lengths = calc_mm_spec([ [('num_samples', totnumsamples)], 
@@ -104,7 +107,10 @@ def main():
         for si, sample in enumerate(data):
             # sample[0]: origin, [1]: origin index, [2]: date, [3]: dispersion, [4]: weather
             origin_index = sample[1]
-            disp = imresize(sample[3], TARGET_SIZE, mode='F')
+            if RESIZE_DISPERSION:
+                disp = imresize(sample[3], TARGET_SIZE, mode='F')
+            else:
+                disp = sample[3]
             # weather: GHT700 only - 64*64
             weather = sample[4][2][1].reshape(-1)
             nz = np.nonzero(disp)

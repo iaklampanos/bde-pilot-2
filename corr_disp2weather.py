@@ -50,6 +50,8 @@ def main():
     log('Loading...')
     dispersiontimes, weathers, times = load_data()
     # log((len(dispersiontimes), weathers.shape, times.shape))
+    # print dispersiontimes.keys()
+    # sys.exit(1)
     
     # find which weathers (indexes) correspond to each dispersion
     snaps_per_disp = 13

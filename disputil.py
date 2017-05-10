@@ -1,8 +1,11 @@
+import matplotlib
+import matplotlib.cm
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
 
 def display_array(a):
+    # plt.imshow(a, cmap=matplotlib.cm.gray, interpolation='nearest')
     plt.imshow(a, interpolation='nearest')
     plt.show()
 
