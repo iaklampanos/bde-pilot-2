@@ -1,7 +1,7 @@
 import os
-os.environ[
-    'THEANO_FLAGS'] = 'mode=FAST_RUN,device=gpu,floatX=float32,nvcc.flags=-D_FORCE_INLINES'
-# os.environ['THEANO_FLAGS'] = 'device=cpu'
+# os.environ[
+#     'THEANO_FLAGS'] = 'mode=FAST_RUN,device=gpu,floatX=float32,nvcc.flags=-D_FORCE_INLINES'
+os.environ['THEANO_FLAGS'] = 'device=cpu'
 import sys
 import ConfigParser
 import numpy as np
@@ -20,7 +20,7 @@ def load_config(input_path):
 
 
 def log(s, label='INFO'):
-    sys.stderr.write(label + ' [' + str(datetime.now()) + '] ' + str(s) + '\n')
+    sys.stdout.write(label + ' [' + str(datetime.now()) + '] ' + str(s) + '\n')
     sys.stdout.flush()
 
 
@@ -159,10 +159,10 @@ def init_pretrained(cp, dataset):
                                         b=np.load(prefix + '_' +
                                                   num + '_b2.npy'),
                                         nonlinearity=relu if dec_act == 'ReLU' else linear)
-    model = Model(input_layer=input_layer,encoder_layer=encoder_layer,decoder_layer=network,network=network)
-    model.save('GHT_700_shallow.zip')
     lasagne.layers.set_all_param_values(
         network, np.load(prefix + '_' + num + '_model.npy'))
+    model = Model(input_layer=input_layer,encoder_layer=encoder_layer,decoder_layer=network,network=network)
+    model.save(prefix+'_model.zip')
     input_layer.input_var = input_var
     hidden = lasagne.layers.get_output(encoder_layer).eval()
     np.save(prefix + '_' + num + '_pretrained_hidden.npy', hidden)
