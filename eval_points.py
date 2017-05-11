@@ -14,6 +14,8 @@ from scipy.misc import imresize
 from scipy.stats import entropy
 from scipy.spatial.distance import euclidean
 import operator
+from sklearn import preprocessing
+
 
 """
 Evaluate a series of random dispersion points agains a model and a clustering 
@@ -108,6 +110,7 @@ def main():
         origin_i = int(sample[SAMPLE_SPEC['origin']])  # real origin
         disp = np.array(sample[SAMPLE_SPEC['disp']])
         disp += 1e-8
+        disp = preprocessing.maxabs_scale(disp)  # scale disp [-1..1)
         if len(disp) < OR_DISP_SIZE:
             disp_needs_resizing = True
             x = int(np.sqrt(len(disp)))
@@ -149,6 +152,7 @@ def main():
             # display_array(disp.reshape(167,167))
 #             display_array(cl_dispersion)
             cl_dispersion += 1e-8
+            cl_dispersion = preprocessing.maxabs_scale(cl_dispersion) # scale to [-1..1)
             
             # Calculate K-L divergence:
             scor = entropy(cl_dispersion.reshape(target_disp_length), disp)
