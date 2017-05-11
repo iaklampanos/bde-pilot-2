@@ -105,7 +105,7 @@ def main():
     # Iterate through the samples
     mm = np.memmap(datafile, dtype='float32', mode='r', shape=MM_SHAPE)
     for s_i, sample in enumerate(mm):
-        origin_i = int(sample[SAMPLE_SPEC['origin']])
+        origin_i = int(sample[SAMPLE_SPEC['origin']])  # real origin
         disp = np.array(sample[SAMPLE_SPEC['disp']])
         disp += 1e-8
         if len(disp) < OR_DISP_SIZE:
@@ -151,8 +151,8 @@ def main():
             cl_dispersion += 1e-8
             
             # Calculate K-L divergence:
-            scor = entropy(cl_dispersion.reshape(target_disp_length),
-                           disp)
+            scor = entropy(cl_dispersion.reshape(target_disp_length), disp)
+            # scor = entropy(disp, cl_dispersion.reshape(target_disp_length))
             scores.append((STATIONS.index(origin), origin, scor))
             
             # Calculate euclidean distance:

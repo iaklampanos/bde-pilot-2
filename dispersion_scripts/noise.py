@@ -32,7 +32,7 @@ if __name__ == '__main__':
     for i in range(0,data_x):
         noisy.append(dataset[i,:])
         for j in range(0,num):
-             rng = np.random.RandomState().uniform(-0.1,0.1,size=data_y)
-             noise = np.add(dataset[i,:],np.multiply(dataset[i,:],rng))
+             rng = np.random.RandomState().uniform(-0.1, 0.1, size=data_y)
+             noise = np.add(dataset[i,:], np.multiply(dataset[i,:], rng))
              noisy.append(noise)
     np.save(output,noisy)

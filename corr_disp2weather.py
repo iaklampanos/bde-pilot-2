@@ -30,6 +30,7 @@ STATIONS_SET = set(STATIONS)
 
 def log(s):
     sys.stderr.write('INFO: ' + str(s) + '\n')
+    sys.stderr.flush()
 
 def load_data():
     data = np.load('test_rel_data.npz')['all']
