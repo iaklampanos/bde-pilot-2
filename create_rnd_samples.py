@@ -12,13 +12,14 @@ import numpy as np
 import random
 from scipy.ndimage.filters import gaussian_filter
 from scipy.misc import imresize
+from sklearn import preprocessing
 
 NUM_SAMPLES=5
 NUM_POINTS=30
 RESIZE_DISPERSION = True
 TARGET_SIZE = (167, 167)
 GFILTER = True
-GFILTER_SIGMA = 1
+GFILTER_SIGMA = .9
 NORMALISE = False
 
 STATIONS = ['ALMARAZ',  #
