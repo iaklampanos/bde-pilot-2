@@ -204,6 +204,7 @@ def init_disp_conv(cp, dataset):
 
 def init(cp, dataset):
     prefix = cp.get('Experiment','prefix')
+    output = cp.get('Experiment','output')
     [win_layer, win, weather_net] = init_weather_conv(cp, dataset)
     [din_layer, din, disp_net] = init_disp_conv(cp, dataset)
     batch_size = int(cp.get('NeuralNetwork', 'batchsize'))
@@ -234,7 +235,7 @@ def init(cp, dataset):
                                         )
     log(lasagne.layers.get_output_shape(lasagne.layers.get_all_layers(network)))
     try:
-        params = np.load(prefix+'_model.npy')
+        params = np.load(output+'sharing_model.npy')
         lasagne.layers.set_all_param_values(network,params)
         log('Found pretrained model.....')
         log('Training with pretrained weights......')
@@ -273,9 +274,10 @@ def init(cp, dataset):
         if (epoch % lr_decay == 0 ) and (epoch != 0):
             base_lr = base_lr / 10.0
         if (epoch % 100 == 0) and (epoch != 0) :
-            np.save(prefix + '_model.npy',lasagne.layers.get_all_param_values(network))
+            np.save(output+prefix + '_model.npy',lasagne.layers.get_all_param_values(network))
     log('Saving......')
-    np.save(prefix + '_model.npy',lasagne.layers.get_all_param_values(network))
+    np.save(output+prefix + '_model.npy',lasagne.layers.get_all_param_values(network))
+    np.save(output+'sharing_model.npy',lasagne.layers.get_all_param_values(network))
     # win_layer.input_var = make_weather(cp,dataset_test)
     # din_layer.input_var = make_disp(cp,dataset_test)
     # prediction = lasagne.layers.get_output(network).argmax(axis=1).eval()
@@ -320,11 +322,11 @@ def init_pretrained(cp, dataset_test):
                                         nonlinearity=lasagne.nonlinearities.softmax
                                         )
     log(lasagne.layers.get_output_shape(lasagne.layers.get_all_layers(network)))
-    params = np.load(prefix+'_model.npy')
+    params = np.load(output+prefix+'_model.npy')
     print params.shape
     lasagne.layers.set_all_param_values(network,params)
-    # model = Model(input_layer=[win_layer,din_layer],encoder_layer=None,decoder_layer=network,network=network)
-    # model.save(prefix+'_model.zip')
+    model = Model(input_layer=[win_layer,din_layer],encoder_layer=None,decoder_layer=network,network=network)
+    model.save(output+prefix+'_model.zip')
     win_layer.input_var = make_weather(cp,dataset_test)
     din_layer.input_var = make_disp(cp,dataset_test)
     prediction = lasagne.layers.get_output(network).argmax(axis=1).eval()
