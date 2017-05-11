@@ -26,7 +26,7 @@ SAMPLE_SPEC = {'origin': slice(1, 2, None),
                'disp': slice(2, 27891, None),
                'fk': slice(0, 1, None),
                'weath': slice(27891, 31987, None)}
-MM_SHAPE = (89600, 31987)
+MM_SHAPE = (22400, 31987)
 OR_DISP_SIZE = 251001  # 501*501
 STATIONS = ['ALMARAZ',  #
             'CERNAVODA',#
@@ -49,9 +49,9 @@ STATIONS = ['ALMARAZ',  #
             'SUKRAINE',#
             'VANDELLOS']#
 
-CLUSTERS_FILE = 'GHT_700_clusters_shallow.zip'
+CLUSTERS_FILE = 'GHT_700_clusters_shallow_desc2.zip'
 MODEL_FILE = 'GHT_700_shallow_model_cpu.zip'  # Should be None for kmeans on raw
-DISPERSIONS_DIR = 'ght700_shallow_dispersions'
+DISPERSIONS_DIR = 'ght700_shallow_dispersions_desc2'
 
 SPECIES = 'c137'
 

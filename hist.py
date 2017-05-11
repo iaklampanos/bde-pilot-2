@@ -17,8 +17,13 @@ def main():
     fname = sys.argv[1]
     ints = []
     count = 0
+    col = 1
+    
     for l in open(fname):
-        l = l.strip()
+        l = l.strip().split()
+        if len(l) < col+1:
+            continue
+        l = l[col]
         if sisint(l):
             count += 1
             ints.append(int(l))
