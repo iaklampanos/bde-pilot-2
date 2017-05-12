@@ -48,13 +48,17 @@ def load_data(cp, train):
         return [X[0:10000], labels]
     else:
         X = np.load(cp.get('Experiment', 'inputfile'))
-        # X = X[cp.get('Experiment','label')]
+        try:
+           X = X[cp.get('Experiment','label')]
+        except:
+           pass
         # if train == 'train':
         print np.unique(X[:,1])
         p = np.random.permutation(X.shape[0])
         X = X[p]
         prefix = cp.get('Experiment', 'prefix')
-        np.save(prefix + '_random_perm.npy', p)
+        output = cp.get('Experiment','output')
+        np.save(output+prefix + '_random_perm.npy', p)
         #  for i in xrange(X.shape[0]):
         #     X[i, 3] = scipy.misc.imresize(X[i, 3], (167, 167))
         return X
@@ -215,7 +219,7 @@ def init(cp, dataset):
         incomings=(weather_net, disp_net), axis=1)
     network = lasagne.layers.DropoutLayer(incoming=network,
                                           p=float(cp.get('NeuralNetwork', 'corruptionfactor')))
-    network = lasagne.layers.DenseLayer(incoming=network,
+    test = network = lasagne.layers.DenseLayer(incoming=network,
                                         num_units=int(
                                             cp.get('NeuralNetwork', 'hidden0')),
                                         )
@@ -237,8 +241,11 @@ def init(cp, dataset):
     try:
         params = np.load(output+'sharing_model.npy')
         lasagne.layers.set_all_param_values(network,params)
+        test_w = test.W.eval()
+        # log(str(np.array_equal(test_w,params[8])))
         log('Found pretrained model.....')
         log('Training with pretrained weights......')
+        log('Are weights equal? '+str(np.array_equal(test_w,params[8])))
     except:
         pass
     lr_decay = int(cp.get('NeuralNetwork','lrdecayepoch'))
@@ -292,6 +299,7 @@ def init(cp, dataset):
 
 
 def init_pretrained(cp, dataset_test):
+    output = cp.get('Experiment','output')
     prefix = cp.get('Experiment','prefix')
     [win_layer, win, weather_net] = init_weather_conv(cp, dataset_test)
     [din_layer, din, disp_net] = init_disp_conv(cp, dataset_test)
@@ -325,8 +333,8 @@ def init_pretrained(cp, dataset_test):
     params = np.load(output+prefix+'_model.npy')
     print params.shape
     lasagne.layers.set_all_param_values(network,params)
-    model = Model(input_layer=[win_layer,din_layer],encoder_layer=None,decoder_layer=network,network=network)
-    model.save(output+prefix+'_model.zip')
+    #model = Model(input_layer=[win_layer,din_layer],encoder_layer=None,decoder_layer=network,network=network)
+    #model.save(output+prefix+'_model.zip')
     win_layer.input_var = make_weather(cp,dataset_test)
     din_layer.input_var = make_disp(cp,dataset_test)
     prediction = lasagne.layers.get_output(network).argmax(axis=1).eval()
@@ -347,11 +355,11 @@ def main(path, train):
     if train == 'train':
         init(cp, X)
     else:
-        X_test = np.load('super_test.npy')
-        np.random.shuffle(X_test)
-        X_test = X_test[0:100,:]
+        #X_test = np.load('super_test.npy')
+        np.random.shuffle(X)
+        #X_test = X_test[0:100,:]
         # print X_test.shape
-        init_pretrained(cp, X_test)
+        init_pretrained(cp, X)
 
 
 from operator import attrgetter
