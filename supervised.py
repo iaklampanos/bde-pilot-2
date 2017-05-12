@@ -337,12 +337,22 @@ def init_pretrained(cp, dataset_test):
     #model.save(output+prefix+'_model.zip')
     win_layer.input_var = make_weather(cp,dataset_test)
     din_layer.input_var = make_disp(cp,dataset_test)
-    prediction = lasagne.layers.get_output(network).argmax(axis=1).eval()
-    print prediction[0:40]
+    prediction = lasagne.layers.get_output(network)
+    max_pred = lasagne.layers.get_output(network).argmax(axis=1).eval()
+    print max_pred[0:40]
     print dataset_test[:,1][0:40]
-    acc = np.mean((prediction==dataset_test[:,1]))
+    acc = np.mean((max_pred==dataset_test[:,1]))
     print prediction.shape
     log('ACC:  '+str(acc))
+    results = []
+    for i in len(dataset_test[:,1]):
+        origin = dataset_test[i,1]
+        raw_preds = prediction[i,:]
+        scores = [(stat,pred) for stat,pred in enumerate(raw_preds)]
+        scores = sorted(scores, key=lambda x: x[1], reverse=True)
+        results.append(origin,raw_preds,scores)
+    np.savez(output+prefix+'_prediction_map',results)
+
 
 
 def main(path, train):
