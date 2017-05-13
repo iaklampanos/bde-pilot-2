@@ -17,7 +17,7 @@ from sklearn.metrics import accuracy_score
 from lasagne.regularization import regularize_layer_params, l2
 from modeltemplate import Model
 import scipy.misc
-from sklearn.preprocessing import maxabs_scale
+from sklearn.preprocessing import maxabs_scale,minmax_scale
 
 
 
@@ -49,7 +49,7 @@ def load_data(cp, train):
         np.save(output+prefix + '_random_perm.npy', p)
         #  for i in xrange(X.shape[0]):
         #     X[i, 3] = scipy.misc.imresize(X[i, 3], (167, 167))
-        return X[0:10,:]
+        return X[0:500,:]
         log('DONE........')
     except:
         raise ValueError('Fill in the inputfile on convdeep.ini configuration file')
@@ -66,7 +66,8 @@ def make_weather(cp, dataset):
     local_dat = local_dat[:, varidx, lvlidx, :, :]
     try:
         norm = cp.get('Experiment','normalize')
-        local_dat = maxabs_scale(local_dat)
+        log('Performing minmax scale....')
+        local_dat = minmax_scale(local_dat)
     except:
         pass
     local_dat = local_dat.reshape(local_dat.shape[0],w_x*w_y)
@@ -86,6 +87,7 @@ def make_disp(cp, dataset):
     channels = int(cp.get('Dispersion', 'channels'))
     try:
         norm = cp.get('Experiment','resize')
+        log('Performing image resize....')
         local_dat = [scipy.misc.imresize(x, (d_x, d_y)) for x in local_dat]
         local_dat = maxabs_scale(local_dat)
     except:
@@ -169,7 +171,8 @@ def weather_net(cp, dataset):
     local_dat = local_dat.reshape(local_dat.shape[0],w_x*w_y)
     try:
         norm = cp.get('Experiment','normalize')
-        local_dat = maxabs_scale(local_dat)
+        log('Performing minmax scale....')
+        local_dat = minmax_scale(local_dat)
     except:
         pass
     local_dat = local_dat.reshape(local_dat.shape[0], channels, w_y, w_y)
@@ -250,6 +253,7 @@ def dispersion_net(cp, dataset):
     channels = int(cp.get('Dispersion', 'channels'))
     try:
         norm = cp.get('Experiment','resize')
+        log('Performing image resize....')
         local_dat = [scipy.misc.imresize(x, (d_x, d_y)) for x in local_dat]
         local_dat = maxabs_scale(local_dat)
     except:
