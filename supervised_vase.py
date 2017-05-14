@@ -396,9 +396,9 @@ def main(path, train):
     if train == 'train':
         init(cp, X)
     else:
-        X_test = np.load('super_test.npy')
+        # X_test = np.load('super_test.npy')
         np.random.shuffle(X)
-        X = X[0:100,:]
+        # X = X[0:100,:]
         #X_test = X_test[0:100,:]
         # print X_test.shape
         init_pretrained(cp, X)
