@@ -132,12 +132,12 @@ def init_weather_conv(cp, dataset):
     network2 = input_layer
     network2 = lasagne.layers.Conv3DLayer(incoming=network2,
                                          num_filters=def_filters, filter_size=def_filter_size,
-                                         stride=(1,def_stride,def_stride),
-                                         pad=(1,int(cp.get('W1','pad'),int(cp.get('W1','pad'))
+                                         stride=def_stride,
+                                         pad=def_padding
                                          )
     network2 = lasagne.layers.Conv3DLayer(incoming=network2,
                                          num_filters=int(cp.get('W2', 'convfilters')),
-                                          filter_size=(2,int(cp.get('W1', 'filtersize')),int(cp.get('W1', 'filtersize'))),
+                                          filter_size=(2,int(cp.get('W2', 'filtersize')),int(cp.get('W2', 'filtersize'))),
                                          stride=(1,int(cp.get('W2', 'stride')),int(cp.get('W2', 'stride'))),
                                          pad=(1,int(cp.get('W2','pad')),int(cp.get('W2','pad')))
                                          )
