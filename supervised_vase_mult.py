@@ -69,6 +69,7 @@ def make_weather(cp, dataset):
     lvlidx = int(cp.get('Weather', 'lvlidx'))
     featurex = int(cp.get('Weather', 'feature_x'))
     featurey = int(cp.get('Weather', 'feature_y'))
+    channels = int(cp.get('Weather', 'channels'))
     dataset = dataset[:, 4]
     dataset = [x for x in dataset]
     dataset = np.array(dataset)
@@ -97,6 +98,7 @@ def init_weather_conv(cp, dataset):
     dataset = [x for x in dataset]
     dataset = np.array(dataset)
     dataset = dataset[:, varidx, 0:lvlidx, :, :]
+    log(dataset.shape)
     dataset = dataset.reshape(dataset.shape[0],channels*featurex*featurey)
     dataset = minmax_scale(dataset)
     channels = int(cp.get('Weather', 'channels'))
