@@ -177,11 +177,11 @@ class Clustering(Dataset):
                 # plt.plot(X_plot, dens, 'k-')
                 
                 c_descs.append(c_desc)
-            plt.show()
+            # plt.show()
+            # break
 
             # print c_desc
             c_descriptors.append(c_descs)
-        # print np.array(c_desc).shape
         
         log('Frames filled from neighbours: ' + str(frames_filled) + '/' +
             str(frames_total))
@@ -271,5 +271,5 @@ if __name__ == '__main__':
     # print clust_obj._labels.shape
     clust_obj.create_density_descriptors(12, times)
     # clust_obj.create_descriptors(12)
-    print np.array(np.array(clust_obj._descriptors)[0][0]).shape
-    # print clust_obj._descriptors
+    # print np.array(np.array(clust_obj._descriptors)[0][0]).shape
+    print clust_obj._descriptors.shape
