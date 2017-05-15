@@ -119,13 +119,13 @@ def init_weather_conv(cp, dataset):
     network = lasagne.layers.Conv3DLayer(incoming=network,
                                          num_filters=def_filters, filter_size=def_filter_size,
                                          stride=(1,def_stride,def_stride),
-                                         pad=def_padding
+                                         pad=(0,def_padding,def_padding)
                                          )
     network = lasagne.layers.Conv3DLayer(incoming=network,
                                          num_filters=int(cp.get('W1', 'convfilters')),
                                           filter_size=int(cp.get('W1', 'filtersize')),
                                          stride=(1,int(cp.get('W1', 'stride')),int(cp.get('W1', 'stride'))),
-                                         pad=int(cp.get('W1','pad'))
+                                         pad=(0,int(cp.get('W1','pad')),int(cp.get('W1','pad')))
                                          )
     network = lasagne.layers.MaxPool3DLayer(
         incoming=network, pool_size=(1,pool_size,pool_size))
@@ -133,13 +133,13 @@ def init_weather_conv(cp, dataset):
     network2 = lasagne.layers.Conv3DLayer(incoming=network2,
                                          num_filters=def_filters, filter_size=def_filter_size,
                                          stride=(1,def_stride,def_stride),
-                                         pad=def_padding
+                                         pad=(0,def_padding,def_padding)
                                          )
     network2 = lasagne.layers.Conv3DLayer(incoming=network2,
                                          num_filters=int(cp.get('W2', 'convfilters')),
                                           filter_size=int(cp.get('W1', 'filtersize')),
                                          stride=(1,int(cp.get('W2', 'stride')),int(cp.get('W2', 'stride'))),
-                                         pad=int(cp.get('W2','pad'))
+                                         pad=(0,int(cp.get('W2','pad')),int(cp.get('W2','pad')))
                                          )
     network2 = lasagne.layers.MaxPool3DLayer(
         incoming=network2, pool_size=(1,pool_size,pool_size))
