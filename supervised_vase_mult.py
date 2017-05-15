@@ -92,6 +92,7 @@ def init_weather_conv(cp, dataset):
     featurey = int(cp.get('Weather', 'feature_y'))
     varidx = int(cp.get('Weather', 'varidx'))
     lvlidx = int(cp.get('Weather', 'lvlidx'))
+    channels = int(cp.get('Weather', 'channels'))
     dataset = dataset[:, 4]
     dataset = [x for x in dataset]
     dataset = np.array(dataset)
@@ -125,7 +126,7 @@ def init_weather_conv(cp, dataset):
                                          pad=int(cp.get('W1','pad'))
                                          )
     network = lasagne.layers.MaxPool3DLayer(
-        incoming=network, pool_size=(pool_size,pool_size,1))
+        incoming=network, pool_size=(1,pool_size,pool_size))
     network2 = input_layer
     network2 = lasagne.layers.Conv3DLayer(incoming=network2,
                                          num_filters=def_filters, filter_size=def_filter_size,
@@ -139,7 +140,7 @@ def init_weather_conv(cp, dataset):
                                          pad=int(cp.get('W2','pad'))
                                          )
     network2 = lasagne.layers.MaxPool3DLayer(
-        incoming=network2, pool_size=(pool_size,pool_size,1))
+        incoming=network2, pool_size=(1,pool_size,pool_size))
     network = lasagne.layers.FlattenLayer(network)
     network2 = lasagne.layers.FlattenLayer(network2)
     out = lasagne.layers.ConcatLayer(incomings=(network,network2),axis=1)
