@@ -124,8 +124,8 @@ def init_weather_conv(cp, dataset):
                                          stride=int(cp.get('W1', 'stride')),
                                          pad=int(cp.get('W1','pad'))
                                          )
-    network = lasagne.layers.MaxPool2DLayer(
-        incoming=network, pool_size=(pool_size, pool_size))
+    network = lasagne.layers.MaxPool3DLayer(
+        incoming=network, pool_size=pool_size
     network2 = input_layer
     network2 = lasagne.layers.Conv3DLayer(incoming=network2,
                                          num_filters=def_filters, filter_size=def_filter_size,
@@ -138,8 +138,8 @@ def init_weather_conv(cp, dataset):
                                          stride=int(cp.get('W2', 'stride')),
                                          pad=int(cp.get('W2','pad'))
                                          )
-    network2 = lasagne.layers.MaxPool2DLayer(
-        incoming=network2, pool_size=(pool_size, pool_size))
+    network2 = lasagne.layers.MaxPool3DLayer(
+        incoming=network2, pool_size=pool_size
     network = lasagne.layers.FlattenLayer(network)
     network2 = lasagne.layers.FlattenLayer(network2)
     out = lasagne.layers.ConcatLayer(incomings=(network,network2),axis=1)
