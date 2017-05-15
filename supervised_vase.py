@@ -1,7 +1,6 @@
 import os
-os.environ[
-    'THEANO_FLAGS'] = 'mode=FAST_RUN,device=gpu,floatX=float32,nvcc.flags=-D_FORCE_INLINES'
-# os.environ['THEANO_FLAGS'] = 'device=cpu,force_device=True'
+os.environ['THEANO_FLAGS'] = 'mode=FAST_RUN,device=gpu,floatX=float32,nvcc.flags=-D_FORCE_INLINES'
+#os.environ['THEANO_FLAGS'] = 'device=cpu,force_device=True'
 import sys
 import ConfigParser
 import numpy as np
@@ -45,7 +44,7 @@ def load_data(cp, train):
         # if train == 'train':
         X = X.astype(np.float32) * 0.02
         #     np.random.shuffle(X)
-        return [X[0:10000], labels]
+        return [X[0:10], labels]
     else:
         X = np.load(cp.get('Experiment', 'inputfile'))
         try:
@@ -60,8 +59,8 @@ def load_data(cp, train):
         output = cp.get('Experiment','output')
         np.save(output+prefix + '_random_perm.npy', p)
         #  for i in xrange(X.shape[0]):
-        #     X[i, 3] = scipy.misc.imresize(X[i, 3], (167, 167))
-        return X[0:100,:]
+        #     X[i, 3] = scipy.misc.imresize(X[i, 3], 167, 167))
+        return X
     log('DONE........')
 
 def make_weather(cp, dataset):
@@ -263,15 +262,15 @@ def init(cp, dataset):
     # log(lasagne.layers.get_output_shape(lasagne.layers.get_all_layers(network)))
     from draw_net import draw_to_file
     layers = lasagne.layers.get_all_layers(network)
-    draw_to_file(layers, 'network.pdf', output_shape=True,verbose=True)
+    draw_to_file(layers, output+prefix+'_network.pdf', output_shape=True,verbose=True)
     try:
         params = np.load(output+'sharing_model.npy')
         lasagne.layers.set_all_param_values(network,params)
-        test_w = test.W.eval()
+        #test_w = test.W.eval()
         # log(str(np.array_equal(test_w,params[8])))
         log('Found pretrained model.....')
         log('Training with pretrained weights......')
-        log('Are weights equal? '+str(np.array_equal(test_w,params[8])))
+        #log('Are weights equal? '+str(np.array_equal(test_w,params[8])))
     except:
         pass
     lr_decay = int(cp.get('NeuralNetwork','lrdecayepoch'))
@@ -306,13 +305,13 @@ def init(cp, dataset):
                     label='Supervised')
             if (epoch % lr_decay == 0 ) and (epoch != 0):
                 base_lr = base_lr / 10.0
-            if (epoch % 100 == 0) and (epoch != 0) :
+            if (epoch % 50 == 0) and (epoch != 0) :
                 np.save(output+prefix + '_model.npy',lasagne.layers.get_all_param_values(network))
         log('Saving......')
         np.save(output+prefix + '_model.npy',lasagne.layers.get_all_param_values(network))
         np.save(output+'sharing_model.npy',lasagne.layers.get_all_param_values(network))
     except KeyboardInterrupt:
-        log('Saving......')
+        #log('Saving......')
         np.save(output+prefix + '_model.npy',lasagne.layers.get_all_param_values(network))
         np.save(output+'sharing_model.npy',lasagne.layers.get_all_param_values(network))
     # win_layer.input_var = make_weather(cp,dataset_test)
@@ -328,7 +327,7 @@ def init(cp, dataset):
     #               dtype=theano.config.floatX)
 
 
-def init_pretrained(cp, dataset_test):
+def init_pretrained(cp, dataset_test, batch):
     output = cp.get('Experiment','output')
     prefix = cp.get('Experiment','prefix')
     [win_layer, win, weather_net] = init_weather_conv(cp, dataset_test)
@@ -382,7 +381,7 @@ def init_pretrained(cp, dataset_test):
         scores = sorted(scores, key=lambda x: x[1], reverse=True)
         results.append((origin,raw_preds,scores))
     results = np.asarray(results,dtype=object)
-    np.save(output+prefix+'_test_results.npy',results)
+    np.save(output+prefix+'_test_results_'+str(batch)+'.npy',results)
 
 
 
@@ -401,7 +400,8 @@ def main(path, train):
         # X = X[0:100,:]
         #X_test = X_test[0:100,:]
         # print X_test.shape
-        init_pretrained(cp, X)
+        for i in xrange(0, X.shape[0], 3000):
+            init_pretrained(cp, X[i:i+3000,:], i)
 
 
 from operator import attrgetter
