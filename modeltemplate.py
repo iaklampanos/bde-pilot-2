@@ -27,6 +27,17 @@ class Model(object):
       output = lasagne.layers.get_output(self._network).eval()
       return output
 
+  def get_output(self, dataset1, dataset2):
+      self._input_layer[0].input_var = theano.shared(name='input_var', value=np.asarray(dataset1,
+                                                                       dtype=theano.config.floatX),
+                                    borrow=True)
+      self._input_layer[1].input_var = theano.shared(name='input_var', value=np.asarray(dataset2,
+                                                                     dtype=theano.config.floatX),
+                                  borrow=True)
+      output = lasagne.layers.get_output(self._network).eval()
+      return output
+
+
   def save(self,filename='model_template.zip'):
       utils.save(filename,self)
 

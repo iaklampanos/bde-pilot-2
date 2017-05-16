@@ -1,7 +1,7 @@
 import os
-os.environ[
-    'THEANO_FLAGS'] = 'mode=FAST_RUN,device=gpu,floatX=float32,nvcc.flags=-D_FORCE_INLINES'
-# os.environ['THEANO_FLAGS'] = 'device=cpu'
+# os.environ[
+#     'THEANO_FLAGS'] = 'mode=FAST_RUN,device=gpu,floatX=float32,nvcc.flags=-D_FORCE_INLINES'
+os.environ['THEANO_FLAGS'] = 'device=cpu,force_device=True'
 import sys
 import ConfigParser
 import numpy as np

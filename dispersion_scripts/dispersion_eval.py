@@ -13,9 +13,9 @@ import scipy
 import time
 
 TEST_PATH='/mnt/disk1/thanasis/data/wrf/nc/'
-COBJ_PATH='/mnt/disk1/thanasis/NIPS/clusters/double_kmeans/GHT_700_clusters_shallow.zip'
+COBJ_PATH='/mnt/disk1/thanasis/NIPS/clusters/double_kmeans/GHT_700_deep.zip'
 TEST_DISP='/mnt/disk1/thanasis/hysplit/hysplit/trunk/test_exec/test/'
-CLUSTER_DISP='/mnt/disk1/thanasis/NIPS/clusters/double_kmeans/ght700_shallow/dispersions/86-01-11-00'
+CLUSTER_DISP='/mnt/disk1/thanasis/NIPS/clusters/double_kmeans/ght_700_deep/dispersions/'
 STATIONS = ["CERNAVODA","KOZLODUY","GROHNDE","EMSLAND","SIZEWELL","HINKLEY","COFRENTES","ALMARAZ","LOVIISA","FORSMARK","RINGHALS","SUKRAINE","PAKS","KRSKO","VANDELLOS","DOEL","HEYSHAM","IGNALINA","GARONA"]
 
 def reconstruct_date(date_str, dot_nc=False):
@@ -57,7 +57,7 @@ def get_results(test_date, cluster_date):
 
 def main():
     clust_obj = utils.load_single(COBJ_PATH)
-    model = utils.load_single('/mnt/disk1/thanasis/data/GHT_700_shallow_model_cpu.zip')
+    model = utils.load_single('/mnt/disk1/thanasis/NIPS/models/GHT_700_deep/GHT_700_deep_model_cpu.zip')
     for test_nc in sys.argv[1:]:
         try:
             file = open(test_nc+'.csv','w')
@@ -65,19 +65,20 @@ def main():
                                       700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
             items = [test_dict.extract_data()]
             items = np.array(items)
-            items = model.get_hidden(items)
-            print items.shape
             ds = Dataset_transformations(items, 1000, items.shape)
-            # ds.twod_transformation()
-            # ds.normalize()
-            cd = clust_obj.centroids_distance(ds, features_first=False)
+            ds.twod_transformation()
+            ds.normalize()
+            items = np.transpose(ds._items)
+            items = model.get_hidden(items)
+            ds_hidden = Dataset_transformations(items,1000,items.shape)
+            # utils.plot_pixel_image(items[4,:],model.get_output(items)[4,:],64,64)
+            cd = clust_obj.centroids_distance(ds_hidden, features_first=False)
             cluster_date = reconstruct_date(clust_obj._desc_date[cd[0][0]])
             test_date = reconstruct_date(test_nc, dot_nc=True)
             [MSE,KL] = get_results(test_date, cluster_date)
             for i,stat in enumerate(STATIONS):
                 file.write(str(test_date)+','+str(cluster_date)+','+str(stat)+','+unicode(MSE[i])+','+unicode(KL[i])+'\n')
-        except:
-            pass
+        except Exception,e: print str(e)
 
 if __name__ == "__main__":
     main()

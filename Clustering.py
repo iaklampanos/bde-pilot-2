@@ -9,6 +9,9 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 import sys
+from scipy.signal import argrelextrema
+import operator
+
 
 def log(s, label='INFO'):
     sys.stdout.write(label + ' [' + str(datetime.now()) + '] ' + str(s) + '\n')
@@ -84,7 +87,7 @@ class Clustering(Dataset):
     def create_kmeans_descriptors(self, frames):
         create_descriptors(self, frames)
 
-    def create_density_descriptors(self, frames, times):
+    def create_density_descriptors(self, frames, times, lmax_limit=5):
         """
         Create max-density cluster descriptors.
         Params:
@@ -104,7 +107,7 @@ class Clustering(Dataset):
         frames_filled = frames_total = 0
         # print len(times), len(times_f), len(data), np.max(times_f)
         for c in clusters:
-            c_desc = [] # the descriptor of the current cluster
+            
             indexes = np.array([x for x in c])
             cdata = data[indexes]
             ctimes_f = times_f[indexes]
@@ -113,55 +116,73 @@ class Clustering(Dataset):
                 ctimes_f[:, np.newaxis])
             dens = np.exp(kde.score_samples(X_plot))
 
-            # Choose the descriptor around the point where density is max
-            max_den_i = np.argmax(dens)
+            # Find the local maxima
+            max_density_indexes = argrelextrema(dens, np.greater)[0]
+            print max_density_indexes
+            local_max = []
+            for md in max_density_indexes:
+                local_max.append((md, dens[md]))
+            local_max.sort(key=operator.itemgetter(1), reverse=True)
+            if len(local_max) > lmax_limit:
+                local_max = local_max[0:lmax_limit]
+            # for oi in local_max:
+            #     plt.axvline(x=oi[0], color='r', linestyle='--')
+            # print local_max
 
-            # find positions of interest
-            cent_pos = max_den_i - (max_den_i % snap_duration_hrs)
-            if max_den_i % snap_duration_hrs > snap_duration_hrs / 2:
-                cent_pos += snap_duration_hrs
-            start_time_offset = cent_pos - (frames / 2) * snap_duration_hrs  ##
-            end_time_offset = start_time_offset + frames * snap_duration_hrs ##
+            # Iterate through all local maxes selected above
+            c_descs = []  # All the descriptors of the current cluster
+            for lm in local_max:
+                c_desc = [] # the descriptor of the current local maximum
+                max_den_i = lm[0]
+                # find positions of interest
+                cent_pos = max_den_i - (max_den_i % snap_duration_hrs)
+                if max_den_i % snap_duration_hrs > snap_duration_hrs / 2:
+                    cent_pos += snap_duration_hrs
+                start_time_offset = cent_pos - (frames / 2) * snap_duration_hrs  ##
+                end_time_offset = start_time_offset + frames * snap_duration_hrs ##
 
-            pos = []  # list of time offsets
-            for k in range(frames):
-                frames_total += 1
-                pos.append(start_time_offset + k * snap_duration_hrs)
-                cindices = np.where(np.in1d(ctimes_f, pos[k]))[0] # indices in cluster data list where the offsets occur - it may be []
+                pos = []  # list of time offsets
+                for k in range(frames):
+                    frames_total += 1
+                    pos.append(start_time_offset + k * snap_duration_hrs)
+                    cindices = np.where(np.in1d(ctimes_f, pos[k]))[0] # indices in cluster data list where the offsets occur - it may be []
 
-                if len(cindices) > 0:
-                    gindices = indexes[cindices]
-                    # print times[indexes[cindices]]  # checking real times
-                    c_desc.append(np.array(gindices))
-                    # c_desc.append(np.mean(cdata[cindices], 0))           # ***
-                else:
-                    c_desc.append(None)
+                    if len(cindices) > 0:
+                        gindices = indexes[cindices]
+                        # print times[indexes[cindices]]  # checking real times
+                        c_desc.append(np.array(gindices))
+                        # c_desc.append(np.mean(cdata[cindices], 0))           # ***
+                    else:
+                        c_desc.append(None)
 
-            # Deal with None by duplicating neighbouring snapshots (shouldn't occur often...)
-            for k in range(frames):
-                if c_desc[k] is None and k > 0:
-                    c_desc[k] = c_desc[k-1]
-                    if c_desc[k] is not None: frames_filled += 1
-            for k in reversed(range(frames)):
-                if c_desc[k] is None and k < frames - 1:
-                    c_desc[k] = c_desc[k+1]
-                    if c_desc[k] is not None: frames_filled += 1
+                # Deal with None by duplicating neighbouring snapshots (shouldn't occur often...)
+                for k in range(frames):
+                    if c_desc[k] is None and k > 0:
+                        c_desc[k] = c_desc[k-1]
+                        if c_desc[k] is not None: frames_filled += 1
+                for k in reversed(range(frames)):
+                    if c_desc[k] is None and k < frames - 1:
+                        c_desc[k] = c_desc[k+1]
+                        if c_desc[k] is not None: frames_filled += 1
 
-            # for displaying data - need to uncommend *** above
-            # from disputil import display_array
-            # for tmp in c_desc:
-            #     img = np.array(tmp).reshape((64,64))
-            #     display_array(img)
+                # for displaying data - need to uncommend *** above
+                # from disputil import display_array
+                # for tmp in c_desc:
+                #     img = np.array(tmp).reshape((64,64))
+                #     display_array(img)
 
-            # for displaying the descriptor ranges in the hypothetical year
-            plt.axvline(x=start_time_offset, color='r', linestyle='--')
-            plt.axvline(x=end_time_offset, color='r', linestyle='--')
-            plt.plot(X_plot, dens, 'k-')
-            plt.show()
+                # for displaying the descriptor ranges in the hypothetical year
+                # plt.axvline(x=start_time_offset, color='r', linestyle='--')
+                # plt.axvline(x=end_time_offset, color='r', linestyle='--')
+                # plt.plot(X_plot, dens, 'k-')
+                
+                c_descs.append(c_desc)
+            # plt.show()
+            # break
 
             # print c_desc
-            c_descriptors.append(c_desc)
-        # print np.array(c_desc).shape
+            c_descriptors.append(c_descs)
+        
         log('Frames filled from neighbours: ' + str(frames_filled) + '/' +
             str(frames_total))
         self._descriptors = c_descriptors
@@ -250,5 +271,5 @@ if __name__ == '__main__':
     # print clust_obj._labels.shape
     clust_obj.create_density_descriptors(12, times)
     # clust_obj.create_descriptors(12)
-    print np.array(clust_obj._descriptors).shape
-    print clust_obj._descriptors
+    # print np.array(np.array(clust_obj._descriptors)[0][0]).shape
+    print clust_obj._descriptors.shape

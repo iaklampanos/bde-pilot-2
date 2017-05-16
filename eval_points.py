@@ -13,6 +13,9 @@ from glob import glob
 from scipy.misc import imresize
 from scipy.stats import entropy
 from scipy.spatial.distance import euclidean
+from scipy.spatial.distance import cosine
+from scipy.spatial.distance import correlation
+from scipy.spatial.distance import cityblock
 import operator
 from sklearn import preprocessing
 
@@ -30,32 +33,33 @@ SAMPLE_SPEC = {'origin': slice(1, 2, None),
                'weath': slice(27891, 31987, None)}
 MM_SHAPE = (22400, 31987)
 OR_DISP_SIZE = 251001  # 501*501
-STATIONS = ['ALMARAZ',  #
-            'CERNAVODA',#
-            'COFRENTES',#
-            'DOEL',#
-            'EMSLAND',#
-            'FORSMARK',#
-            'GARONA',
-            'GROHNDE',#
-            'HEYSHAM',#
-            'HINKLEY',#
-            'IGNALINA',
-            'KHMELNITSKY',#
-            'KOZLODUY',#
-            'KRSKO',#
-            'LOVIISA', #
-            'PAKS',#
-            'RINGHALS',#
-            'SIZEWELL',#
-            'SUKRAINE',#
-            'VANDELLOS']#
+STATIONS = ['ALMARAZ',  #0
+            'CERNAVODA',#1
+            'COFRENTES',#2
+            'DOEL',     #3
+            'EMSLAND',  #4
+            'FORSMARK', #5
+            'GARONA',   #6
+            'GROHNDE',  #7
+            'HEYSHAM',  #8
+            'HINKLEY',  #9
+            'IGNALINA', #10
+            'KHMELNITSKY',#11
+            'KOZLODUY', #12
+            'KRSKO',    #13
+            'LOVIISA',  #14
+            'PAKS',     #15
+            'RINGHALS', #16
+            'SIZEWELL', #17
+            'SUKRAINE', #18
+            'VANDELLOS']#19
 
 CLUSTERS_FILE = 'GHT_700_clusters_shallow_desc2.zip'
 MODEL_FILE = 'GHT_700_shallow_model_cpu.zip'  # Should be None for kmeans on raw
 DISPERSIONS_DIR = 'ght700_shallow_dispersions_desc2'
 
 SPECIES = 'c137'
+PAD = 0 #1E-13
 
 def log(s, label='INFO', metadata=False):
     if metadata:
@@ -106,11 +110,13 @@ def main():
     
     # Iterate through the samples
     mm = np.memmap(datafile, dtype='float32', mode='r', shape=MM_SHAPE)
-    for s_i, sample in enumerate(mm):
+    for s_i, sample in enumerate(mm[4000:]):
         origin_i = int(sample[SAMPLE_SPEC['origin']])  # real origin
         disp = np.array(sample[SAMPLE_SPEC['disp']])
-        disp += 1e-8
-        disp = preprocessing.maxabs_scale(disp)  # scale disp [-1..1)
+        
+        disp = preprocessing.maxabs_scale(disp) * 1000  # scale disp [-1..1)
+        disp += PAD
+        
         if len(disp) < OR_DISP_SIZE:
             disp_needs_resizing = True
             x = int(np.sqrt(len(disp)))
@@ -140,6 +146,7 @@ def main():
         
         scores = []
         scores_euc = []
+        scores_cos = []
         for d in glob(DISPERSIONS_DIR + '/' + cl_id + '/*' + SPECIES + '.npy'):
             origin = d[d.rfind('/') + 1:]
             origin = origin[:origin.find('-')]
@@ -151,34 +158,48 @@ def main():
             # p real, q model
             # display_array(disp.reshape(167,167))
 #             display_array(cl_dispersion)
-            cl_dispersion += 1e-8
-            cl_dispersion = preprocessing.maxabs_scale(cl_dispersion) # scale to [-1..1)
             
-            # Calculate K-L divergence:
-            scor = entropy(cl_dispersion.reshape(target_disp_length), disp)
+            cl_dispersion = preprocessing.maxabs_scale(cl_dispersion) * 1000
+            cl_dispersion += PAD
+            
+            scor = euclidean(cl_dispersion.reshape(target_disp_length), disp)
             # scor = entropy(disp, cl_dispersion.reshape(target_disp_length))
             scores.append((STATIONS.index(origin), origin, scor))
             
-            # Calculate euclidean distance:
-            scor_euc = euclidean(cl_dispersion.reshape(target_disp_length),
+            # Calculate cosine distance:
+            scor_euc = cosine(cl_dispersion.reshape(target_disp_length),
                            disp)
             scores_euc.append((STATIONS.index(origin), origin, scor_euc))
+            
+            scor_cos = correlation(cl_dispersion.reshape(target_disp_length), disp)
+            scores_cos.append((STATIONS.index(origin), origin, scor_cos))
+            
+            assert scor != float('Inf')
+            assert scor_euc != float('Inf')
+            assert scor_cos != float('Inf')
 
         scores.sort(key=operator.itemgetter(2))
         scores_euc.sort(key=operator.itemgetter(2))
+        scores_cos.sort(key=operator.itemgetter(2))
+        # print scores
+        # print scores_euc
+        # print scores_cos
         
         pos = 0
         pos_euc = 0
+        pos_cos = 0
         for i in range(0, len(STATIONS)):
             # print 'Origin', STATIONS.index(origin), 'score...', scores[i][0]
             if origin_i == scores[i][0]:
                 pos = i + 1
             if origin_i == scores_euc[i][0]:
                 pos_euc = i + 1
-            if pos > 0 and pos_euc > 0: 
+            if origin_i == scores_cos[i][0]:
+                pos_cos = i + 1
+            if pos > 0 and pos_euc > 0 and pos_cos > 0: 
                 break
         # log(str(origin_i) + '> ' + str(s_i) + ' ' + str(pos) )
-        log(str(origin_i) + ' ' + str(pos) + ' ' + str(pos_euc))
+        log(str(origin_i) + '\t' + str(pos) + '\t' + str(pos_euc) + '\t' + str(pos_cos))
         
 
 if __name__ == '__main__':
