@@ -54,9 +54,17 @@ STATIONS = ['ALMARAZ',  #0
             'SUKRAINE', #18
             'VANDELLOS']#19
 
-CLUSTERS_FILE = 'GHT_700_clusters_shallow_desc2.zip'
+CLUSTERS_FILE = 'GHT_700_clusters_shallow.zip'
+# CLUSTERS_FILE = 'GHT_700_raw_kmeans.zip'
+# CLUSTERS_FILE = 'GHT_700_raw_density.zip'
+
 MODEL_FILE = 'GHT_700_shallow_model_cpu.zip'  # Should be None for kmeans on raw
-DISPERSIONS_DIR = 'ght700_shallow_dispersions_desc2'
+# MODEL_FILE = None   # Raw
+
+# DISPERSIONS_DIR = 'ght700_shallow_dispersions_desc2'
+DISPERSIONS_DIR = 'ght700_shallow_dispersions'
+# DISPERSIONS_DIR = 'kmeans_km2_raw_dispersions'
+# DISPERSIONS_DIR = 'kmeans_dense_raw_dispersions'
 
 SPECIES = 'c137'
 PAD = 0 #1E-13
@@ -130,9 +138,14 @@ def main():
         ds = Dataset_transformations(weather, 1, weather.shape)
         ds.normalize()
         ds._items = ds._items.T
-        
-        h = model.get_hidden(ds._items)
-        ds_hidden = Dataset_transformations(h, 1, h.shape)
+
+        ds_hidden = None
+        if MODEL_FILE is not None:
+            h = model.get_hidden(ds._items)
+            ds_hidden = Dataset_transformations(h, 1, h.shape)
+        else:
+            ds_hidden = ds  ## unfortunate naming but...
+            assert ds_hidden._items.shape == (1, 4096)
         
         # display_array(ds._items.reshape(64, 64))
         # display_array(h[:,:2500].reshape(50, 50))
