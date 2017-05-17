@@ -14,8 +14,8 @@ from scipy.ndimage.filters import gaussian_filter
 from scipy.misc import imresize
 from sklearn import preprocessing
 
-NUM_SAMPLES=20
-NUM_POINTS=5
+NUM_SAMPLES=5
+NUM_POINTS=30
 RESIZE_DISPERSION = True
 TARGET_SIZE = (167, 167)
 GFILTER = True
@@ -102,7 +102,7 @@ def main():
         print mm_lengths
 
         log('Creating memmap...')
-        mm = np.memmap('data.dat', dtype='float32', mode='w+', shape=mm_lengths)
+        mm = np.memmap('rnd_samples.dat', dtype='float32', mode='w+', shape=mm_lengths)
         log('Done')
         
         for si, sample in enumerate(data):

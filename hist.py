@@ -25,11 +25,13 @@ def main():
     
     ints = []
     count = 0
+
     for l in sys.stdin:
         l = l.strip()
         l = l.split()
         if len(l) < colno: continue
         l = l[colno-1]
+
         if sisint(l):
             count += 1
             ints.append(int(l))
