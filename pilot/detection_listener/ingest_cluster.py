@@ -34,11 +34,13 @@ if __name__ == '__main__':
                         help='input path')
     parser.add_argument('-m', '--method', required=True, type=str,
                         help='clustering method')
+    parser.add_argument('-d', '--descriptor', required=True, type=str,
+                        help='descriptor')
     parser.add_argument('-hp', '--hdfs_path', required=True, type=str,
                         help='hdfs path')
     opts = parser.parse_args()
-    getter = attrgetter('input', 'method', 'hdfs_path')
-    inp, method, hp = getter(opts)
+    getter = attrgetter('input', 'method', 'hdfs_path', 'descriptor')
+    inp, method, hp, desc = getter(opts)
     local_filelist = sorted(os.listdir(inp))
     with open('db_info.json', 'r') as data_file:
         dbpar = json.load(data_file)
@@ -64,11 +66,11 @@ if __name__ == '__main__':
                path = "http://namenode:50070/webhdfs/v1" + hp + "/" + nc + "?op=OPEN"
                date = datetime.datetime.strptime(lfl, '%y-%m-%d-%H')
                print date
-               sql = "INSERT INTO cluster(filename,hdfs_path,station,date,origin,c137,i131,c137_pickle,i131_pickle) VALUES (%s,%s,%s,TIMESTAMP %s,%s,%s,%s,%s,%s)"
+               sql = "INSERT INTO cluster(filename,hdfs_path,station,date,origin,descriptor,c137,i131,c137_pickle,i131_pickle) VALUES (%s,%s,%s,TIMESTAMP %s,%s,%s,%s,%s,%s,%s)"
                cur.execute(sql, (nc, path, nc.split('-')[0],
                datetime.datetime.strftime(
                        date, '%m-%d-%Y %H:%M:%S'),
-               method, 'null', 'null', psycopg2.Binary(
+               method,desc, 'null', 'null', psycopg2.Binary(
                    cPickle.dumps(c137_pickle, 1)),
                psycopg2.Binary(cPickle.dumps(i131_pickle, 1))))
                netcdf.close()
