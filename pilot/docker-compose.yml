@@ -1,0 +1,91 @@
+version: "2"
+
+services:
+  namenode:
+    image: bde2020/hadoop-namenode:1.0.0
+    container_name: namenode
+    domainname: hadoop
+    volumes:
+      - /mnt/synology/hadoop/namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=bde_cluster
+    env_file:
+      - ./hadoop.env
+    networks:
+      - default
+  
+  datanode1:
+    image: bde2020/hadoop-datanode:1.0.0
+    hostname: datanode1
+    container_name: datanode1
+    domainname: hadoop
+    volumes:
+      - /srv/hadoop/datanode:/hadoop/dfs/data
+    env_file:
+      - ./hadoop.env
+    environment:
+      - "constraint:node==slave1"
+    networks:
+      - default
+    depends_on:
+      - namenode
+  
+  datanode2:
+    image: bde2020/hadoop-datanode:1.0.0
+    hostname: datanode2
+    container_name: datanode2
+    domainname: hadoop
+    volumes:
+      - /srv/hadoop/datanode:/hadoop/dfs/data
+    env_file:
+      - ./hadoop.env
+    environment:
+      - "constraint:node==slave2"
+    networks:
+      - default
+    depends_on:
+      - namenode
+  
+  datanode3:
+    image: bde2020/hadoop-datanode:1.0.0
+    hostname: datanode3
+    container_name: datanode3
+    domainname: hadoop
+    volumes:
+      - /srv/hadoop/datanode:/hadoop/dfs/data
+    env_file:
+      - ./hadoop.env
+    environment:
+      - "constraint:node==slave3"
+    networks:
+      - default
+    depends_on:
+      - namenode
+
+  postgis:
+    image: bde2020/postgis
+    container_name: postgis
+    environment:
+      - "constraint:node==slave4"
+    ports:
+      -"5432:5432"
+    volumes:
+      - /srv/postgis:/var/lib/postgresql/9.4/main
+    networks:
+      - default
+
+  networks:
+  default:
+    external:
+    name: bde_net
+
+  sextant:
+    image: bde2020/sextant
+    container_name: sextant
+    environment:
+      -"constraint:node==master"
+    ports:
+      - "8890:8890"
+    networks:
+      - default
+

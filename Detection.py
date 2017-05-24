@@ -4,6 +4,7 @@ import dataset_utils as utils
 from netCDF4 import Dataset
 from scipy.ndimage.filters import gaussian_filter
 import scipy
+from sklearn.preprocessing import maxabs_scale
 
 class Detection(object):
 
@@ -31,6 +32,7 @@ class Detection(object):
             for lon in self._lon_idx:
                 det_map[lat,lon] = 1
         det_map = gaussian_filter(det_map,0.3)
+        det_map = maxabs_scale(det_map)
         self._det_map = det_map
 
     def calc(self):
@@ -42,17 +44,16 @@ class Detection(object):
         return score
 
     def KL(self):
+        nonzero_conc = np.nonzero(self._conc)
+        nonzero_points = [(nonzero_conc[0][i],nonzero_conc[1][i]) for i in range(0,len(nonzero_conc[0]))]
+        det = []
+        for i in range(0,len(nonzero_points)):
+            det.append(self._det_map[nonzero_points[i]])
         det = np.add(self._det_map, 1e-12)
         conc = np.add(self._conc, 1e-12)
-        return scipy.stats.entropy(det.flatten(), conc.flatten())
+        return scipy.stats.entropy(conc.flatten(),det.flatten())
 
     def cosine(self):
-        conc = []
-        nonzero_det = np.nonzero(self._det_map)
-        nonzero_points = [(nonzero_det[0][i],nonzero_det[1][i]) for i in range(0,len(nonzero_det[0]))]
-        score = 0
-        for i in range(0,len(nonzero_points)):
-            conc.append(self._conc[nonzero_points[i]])
-        conc = np.add(conc,1e-12)
-        detnon = np.add(self._det_map[np.nonzero(self._det_map)],1e-12)
-        return scipy.spatial.distance.cosine(conc.flatten(),detnon.flatten())
+        det = self._det_map
+        conc = maxabs_scale(self._conc)
+        return scipy.spatial.distance.cosine(conc.flatten(),det.flatten())

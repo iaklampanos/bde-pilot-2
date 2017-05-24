@@ -1,0 +1,12 @@
+#! /bin/bash
+
+for i in `ls /mnt/disk1/thanasis/NIPS/clusters/double_kmeans/raw_kmeans/dispersions/`;
+do
+for j in `ls /mnt/disk1/thanasis/NIPS/clusters/double_kmeans/raw_kmeans/dispersions/$i`;
+do
+for k in `ls /mnt/disk1/thanasis/NIPS/clusters/double_kmeans/raw_kmeans/dispersions/$i/$j`;
+do
+   ./nc2numpyarray.py /mnt/disk1/thanasis/NIPS/clusters/double_kmeans/raw_kmeans/dispersions/$i/$j/$k
+done
+done
+done

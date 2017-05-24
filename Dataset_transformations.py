@@ -1,6 +1,6 @@
 import numpy as np
 from Dataset import Dataset
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import minmax_scale
 
 class Dataset_transformations(Dataset):
 
@@ -59,28 +59,5 @@ class Dataset_transformations(Dataset):
                 self._items[:, j], np.sqrt(np.var(self._items[:, j])+10))
         # print np.min(self._items), np.max(self._items), np.std(self._items)
 
-    def shift(self):
-        # self._delta = 1e-8
-        self._items = self._items.flatten()
-        self._items_min = np.min(self._items)
-        self._items = np.add(self._items, -1 * np.min(self._items))
-        self._items_max = np.max(self._items)
-        self._items = np.divide(self._items, np.max(self._items))
-        # self._items = np.add(self._items, self._delta)
-        self._items = self._items.reshape(self._x, self._y)
-        # print np.min(self._items), np.max(self._items), np.std(self._items)
-
-    def reverse(self):
-        self._items = np.subtract(self._items, self._delta)
-        self._items = np.multiply(self._items, self._items_max)
-        self._items = np.add(self._items, self._items_min)
-        self._items = self._items.reshape(self._x, self._y)
-        # print np.min(self._items), np.max(self._items), np.std(self._items)
-
-    def conv_process(self, items):
-        X_train = np.transpose(self.get_items())
-        X_train = X_train.reshape(items.shape[2], items.shape[
-                                  0], items.shape[4], items.shape[5])
-        X_train = X_train.astype(np.float32)
-        X_out = X_train.reshape((X_train.shape[0], -1))
-        return X_train,X_out
+    def minmax(self):
+        self._items = minmax_scale(self._items)

@@ -1,0 +1,94 @@
+version: "2"
+
+services:
+  namenode:
+    image: bde2020/hadoop-namenode:1.0.0
+    container_name: sc5_namenode
+    domainname: hadoop
+    volumes:
+      - /mnt/synology/sc5_hadoop/namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=bde_cluster
+    env_file:
+      - ./hadoop.env
+    networks:
+      - sc5_net
+  
+  datanode1:
+    image: bde2020/hadoop-datanode:1.0.0
+    hostname: datanode1
+    container_name: sc5_datanode1
+    domainname: hadoop
+    volumes:
+      - /srv/sc5_hadoop/datanode:/hadoop/dfs/data
+    env_file:
+      - ./hadoop.env
+    environment:
+      - "constraint:node==slave1"
+    networks:
+      - sc5_net
+    depends_on:
+      - namenode
+  
+  datanode2:
+    image: bde2020/hadoop-datanode:1.0.0
+    hostname: datanode2
+    container_name: sc5_datanode2
+    domainname: hadoop
+    volumes:
+      - /srv/sc5_hadoop/datanode:/hadoop/dfs/data
+    env_file:
+      - ./hadoop.env
+    environment:
+      - "constraint:node==slave2"
+    networks:
+      - sc5_net
+    depends_on:
+      - namenode
+  
+  datanode3:
+    image: bde2020/hadoop-datanode:1.0.0
+    hostname: datanode3
+    container_name: sc5_datanode3
+    domainname: hadoop
+    volumes:
+      - /srv/sc5_hadoop/datanode:/hadoop/dfs/data
+    env_file:
+      - ./hadoop.env
+    environment:
+      - "constraint:node==slave3"
+    networks:
+      - sc5_net
+    depends_on:
+      - namenode
+
+  postgis:
+    image: bde2020/postgis
+    environment:
+      - "constraint:node==slave4"
+    ports:
+      - "5432:5432"
+    volumes:
+      - /srv/sc5_postgis:/var/lib/postgresql/9.4/main
+    networks:
+      - sc5_net
+
+  sc5_sextant:
+    image: sc5_sextant
+    container_name: sc5_sextant
+    environment:
+      - "constraint:node==slave4"
+    volumes:
+      - /srv/sc5_ingest_data:/pilot_data/
+    ports:
+      - "9999:8080"
+      - "5000:5000"
+    networks:
+      - sc5_net
+
+networks:
+  sc5_net:
+    driver: bridge
+
+
+
