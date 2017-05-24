@@ -25,7 +25,7 @@ var vector = new ol.layer.Vector({
         image: new ol.style.Circle({
             radius: 7,
             fill: new ol.style.Fill({
-                color: '#ffcc33'
+                color: '#ff6347'
             })
         })
     })

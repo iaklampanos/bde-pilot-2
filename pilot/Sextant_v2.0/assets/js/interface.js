@@ -637,7 +637,7 @@ function estimateLocation() {
               loader.style.display = 'block';
               eheader.style.display = 'none';
               var req = new XMLHttpRequest();
-              req.open("POST", listener_ip+"detections/" + timestamp + "/" + pollcheckedVal() + "/" + metriccheckedVal() + "/" + methodcheckedVal(), true);
+              req.open("POST", listener_ip+"detections/" + timestamp + "/" + pollcheckedVal() + "/" + metriccheckedVal() + "/" + methodcheckedVal() + "/" + desccheckedVal(), true);
               req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
               req.send(JSON.stringify(locs));
               req.onloadend = function() {
