@@ -43,17 +43,21 @@ class Detection(object):
             score += self._conc[nonzero_points[i]]
         return score
 
-    def KL(self):
-        nonzero_conc = np.nonzero(self._conc)
-        nonzero_points = [(nonzero_conc[0][i],nonzero_conc[1][i]) for i in range(0,len(nonzero_conc[0]))]
-        det = []
-        for i in range(0,len(nonzero_points)):
-            det.append(self._det_map[nonzero_points[i]])
-        det = np.add(self._det_map, 1e-12)
-        conc = np.add(self._conc, 1e-12)
-        return scipy.stats.entropy(conc.flatten(),det.flatten())
+    # def KL(self):
+    #     nonzero_conc = np.nonzero(self._conc)
+    #     nonzero_points = [(nonzero_conc[0][i],nonzero_conc[1][i]) for i in range(0,len(nonzero_conc[0]))]
+    #     det = []
+    #     for i in range(0,len(nonzero_points)):
+    #         det.append(self._det_map[nonzero_points[i]])
+    #     det = np.add(self._det_map, 1e-12)
+    #     conc = np.add(self._conc, 1e-12)
+    #     return scipy.stats.entropy(conc.flatten(),det.flatten())
 
     def cosine(self):
-        det = self._det_map
-        conc = maxabs_scale(self._conc)
-        return scipy.spatial.distance.cosine(conc.flatten(),det.flatten())
+        overlap = calc()
+        if overlap != 0:
+            det = self._det_map
+            conc = maxabs_scale(self._conc)
+            return scipy.spatial.distance.cosine(conc.flatten(),det.flatten())
+        else:
+            return 0

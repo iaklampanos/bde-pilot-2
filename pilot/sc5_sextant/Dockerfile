@@ -5,7 +5,7 @@ ENV PORT2 5000
 
 
 RUN apt-get update && \
-    apt-get install -y git python-pip libpq-dev python-dev libhdf5-serial-dev netcdf-bin libnetcdf-dev gdal-bin libgdal-dev python-gdal libblas-dev liblapack-dev libatlas-base-dev gfortran && \
+    apt-get install -y git python-pip libpq-dev python-dev libhdf5-serial-dev netcdf-bin libnetcdf-dev gdal-bin libgdal-dev python-gdal libblas-dev liblapack-dev libatlas-base-dev gfortran libfreetype6-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

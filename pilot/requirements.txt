@@ -8,3 +8,4 @@ requests==2.12.3
 scipy==0.16.0
 netCDF4==1.2.7
 scikit_learn==0.18.1
+matplotlib==2.0.2

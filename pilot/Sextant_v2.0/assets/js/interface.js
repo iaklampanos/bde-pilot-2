@@ -576,6 +576,26 @@ function metriccheckedVal() {
 }
 
 
+function isdescChecked() {
+    var rlist = document.getElementById('desc');
+    for (var i = 0; i < rlist.length; i++) {
+        if (rlist[i].checked) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function desccheckedVal() {
+    var rlist = document.getElementById('desc');
+    for (var i = 0; i < rlist.length; i++) {
+        if (rlist[i].checked) {
+            return rlist[i].value;
+        }
+    }
+}
+
+
 
 var geo = undefined;
 var resp = undefined;
@@ -596,7 +616,7 @@ function estimateLocation() {
     drawStations();
     var res = document.getElementById('source_result');
     res.innerHTML = '';
-    if (isPollChecked() && isMethodChecked() && isMetricChecked()) {
+    if (isPollChecked() && isMethodChecked() && isMetricChecked() && isdescChecked()) {
           var locs = [];
           vector.getSource().forEachFeature(function(feature) {
               try {
@@ -622,17 +642,7 @@ function estimateLocation() {
               req.send(JSON.stringify(locs));
               req.onloadend = function() {
                   resp = JSON.parse(req.responseText);
-                  if ( (resp["scores"][0]+resp["scores"][1]+resp["scores"][2])/3 < 13.5 && metriccheckedVal() == 'KL') {
-                    res_str = 'Estimated sources: <br> <table style="border-collapse: collapse;"><tr><th style="padding: 8px;">Station<br>name</th><th style="padding: 8px;">Score</th></tr>';
-                    for (var i=0; i<resp['scores'].length;i++){
-                        res_str += '<tr><td style="padding: 8px;"><a onClick="drawDispersion('+i+')">'+resp['stations'][i]+'</a></td><td style="padding: 8px;">'+resp['scores'][i]+'</td></tr>';
-                    }
-                    res_str += '</table>';
-                    res.innerHTML = res_str;
-                    loader.style.display = 'none';
-                    eheader.style.display = 'block';
-                }
-                else if (resp["scores"][0]-resp["scores"][2] !=0  && metriccheckedVal() == 'cosine') {
+              if (resp["scores"][0]-resp["scores"][2] !=0  && metriccheckedVal() == 'cosine') {
                     res_str = 'Estimated sources: <br> <table style="border-collapse: collapse;"><tr><th style="padding: 8px;">Station<br>name</th><th style="padding: 8px;">Score</th></tr>';
                     for (var i=0; i<resp['scores'].length;i++){
                         res_str += '<tr><td style="padding: 8px;"><a onClick="drawDispersion('+i+')">'+resp['stations'][i]+'</a></td><td style="padding: 8px;">'+resp['scores'][i]+'</td></tr>';
@@ -652,7 +662,7 @@ function estimateLocation() {
           alert('You should mark some detection points before estimating the source\'s location');
       }
     } else {
-        alert('You should choose a weather file, pollutant & clustering method before estimating the source\'s location');
+        alert('You should choose a weather file, pollutant, clustering method and clustering descriptor before estimating the source\'s location');
     }
 
 }
@@ -681,8 +691,8 @@ function drawDispersion(idx){
          var style = new ol.style.Style({
                  image: new ol.style.Icon({
                      src: './assets/images/pin_red.png',
-                     size: [200, 200],
-                     scale: 0.2
+                     size: [433, 692],
+                     scale: 0.1
                  })
              });
          feature.setStyle(style);

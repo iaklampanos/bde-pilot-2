@@ -21,8 +21,11 @@ def make_latlon_files(inp,hp):
                 lon = netcdf.variables['longitude'][:]
                 np.save(inp + '/' + lfl + '/'+'lat.npy',lat)
                 np.save(inp + '/' + lfl + '/'+'lon.npy',lon)
-                hdfs.create_file(hp + '/'+'lat.npy', open(inp + '/' + lfl + '/'+'lat.npy', 'rb'))
-                hdfs.create_file(hp + '/'+'lon.npy', open(inp + '/' + lfl + '/'+'lon.npy', 'rb'))
+                try:
+                    hdfs.create_file('/sc5/clusters/lat.npy', open(inp + '/' + lfl + '/'+'lat.npy', 'rb'))
+                    hdfs.create_file('/sc5/clusters/lon.npy', open(inp + '/' + lfl + '/'+'lon.npy', 'rb'))
+                except:
+                    pass
                 os.system('rm '+inp + '/' + lfl + '/'+'lat.npy')
                 os.system('rm '+inp + '/' + lfl + '/'+'lon.npy')
                 break

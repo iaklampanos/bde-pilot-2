@@ -175,9 +175,9 @@ def detections(date, pollutant, metric, origin):
                 datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "'")
     for row in cur:
         urllib.urlretrieve(
-            'http://namenode:50070/webhdfs/v1/sc5/clusters/'+origin+'/lat.npy?op=OPEN', 'lat.npy')
+            'http://namenode:50070/webhdfs/v1/sc5/clusters/lat.npy?op=OPEN', 'lat.npy')
         urllib.urlretrieve(
-            'http://namenode:50070/webhdfs/v1/sc5/clusters/'+origin+'/lon.npy?op=OPEN', 'lon.npy')
+            'http://namenode:50070/webhdfs/v1/sc5/clusters/lon.npy?op=OPEN', 'lon.npy')
         filelat = np.load('lat.npy')
         filelon = np.load('lon.npy')
         if pollutant == 'C137':

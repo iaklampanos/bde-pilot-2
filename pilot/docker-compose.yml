@@ -4,7 +4,6 @@ services:
   namenode:
     image: bde2020/hadoop-namenode:1.0.0
     container_name: sc5_namenode
-    domainname: hadoop
     volumes:
       - /mnt/synology/sc5_hadoop/namenode:/hadoop/dfs/name
     environment:
@@ -18,9 +17,8 @@ services:
     image: bde2020/hadoop-datanode:1.0.0
     hostname: datanode1
     container_name: sc5_datanode1
-    domainname: hadoop
     volumes:
-      - /srv/sc5_hadoop/datanode:/hadoop/dfs/data
+      - /mnt/disk1/thanasis/dockers/sc5_hadoop/datanode:/hadoop/dfs/data
     env_file:
       - ./hadoop.env
     environment:
@@ -34,9 +32,8 @@ services:
     image: bde2020/hadoop-datanode:1.0.0
     hostname: datanode2
     container_name: sc5_datanode2
-    domainname: hadoop
     volumes:
-      - /srv/sc5_hadoop/datanode:/hadoop/dfs/data
+      - /mnt/disk1/thanasis/dockers/sc5_hadoop/datanode:/hadoop/dfs/data
     env_file:
       - ./hadoop.env
     environment:
@@ -50,9 +47,8 @@ services:
     image: bde2020/hadoop-datanode:1.0.0
     hostname: datanode3
     container_name: sc5_datanode3
-    domainname: hadoop
     volumes:
-      - /srv/sc5_hadoop/datanode:/hadoop/dfs/data
+      - /mnt/disk1/thanasis/dockers/sc5_hadoop/datanode:/hadoop/dfs/data
     env_file:
       - ./hadoop.env
     environment:
@@ -69,7 +65,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - /srv/sc5_postgis:/var/lib/postgresql/9.4/main
+      - /mnt/disk1/thanasis/dockers/sc5_postgis:/var/lib/postgresql/9.4/main
     networks:
       - sc5_net
 
@@ -79,7 +75,7 @@ services:
     environment:
       - "constraint:node==slave4"
     volumes:
-      - /srv/sc5_ingest_data:/pilot_data/
+      - /mnt/disk1/thanasis/dockers/sc5_ingest_data:/pilot_data/
     ports:
       - "9999:8080"
       - "5000:5000"
