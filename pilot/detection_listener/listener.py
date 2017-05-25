@@ -160,7 +160,7 @@ def detections(date, pollutant, metric, origin, descriptor):
     ds.twod_transformation()
     ds.normalize()
     for m in models:
-        if origin in m:
+        if origin == m[0]:
             if 'kmeans' not in m[0]:
                 clust_obj = m[2]
                 ds._items = m[1].get_hidden(ds._items.T)
