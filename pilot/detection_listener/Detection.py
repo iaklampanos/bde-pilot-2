@@ -54,10 +54,10 @@ class Detection(object):
     #     return scipy.stats.entropy(conc.flatten(),det.flatten())
 
     def cosine(self):
-        overlap = self.calc()
-        if overlap != 0:
-            det = self._det_map
-            conc = maxabs_scale(self._conc)
-            return scipy.spatial.distance.cosine(conc.flatten(),det.flatten())
-        else:
-            return 0
+        # overlap = self.calc()
+        # if overlap != 0:
+        det = self._det_map
+        conc = maxabs_scale(self._conc)
+        return scipy.spatial.distance.cosine(conc.flatten(),det.flatten())
+        # else:
+        #     return 0
