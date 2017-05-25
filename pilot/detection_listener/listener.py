@@ -37,6 +37,7 @@ dpass = getpass.getpass()
 APPS_ROOT = os.path.dirname(os.path.abspath(__file__))
 VARS = ['GHT']
 LEVELS = [700]
+MULT = [500,700,900]
 
 def dispersion_integral(dataset_name):
     dataset = Dataset(APPS_ROOT + '/' + dataset_name, 'r')
@@ -135,8 +136,8 @@ def calc_winddir(dataset_name,level):
     return json.dumps(feature)
 
 
-@app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
-def detections(date, pollutant, metric, origin):
+@app.route('/detections/<date>/<pollutant>/<metric>/<origin>/<descriptor>', methods=['POST'])
+def detections(date, pollutant, metric, origin, descriptor):
     lat_lon = request.get_json(force=True)
     llat = []
     llon = []
@@ -147,7 +148,10 @@ def detections(date, pollutant, metric, origin):
                 date + "' - date)/3600/24 as diff from weather order by diff desc;")
     res = cur.fetchone()
     urllib.urlretrieve(res[1], res[0])
-    test_dict = netCDF_subset(APPS_ROOT + '/' + res[0], LEVELS, VARS, lvlname='num_metgrid_levels', timename='Times')
+    if 'mult' in origin:
+        test_dict = netCDF_subset(APPS_ROOT + '/' + res[0], MULT, VARS, lvlname='num_metgrid_levels', timename='Times')
+    else:
+        test_dict = netCDF_subset(APPS_ROOT + '/' + res[0], LEVELS, VARS, lvlname='num_metgrid_levels', timename='Times')
     items = [test_dict.extract_data()]
     items = np.array(items)
     ds = Dataset_transformations(items, 1000, items.shape)
@@ -157,11 +161,9 @@ def detections(date, pollutant, metric, origin):
     ds.normalize()
     for m in models:
         if origin in m:
-            if m[0] != 'kmeans':
-                clust_obj = m[1]._clustering
-                ds.shift()
-                ds._items = m[1]._nnet.get_hidden(
-                    np.transpose(ds.get_items()))
+            if 'kmeans' not in m[0]:
+                clust_obj = m[2]
+                ds._items = m[1].get_hidden(ds._items.T)
                 cd = clust_obj.centroids_distance(ds, features_first=False)
                 cluster_date = utils.reconstruct_date(clust_obj._desc_date[cd[0][0]])
             else:
@@ -172,7 +174,7 @@ def detections(date, pollutant, metric, origin):
     results2 = []
     timestamp = datetime.datetime.strptime(cluster_date, '%y-%m-%d-%H')
     cur.execute("select filename,hdfs_path,station,c137_pickle,i131_pickle from cluster where date=TIMESTAMP \'" +
-                datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "'")
+                datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "' and descriptor='"+ descriptor +"'")
     for row in cur:
         urllib.urlretrieve(
             'http://namenode:50070/webhdfs/v1/sc5/clusters/lat.npy?op=OPEN', 'lat.npy')
@@ -327,8 +329,18 @@ if __name__ == '__main__':
     for row in cur:
         print row[1]
         urllib.urlretrieve(row[2], row[1])
-        fil = gzip.open(row[1])
-        models.append((row[0], cPickle.load(fil)))
+        config = utils.load(row[1])
+        m = config.next()
+        try:
+            c = config.next()
+        except:
+            c = m
+        current = [mod[1] for mod in models]
+        try:
+            pos = current.index(m)
+            models.append((row[0], models[pos][1], c))
+        except:
+            models.append((row[0], m, c))
         os.system('rm ' + APPS_ROOT + '/' + row[1])
     try:
         app.run(host='0.0.0.0')

@@ -46,7 +46,7 @@ cur = conn.cursor()
 cur.execute("CREATE TABLE weather (filename varchar(500),\
             hdfs_path varchar(2000),date timestamp,wind_dir500 json,wind_dir700 json,wind_dir900 json, PRIMARY KEY(date))")
 cur.execute("CREATE TABLE cluster (filename varchar(500),\
-            hdfs_path varchar(2000),station varchar(100),date timestamp,origin varchar(500),descriptor varchar(500),c137 json,i131 json,c137_pickle BYTEA,i131_pickle BYTEA, PRIMARY KEY(station,date,origin))")
+            hdfs_path varchar(2000),station varchar(100),date timestamp,origin varchar(500),descriptor varchar(500),c137 json,i131 json,c137_pickle BYTEA,i131_pickle BYTEA, PRIMARY KEY(station,date,origin), FOREIGN KEY(origin) REFERENCES models(origin))")
 cur.execute("CREATE TABLE models (origin varchar(500),filename varchar(500),\
             hdfs_path varchar(2000), PRIMARY KEY(origin))")
 conn.commit()
