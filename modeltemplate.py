@@ -11,6 +11,13 @@ class Model(object):
       self._decoder_layer = decoder_layer
       self._network = network
 
+  def __eq__(self, other):
+      this_param = lasagne.layers.get_all_param_values(self._network)
+      other_param = lasagne.layers.get_all_param_values(other._network)
+      for i,val in enumerate(this_param):
+          if not(np.array_equal(this_param[i],other_param[i])):
+              return False
+      return True
 
   def get_hidden(self, dataset):
       self._input_layer.input_var = theano.shared(name='input_var', value=np.asarray(dataset,

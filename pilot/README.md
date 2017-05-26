@@ -17,4 +17,5 @@ docker cp <netcdf_weather_files>/ sc5_sextant:/pilot_data/
 docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/ingest_weather.py -i <netcdf_weather_files>/
 docker cp <netcdf_dispersion_files>/ sc5_sextant:/pilot_data/
 docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/ingest_cluster.py -i <netcdf_dispersion_files>/ -m '<clustering_method>' -d '<descriptor>' -hp <hdfs_path>
+docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/ingest_model.py -i <model_template.zip> -m "<clustering_method>"
 ```
