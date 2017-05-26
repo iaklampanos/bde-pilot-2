@@ -9,6 +9,7 @@ GRIB_3D = ''
 GRIB_2D = ''
 OUTPUT_PATH = ''
 INVARIANT = ''
+HYSPLIT_PATH = ''
 
 def reconstruct_date(date_str, dot_nc=False):
     if dot_nc:
@@ -43,10 +44,12 @@ def main():
     for descriptor_nc in sys.argv[1:]:
         gb_str = reconstruct_date(descriptor_nc,dot_nc=True)
         date_list = date_range(gb_str)
-        os.system('cdo merge'+reconstruct_range(date_list,prefix=GRIB_3D)+' '+OUTPUT_PATH+'/'+gb_str+'_3d.grib'
-        os.system('cdo merge'+reconstruct_range(date_list,prefix=GRIB_2D)' '+OUTPUT_PATH+'/'+gb_str+'_2d.grib'
-
-
+        full_2d = OUTPUT_PATH+'/'+gb_str+'_2d.grib'
+        full_3d = OUTPUT_PATH+'/'+gb_str+'_3d.grib'
+        os.system('cdo merge'+reconstruct_range(date_list,prefix=GRIB_3D)+' '+full_3d
+        os.system('cdo merge'+reconstruct_range(date_list,prefix=GRIB_2D)' '+full_2d
+        os.chdir(HYSPLIT_PATH)
+        os.system('make 3D_IN='+full_3d+' 2D_IN='+full_2d+' INVARIANT='+INVARIANT+' BIN_NAME='+gb_str+' convert_f conc_f clean')
 
 if __name__ == "__main__":
     main()
