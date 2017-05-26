@@ -626,7 +626,7 @@ function estimateLocation() {
               if (resp["scores"][0]-resp["scores"][2] !=0  && metriccheckedVal() == 'cosine') {
                     res_str = 'Estimated sources: <br> <table style="border-collapse: collapse;"><tr><th style="padding: 8px;">Station<br>name</th><th style="padding: 8px;">Score</th></tr>';
                     for (var i=0; i<resp['scores'].length;i++){
-                        res_str += '<tr><td style="padding: 8px;"><a onClick="drawDispersion('+i+')">'+resp['stations'][i]+'</a></td><td style="padding: 8px;">'+resp['scores'][i]+'</td></tr>';
+                        res_str += '<tr><td style="padding: 8px;"><a onClick="drawDispersion('+i+')">'+resp['stations'][i]+'</a></td><td style="padding: 8px;">'+ ((resp['scores'][i] == 0)?'No overlap':resp['scores'][i]) +'</td></tr>';
                     }
                     res_str += '</table>';
                     res.innerHTML = res_str;
