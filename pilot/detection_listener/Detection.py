@@ -41,6 +41,7 @@ class Detection(object):
         score = 0
         for i in range(0,len(nonzero_points)):
             score += self._conc[nonzero_points[i]]
+        print score
         return score
 
     # def KL(self):
