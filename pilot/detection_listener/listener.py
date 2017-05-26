@@ -201,6 +201,7 @@ def detections(date, pollutant, metric, origin):
         os.system('rm ' + APPS_ROOT + '/' + 'lon.npy')
     results = sorted(results, key=lambda k: k[1] if k[1] > 0 else float('inf'), reverse=False)
     top3 = results[:3]
+    top3 = sorted(top3, key=lambda k: k[1] if k[1] > 0 else float('inf'), reverse=False)
     print top3
     top3_names = [top[0] for top in top3]
     top3_scores = [round(top[1],3) for top in top3]
@@ -255,12 +256,8 @@ def detections(date, pollutant, metric, origin):
                     dispersions.append(json.dumps(row[3]))
                 else:
                     dispersions.append(json.dumps(row[4]))
-    if metric == 'KL':
-        scores, dispersions, stations = zip(
-            *sorted(zip(scores, dispersions, stations)))
-    else:
-        scores, dispersions, stations = zip(
-            *sorted(zip(scores, dispersions, stations), reverse=False))
+    scores, dispersions, stations = zip(
+        *sorted(zip(scores, dispersions, stations), reverse=False))
     send = {}
     send['stations'] = stations
     send['scores'] = scores
