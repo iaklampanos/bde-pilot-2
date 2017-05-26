@@ -137,7 +137,7 @@ def calc_winddir(dataset_name,level):
 
 
 @app.route('/detections/<date>/<pollutant>/<metric>/<origin>/<descriptor>', methods=['POST'])
-def detections(date, pollutant, metric, origin, descriptor):
+def detections(date, pollutant, metric, origin):
     lat_lon = request.get_json(force=True)
     llat = []
     llon = []
@@ -172,6 +172,7 @@ def detections(date, pollutant, metric, origin, descriptor):
                 cluster_date = utils.reconstruct_date(clust_obj._desc_date[cd[0][0]])
     results = []
     results2 = []
+    descriptor = origin.split('_')[1]
     timestamp = datetime.datetime.strptime(cluster_date, '%y-%m-%d-%H')
     cur.execute("select filename,hdfs_path,station,c137_pickle,i131_pickle from cluster where date=TIMESTAMP \'" +
                 datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "' and descriptor='"+ descriptor +"'")
@@ -192,16 +193,13 @@ def detections(date, pollutant, metric, origin, descriptor):
                 str(row[4])), filelat, filelon, llat, llon)
             det_obj.get_indices()
             det_obj.create_detection_map()
-        if metric == 'KL':
-            results.append((row[2], det_obj.KL()))
-        else:
+        if det_obj.calc() != 0:
             results.append((row[2], det_obj.cosine()))
+        else:
+            results.append((row[2], 0))
         os.system('rm ' + APPS_ROOT + '/' + 'lat.npy')
         os.system('rm ' + APPS_ROOT + '/' + 'lon.npy')
-    if metric == 'KL':
-        results = sorted(results, key=lambda k: k[1], reverse=False)
-    else:
-        results = sorted(results, key=lambda k: k[1], reverse=False)
+    results = sorted(results, key=lambda k: k[1], reverse=False)
     top3 = results[:3]
     print top3
     top3_names = [top[0] for top in top3]

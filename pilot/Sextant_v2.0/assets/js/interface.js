@@ -692,7 +692,7 @@ function drawDispersion(idx){
                  image: new ol.style.Icon({
                      src: './assets/images/pin_red.png',
                      size: [433, 692],
-                     scale: 0.1
+                     scale: 0.05
                  })
              });
          feature.setStyle(style);
