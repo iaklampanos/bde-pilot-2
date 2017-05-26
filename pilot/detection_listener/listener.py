@@ -136,7 +136,7 @@ def calc_winddir(dataset_name,level):
     return json.dumps(feature)
 
 
-@app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
+@app.route('/detections/<date>/<pollutant>/<metric>/', methods=['POST'])
 def detections(date, pollutant, metric, origin):
     lat_lon = request.get_json(force=True)
     llat = []
@@ -199,7 +199,7 @@ def detections(date, pollutant, metric, origin):
             results.append((row[2], 0))
         os.system('rm ' + APPS_ROOT + '/' + 'lat.npy')
         os.system('rm ' + APPS_ROOT + '/' + 'lon.npy')
-    results = sorted(results, key=lambda k: k[1], reverse=False)
+    results = sorted(results, key=lambda k: k[1] if k[1] > 0 else float('inf'), reverse=False)
     top3 = results[:3]
     print top3
     top3_names = [top[0] for top in top3]
