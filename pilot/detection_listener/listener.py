@@ -136,7 +136,7 @@ def calc_winddir(dataset_name,level):
     return json.dumps(feature)
 
 
-@app.route('/detections/<date>/<pollutant>/<metric>/', methods=['POST'])
+@app.route('/detections/<date>/<pollutant>/<metric>', methods=['POST'])
 def detections(date, pollutant, metric, origin):
     lat_lon = request.get_json(force=True)
     llat = []
