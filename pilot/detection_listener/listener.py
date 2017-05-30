@@ -172,7 +172,8 @@ def detections(date, pollutant, metric, origin):
                 cluster_date = utils.reconstruct_date(clust_obj._desc_date[cd[0][0]])
     results = []
     results2 = []
-    descriptor = origin.split('_')[1]
+    descriptor = origin.split('_')
+    descriptor = descriptor[len(descriptor)]
     timestamp = datetime.datetime.strptime(cluster_date, '%y-%m-%d-%H')
     cur.execute("select filename,hdfs_path,station,c137_pickle,i131_pickle from cluster where date=TIMESTAMP \'" +
                 datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "' and descriptor='"+ descriptor +"'")
@@ -256,7 +257,7 @@ def detections(date, pollutant, metric, origin):
                 else:
                     dispersions.append(json.dumps(row[4]))
     scores, dispersions, stations = zip(
-        *sorted(zip(scores, dispersions, stations),key=lambda k: k[0] if k[0] > 0 else float('inf'), reverse=False))
+        *sorted(zip(scores, dispersions, stations),reverse=False))
     send = {}
     send['stations'] = stations
     send['scores'] = scores
