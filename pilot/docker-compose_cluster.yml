@@ -3,89 +3,93 @@ version: "2"
 services:
   namenode:
     image: bde2020/hadoop-namenode:1.0.0
-    container_name: namenode
-    domainname: hadoop
+    container_name: sc5_namenode
     volumes:
-      - /mnt/synology/hadoop/namenode:/hadoop/dfs/name
+      - /mnt/synology/sc5_hadoop/namenode:/hadoop/dfs/name
     environment:
       - CLUSTER_NAME=bde_cluster
     env_file:
       - ./hadoop.env
+    ports:
+      - "60070:50070"
     networks:
-      - default
-  
+      - sc5_net
+
   datanode1:
     image: bde2020/hadoop-datanode:1.0.0
     hostname: datanode1
-    container_name: datanode1
-    domainname: hadoop
+    container_name: sc5_datanode1
     volumes:
-      - /srv/hadoop/datanode:/hadoop/dfs/data
-    env_file:
-      - ./hadoop.env
-    environment:
-      - "constraint:node==slave1"
-    networks:
-      - default
-    depends_on:
-      - namenode
-  
-  datanode2:
-    image: bde2020/hadoop-datanode:1.0.0
-    hostname: datanode2
-    container_name: datanode2
-    domainname: hadoop
-    volumes:
-      - /srv/hadoop/datanode:/hadoop/dfs/data
+      - /srv/sc5_hadoop/datanode:/hadoop/dfs/data
     env_file:
       - ./hadoop.env
     environment:
       - "constraint:node==slave2"
+    ports:
+      - "60075:50075"
     networks:
-      - default
+      - sc5_net
     depends_on:
       - namenode
-  
-  datanode3:
+
+  datanode2:
     image: bde2020/hadoop-datanode:1.0.0
-    hostname: datanode3
-    container_name: datanode3
-    domainname: hadoop
+    hostname: datanode2
+    container_name: sc5_datanode2
     volumes:
-      - /srv/hadoop/datanode:/hadoop/dfs/data
+      - /srv/sc5_hadoop/datanode:/hadoop/dfs/data
     env_file:
       - ./hadoop.env
     environment:
-      - "constraint:node==slave3"
+      - "constraint:node==slave2"
+    ports:
+      - "60075:50075"
     networks:
-      - default
+      - sc5_net
+    depends_on:
+      - namenode
+
+  datanode3:
+    image: bde2020/hadoop-datanode:1.0.0
+    hostname: datanode3
+    container_name: sc5_datanode3
+    volumes:
+      - /srv/sc5_hadoop/datanode:/hadoop/dfs/data
+    env_file:
+      - ./hadoop.env
+    environment:
+      - "constraint:node==slave2"
+    ports:
+      - "60075:50075"
+    networks:
+      - sc5_net
     depends_on:
       - namenode
 
   postgis:
     image: bde2020/postgis
-    container_name: postgis
     environment:
       - "constraint:node==slave4"
     ports:
-      -"5432:5432"
+      - "5332:5432"
     volumes:
-      - /srv/postgis:/var/lib/postgresql/9.4/main
+      - /srv/sc5_postgis:/var/lib/postgresql/9.4/main
     networks:
-      - default
+      - sc5_net
 
-  networks:
-  default:
-    external:
-    name: bde_net
-
-  sextant:
-    image: bde2020/sextant
-    container_name: sextant
+  sc5_sextant:
+    image: sc5_sextant
+    container_name: sc5_sextant
     environment:
-      -"constraint:node==master"
+      - "constraint:node==slave2"
+    volumes:
+      - /srv/sc5_ingest_data:/pilot_data/
     ports:
-      - "8890:8890"
+      - "9292:8080"
+      - "9291:5000"
     networks:
-      - default
+      - sc5_net
 
+networks:
+  sc5_net:
+    driver: overlay
