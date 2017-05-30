@@ -257,7 +257,7 @@ def detections(date, pollutant, metric, origin):
                 else:
                     dispersions.append(json.dumps(row[4]))
     scores, dispersions, stations = zip(
-        *sorted(zip(scores, dispersions, stations),key=lambda k: k[0] if k[0] > 0 else float('inf')reverse=False))
+        *sorted(zip(scores, dispersions, stations),key=lambda k: k[0] if k[0] > 0 else float('inf'),reverse=False))
     send = {}
     send['stations'] = stations
     send['scores'] = scores
