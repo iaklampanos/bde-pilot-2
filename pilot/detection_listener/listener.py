@@ -173,7 +173,7 @@ def detections(date, pollutant, metric, origin):
     results = []
     results2 = []
     descriptor = origin.split('_')
-    descriptor = descriptor[len(descriptor)]
+    descriptor = descriptor[len(descriptor)-1]
     timestamp = datetime.datetime.strptime(cluster_date, '%y-%m-%d-%H')
     cur.execute("select filename,hdfs_path,station,c137_pickle,i131_pickle from cluster where date=TIMESTAMP \'" +
                 datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "' and descriptor='"+ descriptor +"'")
