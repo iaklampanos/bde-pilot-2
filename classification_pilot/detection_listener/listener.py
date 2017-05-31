@@ -18,6 +18,7 @@ import time
 from geojson import Feature, Point, MultiPoint, MultiLineString, LineString, FeatureCollection
 import cPickle
 import gzip
+from sklearn.preprocessing import maxabs_scale
 
 BOOTSTRAP_SERVE_LOCAL = True
 app = Flask(__name__)
@@ -135,6 +136,29 @@ def calc_winddir(dataset_name,level):
     dataset.close()
     return json.dumps(feature)
 
+@app.route('/class_detections/<pollutant>/<metric>', methods=['POST'])
+def cdetections(pollutant,metric):
+    lat_lon = request.get_json(force=True)
+    llat = []
+    llon = []
+    for llobj in lat_lon:
+        llat.append(float(llobj['lat']))
+        llon.append(float(llobj['lon']))
+    cur.execute("SELECT filename,date,c137_pickle,i131_pickle from class;")
+    res = cur.fetchall()
+    results = []
+    for row in res:
+        if pollutant == 'C137':
+            det_obj = Detection(cPickle.loads(
+                str(row[2])), filelat, filelon, llat, llon)
+        else:
+            det_obj = Detection(cPickle.loads(
+                str(row[3])), filelat, filelon, llat, llon)
+        det_obj.get_indices()
+        det_obj.create_detection_map()
+        if det_obj.calc() != 0:
+            results.append((row[0], det_obj.cosine()))    
+    
 
 @app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def detections(date, pollutant, metric, origin):

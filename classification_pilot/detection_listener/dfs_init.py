@@ -19,6 +19,11 @@ resp = req.json()
 if resp['boolean'] == 'false':
     print '> Error on initializing directory '
     exit(-1)
+req = requests.put('http://namenode:50070/webhdfs/v1/sc5/classes?op=MKDIRS')
+resp = req.json()
+if resp['boolean'] == 'false':
+    print '> Error on initializing directory '
+    exit(-1)    
 while True:
     print 'Database IP: '
     dip = raw_input()
@@ -49,6 +54,8 @@ cur.execute("CREATE TABLE models (origin varchar(500),filename varchar(500),\
             hdfs_path varchar(2000), PRIMARY KEY(origin))")
 cur.execute("CREATE TABLE cluster (filename varchar(500),\
             hdfs_path varchar(2000),station varchar(100),date timestamp,origin varchar(500),descriptor varchar(500),c137 json,i131 json,c137_pickle BYTEA,i131_pickle BYTEA, PRIMARY KEY(station,date,origin), FOREIGN KEY(origin) REFERENCES models(origin))")
+cur.execute("CREATE TABLE class (filename varchar(500),\
+            hdfs_path varchar(2000),station varchar(100),date timestamp,c137 json,i131 json,c137_pickle BYTEA,i131_pickle BYTEA, PRIMARY KEY(station,date,origin)")
 conn.commit()
 cur.close()
 conn.close()
