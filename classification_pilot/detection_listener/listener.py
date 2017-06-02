@@ -180,7 +180,7 @@ def cdetections(date,pollutant,metric,origin):
             items = items.reshape(1,1,items.shape[0],items.shape[1])
             det_map = det_map.reshape(1,1,det_map.shape[0],det_map.shape[1])
             cl = m[1].get_output(items,det_map)
-            cl = [(c,i) for c,i in enumerate(cl)]
+            cl = [(c,i) for c,i in enumerate(cl[0])]
             cl = sorted(cl,key=lambda k: k[1],reverse=False)
             cl = cl[:3]
     print cl
