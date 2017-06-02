@@ -20,6 +20,7 @@ import cPickle
 import gzip
 from sklearn.preprocessing import maxabs_scale,scale
 from scipy.ndimage.filters import gaussian_filter
+import scipy.misc
 
 BOOTSTRAP_SERVE_LOCAL = True
 app = Flask(__name__)
@@ -172,7 +173,6 @@ def cdetections(date,pollutant,metric,origin):
     for r in readings:
             det_map[r] = 1
     det_map = gaussian_filter(det_map,0.3)
-    import scipy.misc
     det_map = scipy.misc.imresize(det_map,(167,167))
     det_map = maxabs_scale(det_map)
     for m in models:
