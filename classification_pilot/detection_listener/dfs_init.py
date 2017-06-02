@@ -55,7 +55,7 @@ cur.execute("CREATE TABLE models (origin varchar(500),filename varchar(500),\
 cur.execute("CREATE TABLE cluster (filename varchar(500),\
             hdfs_path varchar(2000),station varchar(100),date timestamp,origin varchar(500),descriptor varchar(500),c137 json,i131 json,c137_pickle BYTEA,i131_pickle BYTEA, PRIMARY KEY(station,date,origin), FOREIGN KEY(origin) REFERENCES models(origin))")
 cur.execute("CREATE TABLE class (filename varchar(500),\
-            hdfs_path varchar(2000),station varchar(100),date timestamp,c137 json,i131 json,c137_pickle BYTEA,i131_pickle BYTEA, PRIMARY KEY(station,date), FOREIGN KEY(origin) REFERENCES models(origin))")
+            hdfs_path varchar(2000),station varchar(100),date timestamp,c137 json,i131 json,c137_pickle BYTEA,i131_pickle BYTEA, PRIMARY KEY(station,date)")
 conn.commit()
 cur.close()
 conn.close()
