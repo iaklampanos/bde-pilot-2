@@ -195,19 +195,19 @@ def cdetections(date,pollutant,metric,origin):
             det = cPickle.loads(str(row[3]))
         det = scipy.misc.imresize(det,(167,167))
         det = maxabs_scale(det)
-        disp_results.append(row[0],1-scipy.spatial.distance.cosine(det,det_map))
+        disp_results.append(row[0],1-scipy.spatial.distance.cosine(det.flatten(),det_map.flatten()))
     cur.execute("SELECT date,GHT from weather;")
     res = cur.fetchall()
     weather_results = []
     for row in res:
         if 'mult' in origin:
             citems = cPickle.loads(str(row[2]))
-            citems = scale(citems)
+            citems = scale(citems.sum(axis=0))
         else:
             citems = cPickle.loads(str(row[2]))
             citems = citems[:,1,:,:]
-            citems = scale(citems)
-        weather_results.append(row[0],1-scipy.spatial.distance.cosine(items,citems))
+            citems = scale(citems.sum(axis=0))
+        weather_results.append(row[0],1-scipy.spatial.distance.cosine(items.flatten(),citems))
     results = []
     for disp in disp_results:
         results.append([(w[0],w[1]*disp[1])for w in weather_results if w[0]==disp[0]])
