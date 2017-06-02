@@ -18,7 +18,7 @@ import time
 from geojson import Feature, Point, MultiPoint, MultiLineString, LineString, FeatureCollection
 import cPickle
 import gzip
-from sklearn.preprocessing import maxabs_scale
+from sklearn.preprocessing import maxabs_scale,scale
 
 BOOTSTRAP_SERVE_LOCAL = True
 app = Flask(__name__)
@@ -136,29 +136,65 @@ def calc_winddir(dataset_name,level):
     dataset.close()
     return json.dumps(feature)
 
-@app.route('/class_detections/<pollutant>/<metric>', methods=['POST'])
-def cdetections(pollutant,metric):
+@app.route('/class_detections/<date>/<origin>/<pollutant>/<metric>', methods=['POST'])
+def cdetections(date,pollutant,metric):
     lat_lon = request.get_json(force=True)
     llat = []
     llon = []
     for llobj in lat_lon:
         llat.append(float(llobj['lat']))
         llon.append(float(llobj['lon']))
-    cur.execute("SELECT filename,date,c137_pickle,i131_pickle from class;")
+    cur.execute("select filename,hdfs_path,GHT,EXTRACT(EPOCH FROM TIMESTAMP '" +
+                date + "' - date)/3600/24 as diff from weather order by diff desc;")
+    if 'mult' in origin:
+        items = cPickle.loads(str(row[2]))
+        items = scale(items)
+    else:
+        items = cPickle.loads(str(row[2]))
+        items = items[:,1,:,:]
+        items = scale(items)
+    det_map = np.zeros(shape=(501 ,501))
+    urllib.urlretrieve(
+        'http://namenode:50070/webhdfs/v1/sc5/clusters/lat.npy?op=OPEN', 'lat.npy')
+    urllib.urlretrieve(
+        'http://namenode:50070/webhdfs/v1/sc5/clusters/lon.npy?op=OPEN', 'lon.npy')
+    filelat = np.load('lat.npy')
+    filelon = np.load('lon.npy')
+    lat_idx = []
+    lon_idx = []
+    for lat in self._lats:
+        lat_idx.append(np.argmin(np.abs(self._filelat - lat)))
+    for lon in self._lons:
+        lon_idx.append(np.argmin(np.abs(self._filelon - lon)))
+    readings = [(self._lat_idx[k],self._lon_idx[k]) for k,i in enumerate(self._lat_idx)]
+    for r in readings:
+            det_map[r] = 1
+    det_map = gaussian_filter(det_map,0.3)
+    import scipy.misc
+    det_map = scipy.misc.imresize(det_map,(167,167))
+    det_map = maxabs_scale(det_map)
+    for m in models:
+        if origin == m[0]:
+            items = items.reshape(1,1,items.shape[0],items.shape[1])
+            det_map = det_map.reshape(1,1,det_map.shape[0],det_map.shape[1])
+            class = m.get_output(items,det_map).argmax(axis=1)[0]
+    cur.execute("SELECT station from class group by station order by station;")
     res = cur.fetchall()
-    results = []
+    res = [i for i in res]
+    class_name = res[class]
+    disp_results = []
+    cur.execute("SELECT filename,hdfs_path,c137_pickle,i131_pickle where station="+class_name+";")
     for row in res:
         if pollutant == 'C137':
-            det_obj = Detection(cPickle.loads(
-                str(row[2])), filelat, filelon, llat, llon)
+            det = cPickle.loads(str(row[2]))
         else:
-            det_obj = Detection(cPickle.loads(
-                str(row[3])), filelat, filelon, llat, llon)
-        det_obj.get_indices()
-        det_obj.create_detection_map()
-        if det_obj.calc() != 0:
-            results.append((row[0], det_obj.cosine()))    
-    
+            det = cPickle.loads(str(row[3]))
+        det = scipy.misc.imresize(det,(167,167))
+        det = maxabs_scale(det)
+        results.append(row[0],scipy.spatial.distance.cosine(det,det_map))
+    ### rerank with weather
+
+
 
 @app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def detections(date, pollutant, metric, origin):
@@ -168,16 +204,15 @@ def detections(date, pollutant, metric, origin):
     for llobj in lat_lon:
         llat.append(float(llobj['lat']))
         llon.append(float(llobj['lon']))
-    cur.execute("select filename,hdfs_path,EXTRACT(EPOCH FROM TIMESTAMP '" +
+    cur.execute("select filename,hdfs_path,GHT,EXTRACT(EPOCH FROM TIMESTAMP '" +
                 date + "' - date)/3600/24 as diff from weather order by diff desc;")
     res = cur.fetchone()
     urllib.urlretrieve(res[1], res[0])
     if 'mult' in origin:
-        test_dict = netCDF_subset(APPS_ROOT + '/' + res[0], MULT, VARS, lvlname='num_metgrid_levels', timename='Times')
+        items = cPickle.loads(str(row[2]))
     else:
-        test_dict = netCDF_subset(APPS_ROOT + '/' + res[0], LEVELS, VARS, lvlname='num_metgrid_levels', timename='Times')
-    items = [test_dict.extract_data()]
-    items = np.array(items)
+        items = cPickle.loads(str(row[2]))
+        items = items[:,1,:,:]
     ds = Dataset_transformations(items, 1000, items.shape)
     x = items.shape[4]
     y = items.shape[5]
@@ -196,18 +231,18 @@ def detections(date, pollutant, metric, origin):
                 cluster_date = utils.reconstruct_date(clust_obj._desc_date[cd[0][0]])
     results = []
     results2 = []
+    urllib.urlretrieve(
+        'http://namenode:50070/webhdfs/v1/sc5/clusters/lat.npy?op=OPEN', 'lat.npy')
+    urllib.urlretrieve(
+        'http://namenode:50070/webhdfs/v1/sc5/clusters/lon.npy?op=OPEN', 'lon.npy')
+    filelat = np.load('lat.npy')
+    filelon = np.load('lon.npy')
     descriptor = origin.split('_')
     descriptor = descriptor[len(descriptor)-1]
     timestamp = datetime.datetime.strptime(cluster_date, '%y-%m-%d-%H')
     cur.execute("select filename,hdfs_path,station,c137_pickle,i131_pickle from cluster where date=TIMESTAMP \'" +
                 datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "' and descriptor='"+ descriptor +"'")
     for row in cur:
-        urllib.urlretrieve(
-            'http://namenode:50070/webhdfs/v1/sc5/clusters/lat.npy?op=OPEN', 'lat.npy')
-        urllib.urlretrieve(
-            'http://namenode:50070/webhdfs/v1/sc5/clusters/lon.npy?op=OPEN', 'lon.npy')
-        filelat = np.load('lat.npy')
-        filelon = np.load('lon.npy')
         if pollutant == 'C137':
             det_obj = Detection(cPickle.loads(
                 str(row[3])), filelat, filelon, llat, llon)

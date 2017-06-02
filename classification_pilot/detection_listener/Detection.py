@@ -28,9 +28,9 @@ class Detection(object):
     def create_detection_map(self):
         pollutant_array = self._conc
         det_map = np.zeros(shape=(pollutant_array.shape[0] ,pollutant_array.shape[1]))
-        for lat in self._lat_idx:
-            for lon in self._lon_idx:
-                det_map[lat,lon] = 1
+        readings = [(self._lat_idx[k],self._lon_idx[k]) for k,i in enumerate(self._lat_idx)]
+        for r in readings:
+                det_map[r] = 1
         det_map = gaussian_filter(det_map,0.3)
         det_map = maxabs_scale(det_map)
         self._det_map = det_map
