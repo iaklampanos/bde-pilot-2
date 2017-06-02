@@ -179,12 +179,13 @@ def cdetections(date,pollutant,metric,origin):
         if origin == m[0]:
             items = items.reshape(1,1,items.shape[0],items.shape[1])
             det_map = det_map.reshape(1,1,det_map.shape[0],det_map.shape[1])
-            cl = m[1].get_output(items,det_map).argmax(axis=1)[0]
+            cl = m[1].get_output(items,det_map).argmax(axis=1)[:3]
     cur.execute("SELECT station from class group by station order by station;")
     res = cur.fetchall()
     res = [i for i in res]
     class_name = res[cl]
-    class_name = str(class_name[0])
+    print class_name
+    # class_name = (c[0] for c in class_names)
     disp_results = []
     cur.execute("SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station=\'"+class_name+"\';")
     res = cur.fetchall()
