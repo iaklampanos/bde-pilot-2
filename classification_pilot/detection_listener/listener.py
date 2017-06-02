@@ -153,6 +153,7 @@ def cdetections(date,pollutant,metric,origin):
     else:
         items = cPickle.loads(str(row[2]))
         items = items[:,1,:,:]
+        print items.shape
         items = scale(items)
     det_map = np.zeros(shape=(501 ,501))
     urllib.urlretrieve(
