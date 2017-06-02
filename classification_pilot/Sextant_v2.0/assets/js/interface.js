@@ -617,10 +617,19 @@ function estimateLocation() {
               var eheader = document.getElementById('estimate');
               loader.style.display = 'block';
               eheader.style.display = 'none';
-              var req = new XMLHttpRequest();
-              req.open("POST", listener_ip+"detections/" + timestamp + "/" + pollcheckedVal() + "/" + metriccheckedVal() + "/" + methodcheckedVal(), true);
-              req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
-              req.send(JSON.stringify(locs));
+              if (metriccheckedVal().indexOf('classification') == -1)
+              {
+                var req = new XMLHttpRequest();
+                req.open("POST", listener_ip+"detections/" + timestamp + "/" + pollcheckedVal() + "/" + metriccheckedVal() + "/" + methodcheckedVal(), true);
+                req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+                req.send(JSON.stringify(locs));
+              }
+              else {
+                var req = new XMLHttpRequest();
+                req.open("POST", listener_ip+"cdetections/" + timestamp + "/" + pollcheckedVal() + "/" + metriccheckedVal(), true);
+                req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+                req.send(JSON.stringify(locs));
+              }
               req.onloadend = function() {
                   resp = JSON.parse(req.responseText);
               if (resp["scores"][0]-resp["scores"][2] !=0  && metriccheckedVal() == 'cosine') {
