@@ -186,7 +186,7 @@ def cdetections(date,pollutant,metric,origin):
     cur.execute("SELECT station from class group by station order by station;")
     res = cur.fetchall()
     res = [i for i in res]
-    class_name = res[cl]
+    class_name = [res[i] for i in cl]
     print class_name
     # class_name = (c[0] for c in class_names)
     disp_results = []
