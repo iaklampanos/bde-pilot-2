@@ -10,6 +10,7 @@ from pywebhdfs.webhdfs import PyWebHdfsClient
 from netCDF4 import Dataset
 import numpy as np
 import cPickle
+import base64
 
 def make_latlon_files(inp,hp):
     for lfl in sorted(os.listdir(inp)):
