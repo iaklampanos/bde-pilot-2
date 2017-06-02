@@ -9,13 +9,14 @@ import getpass
 from pywebhdfs.webhdfs import PyWebHdfsClient
 from netcdf_subset import netCDF_subset
 import sys
+import base64
 
 def init():
     with open('db_info.json','r') as data_file:
         dbpar = json.load(data_file)
     dpass = getpass.getpass()
     conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
-                            "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + dpass + "'")
+                            "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + base64.b64decode(dbpar['pass']) + "'")
     cur = conn.cursor()
     hdfs = PyWebHdfsClient(host='namenode', port='50070')
 

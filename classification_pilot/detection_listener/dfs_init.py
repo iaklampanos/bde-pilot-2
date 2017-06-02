@@ -2,7 +2,7 @@ import requests
 import psycopg2
 import json
 import getpass
-
+import base64
 
 req = requests.put('http://namenode:50070/webhdfs/v1/sc5/weather?op=MKDIRS')
 resp = req.json()
@@ -45,6 +45,7 @@ dbobj['dbname'] = dnam
 dbobj['host'] = dip
 dbobj['port'] = dpo
 dbobj['user'] = du
+dbobj['pass'] = base64.b64encode(dpass)
 with open('db_info.json', 'w') as outfile2:
     json.dump(dbobj, outfile2)
 cur = conn.cursor()
@@ -55,7 +56,7 @@ cur.execute("CREATE TABLE models (origin varchar(500),filename varchar(500),\
 cur.execute("CREATE TABLE cluster (filename varchar(500),\
             hdfs_path varchar(2000),station varchar(100),date timestamp,origin varchar(500),descriptor varchar(500),c137 json,i131 json,c137_pickle BYTEA,i131_pickle BYTEA, PRIMARY KEY(station,date,origin), FOREIGN KEY(origin) REFERENCES models(origin))")
 cur.execute("CREATE TABLE class (filename varchar(500),\
-            hdfs_path varchar(2000),station varchar(100),date timestamp,c137 json,i131 json,c137_pickle BYTEA,i131_pickle BYTEA, PRIMARY KEY(station,date)")
+            hdfs_path varchar(2000),station varchar(100),date timestamp,c137 json,i131 json,c137_pickle BYTEA,i131_pickle BYTEA, PRIMARY KEY(station,date))")
 conn.commit()
 cur.close()
 conn.close()
