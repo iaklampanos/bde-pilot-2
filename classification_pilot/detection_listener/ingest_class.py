@@ -41,6 +41,7 @@ cur = conn.cursor()
 hdfs = PyWebHdfsClient(host='namenode', port='50070')
 
 def main():
+    hp = '/sc5/classes'
     for lfl in sys.argv[1:]:
         for nc in sorted(os.listdir(lfl)):
             if nc.endswith("nc"):
