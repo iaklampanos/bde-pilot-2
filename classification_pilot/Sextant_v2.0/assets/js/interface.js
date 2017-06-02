@@ -617,7 +617,7 @@ function estimateLocation() {
               var eheader = document.getElementById('estimate');
               loader.style.display = 'block';
               eheader.style.display = 'none';
-              if (metriccheckedVal().indexOf('classification') == -1)
+              if (methodcheckedVal().indexOf('classification') == -1)
               {
                 var req = new XMLHttpRequest();
                 req.open("POST", listener_ip+"detections/" + timestamp + "/" + pollcheckedVal() + "/" + metriccheckedVal() + "/" + methodcheckedVal(), true);
@@ -626,7 +626,7 @@ function estimateLocation() {
               }
               else {
                 var req = new XMLHttpRequest();
-                req.open("POST", listener_ip+"cdetections/" + timestamp + "/" + pollcheckedVal() + "/" + metriccheckedVal(), true);
+                req.open("POST", listener_ip+"class_detections/" + timestamp + "/" + pollcheckedVal() + "/" + metriccheckedVal() + "/" + methodcheckedVal(), true);
                 req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
                 req.send(JSON.stringify(locs));
               }
