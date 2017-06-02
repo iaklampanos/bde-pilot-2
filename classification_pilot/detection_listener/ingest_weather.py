@@ -30,12 +30,14 @@ def main():
             print lfl
             lfl_nc = netCDF_subset(f,[500,700,900],['GHT'])
             items = lfl_nc.extract_data()
-            ght_pkl = items.reshape(items.shape[1:])
+            ght_pkl = np.array(items.reshape(items.shape[1:]))
             hdfs.create_file('/sc5/weather/'+lfl, open(f,'rb'))
             path = "http://namenode:50070/webhdfs/v1/sc5/weather/"+lfl+"?op=OPEN"
             date = datetime.datetime.strptime(lfl.split('.')[0],'%Y-%m-%d_%H-%M-%S')
-            cur.execute("INSERT INTO weather(filename,hdfs_path,date,wind_dir500,wind_dir700,wind_dir900,GHT) VALUES(\'"+lfl+"\',\'"+path+"\', TIMESTAMP \'"+datetime.datetime.strftime(date,'%m-%d-%Y %H:%M:%S')+"\',null,null,null,"+psycopg2.Binary(
-                cPickle.dumps(ght_pkl, 1))+")")
+            sql = "INSERT INTO weather(filename,hdfs_path,date,wind_dir500,wind_dir700,wind_dir900,GHT) \
+            VALUES(%s,%s,TIMESTAMP %s,%s,%s,%s,%s)"
+            cur.execute(sql, (lfl,path,datetime.datetime.strftime(date,'%m-%d-%Y %H:%M:%S'),'null','null','null',psycopg2.Binary(
+                cPickle.dumps(ght_pkl, 1))))
     conn.commit()
     cur.close()
     conn.close()
