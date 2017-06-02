@@ -30,7 +30,7 @@ def main():
             print lfl
             lfl_nc = netCDF_subset(f,[500,700,900],['GHT'])
             items = lfl_nc.extract_data()
-            ght_pkl = np.array(items.reshape(items.shape[1:]))
+            ght_pkl = items.reshape(items.shape[1:])
             hdfs.create_file('/sc5/weather/'+lfl, open(f,'rb'))
             path = "http://namenode:50070/webhdfs/v1/sc5/weather/"+lfl+"?op=OPEN"
             date = datetime.datetime.strptime(lfl.split('.')[0],'%Y-%m-%d_%H-%M-%S')
