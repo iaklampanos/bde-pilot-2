@@ -11,17 +11,14 @@ from netcdf_subset import netCDF_subset
 import sys
 import base64
 
-def init():
-    with open('db_info.json','r') as data_file:
-        dbpar = json.load(data_file)
-    dpass = getpass.getpass()
-    conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
-                            "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + base64.b64decode(dbpar['pass']) + "'")
-    cur = conn.cursor()
-    hdfs = PyWebHdfsClient(host='namenode', port='50070')
+with open('db_info.json','r') as data_file:
+    dbpar = json.load(data_file)
+conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
+                        "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + base64.b64decode(dbpar['pass']) + "'")
+cur = conn.cursor()
+hdfs = PyWebHdfsClient(host='namenode', port='50070')
 
 def main():
-    init()
     req = requests.get('http://namenode:50070/webhdfs/v1/sc5/weather?op=LISTSTATUS')
     resp = req.json()
     fl = resp['FileStatuses']['FileStatus']
