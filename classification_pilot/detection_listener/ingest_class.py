@@ -55,7 +55,7 @@ def main():
                 i131_pickle = np.sum(netcdf.variables['I131'][
                                      :, 0, :, :], axis=0)
                 path = "http://namenode:50070/webhdfs/v1" + hp + "/" + nc + "?op=OPEN"
-                dstr = lfl.split['/']
+                dstr = lfl.split('/')
                 dstr = dstr[len(dstr)-1]
                 date = datetime.datetime.strptime(lfl, '%y-%m-%d-%H')
                 sql = "INSERT INTO class(filename,hdfs_path,station,date,c137,i131,c137_pickle ,i131_pickle) VALUES (%s,%s,%s,TIMESTAMP %s,%s,%s,%s,%s)"
