@@ -386,7 +386,7 @@ def detections(date, pollutant, metric, origin):
 
 @app.route('/getMethods/', methods=['GET'])
 def get_methods():
-    cur.execute("select * from models;")
+    cur.execute("select origin from models;")
     origins = []
     for row in cur:
         origins.append(row[0])
