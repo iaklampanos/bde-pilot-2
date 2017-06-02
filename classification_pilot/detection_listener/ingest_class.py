@@ -62,9 +62,9 @@ def main():
                     cPickle.dumps(c137_pickle, 1)),
                 psycopg2.Binary(cPickle.dumps(i131_pickle, 1))))
                 netcdf.close()
-     conn.commit()
-     cur.close()
-     conn.close()
+    conn.commit()
+    cur.close()
+    conn.close()
 
 
 if __name__ == '__main__':
