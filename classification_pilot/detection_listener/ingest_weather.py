@@ -10,6 +10,7 @@ from pywebhdfs.webhdfs import PyWebHdfsClient
 from netcdf_subset import netCDF_subset
 import sys
 import base64
+import cPickle
 
 with open('db_info.json','r') as data_file:
     dbpar = json.load(data_file)
