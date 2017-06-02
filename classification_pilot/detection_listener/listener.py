@@ -208,9 +208,8 @@ def cdetections(date,pollutant,metric,origin):
             citems = citems[:,1,:,:]
             citems = scale(citems.sum(axis=0))
         weather_results.append((row[0],1-scipy.spatial.distance.cosine(items.flatten(),citems.flatten())))
-    results = []
     for disp in disp_results:
-        results.append([(w[0],w[1]*disp[1])for w in weather_results if w[0]==disp[0]])
+        results = [(w[0],w[1]*disp[1]) for w in weather_results if w[0]==disp[0]]
     results = sorted(results, key=lambda k: k[1],reverse=False)
     cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
                 datetime.datetime.strftime(results[0][0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + class_name + "';")
