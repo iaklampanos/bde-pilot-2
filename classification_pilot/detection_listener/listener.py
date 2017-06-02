@@ -184,6 +184,7 @@ def cdetections(date,pollutant,metric,origin):
     res = cur.fetchall()
     res = [i for i in res]
     class_name = res[cl]
+    class_name = str(class_name[0])
     disp_results = []
     cur.execute("SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station="+class_name+";")
     for row in res:
