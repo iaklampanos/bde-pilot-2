@@ -146,6 +146,7 @@ def cdetections(date,pollutant,metric):
         llon.append(float(llobj['lon']))
     cur.execute("select filename,hdfs_path,GHT,EXTRACT(EPOCH FROM TIMESTAMP '" +
                 date + "' - date)/3600/24 as diff from weather order by diff desc;")
+    row = cur.fetchone()
     if 'mult' in origin:
         items = cPickle.loads(str(row[2]))
         items = scale(items)
@@ -162,11 +163,11 @@ def cdetections(date,pollutant,metric):
     filelon = np.load('lon.npy')
     lat_idx = []
     lon_idx = []
-    for lat in self._lats:
-        lat_idx.append(np.argmin(np.abs(self._filelat - lat)))
-    for lon in self._lons:
-        lon_idx.append(np.argmin(np.abs(self._filelon - lon)))
-    readings = [(self._lat_idx[k],self._lon_idx[k]) for k,i in enumerate(self._lat_idx)]
+    for lat in llat:
+        lat_idx.append(np.argmin(np.abs(filelat - lat)))
+    for lon in llon:
+        lon_idx.append(np.argmin(np.abs(filelon - lon)))
+    readings = [(lat_idx[k],lon_idx[k]) for k,i in enumerate(lat_idx)]
     for r in readings:
             det_map[r] = 1
     det_map = gaussian_filter(det_map,0.3)
@@ -183,7 +184,7 @@ def cdetections(date,pollutant,metric):
     res = [i for i in res]
     class_name = res[class]
     disp_results = []
-    cur.execute("SELECT filename,hdfs_path,c137_pickle,i131_pickle where station="+class_name+";")
+    cur.execute("SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station="+class_name+";")
     for row in res:
         if pollutant == 'C137':
             det = cPickle.loads(str(row[2]))
@@ -191,10 +192,69 @@ def cdetections(date,pollutant,metric):
             det = cPickle.loads(str(row[3]))
         det = scipy.misc.imresize(det,(167,167))
         det = maxabs_scale(det)
-        results.append(row[0],scipy.spatial.distance.cosine(det,det_map))
-    ### rerank with weather
-
-
+        disp_results.append(row[0],1-scipy.spatial.distance.cosine(det,det_map))
+    cur.execute("SELECT date,GHT from weather;")
+    res = cur.fetchall()
+    weather_results = []
+    for row in res:
+        if 'mult' in origin:
+            citems = cPickle.loads(str(row[2]))
+            citems = scale(citems)
+        else:
+            citems = cPickle.loads(str(row[2]))
+            citems = citems[:,1,:,:]
+            citems = scale(citems)
+        weather_results.append(row[0],1-scipy.spatial.distance.cosine(items,citems))
+    results = []
+    for disp in disp_results:
+        results.append([(w[0],w[1]*disp[1])for w in weather_results if w[0]==disp[0]])
+    results = sorted(results, key=lambda k: k[1],reverse=False)
+    cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
+                datetime.datetime.strftime(results[0][0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + class_name + "';")
+    row = cur.fetchone()
+    if (row[3] == None) or (row[4] == None):
+        urllib.urlretrieve(row[1], row[0])
+        dispersion_integral(row[0])
+        os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
+                  row[0] + '\\":C137 ' + row[0].split('.')[0] + '_c137.tiff')
+        os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
+                  row[0] + '\\":I131 ' + row[0].split('.')[0] + '_i131.tiff')
+        os.system('make png TIFF_IN=' +
+                  row[0].split('.')[0] + '_c137.tiff')
+        os.system('make png TIFF_IN=' +
+                  row[0].split('.')[0] + '_i131.tiff')
+        os.system('make clean')
+        with open(row[0].split('.')[0] + '_c137.json', 'r') as c137:
+            c137_json = json.load(c137)
+        with open(row[0].split('.')[0] + '_i131.json', 'r') as i131:
+            i131_json = json.load(i131)
+        cur.execute("UPDATE class SET  c137=\'" +
+                    json.dumps(c137_json) + "\' WHERE filename=\'" + row[0] + "\'")
+        cur.execute("UPDATE class SET  i131=\'" +
+                    json.dumps(i131_json) + "\' WHERE filename=\'" + row[0] + "\'")
+        conn.commit()
+        os.system('rm ' + APPS_ROOT + '/' +
+                  row[0].split('.')[0] + '_c137.json')
+        os.system('rm ' + APPS_ROOT + '/' +
+                  row[0].split('.')[0] + '_i131.json')
+        os.system('rm ' + APPS_ROOT + '/' + row[0])
+        os.system('rm ' + APPS_ROOT + '/' + 'int_' + row[0])
+        os.system('rm ' + APPS_ROOT + '/' + res[0])
+        if pollutant == 'C137':
+            dispersion = json.dumps(c137_json)
+        else:
+            dispersion = json.dumps(i131_json)
+    else:
+        os.system('rm ' + APPS_ROOT + '/' + res[0])
+        if pollutant == 'C137':
+            dispersion = json.dumps(c137_json)
+        else:
+            dispersion = json.dumps(i131_json)
+    send = {}
+    send['stations'] = [class_name]
+    send['scores'] = [results[0][1]]
+    send['dispersions'] = [dispersion]
+    return json.dumps(send)
 
 @app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def detections(date, pollutant, metric, origin):
