@@ -249,9 +249,9 @@ def cdetections(date,pollutant,metric,origin):
     else:
         # os.system('rm ' + APPS_ROOT + '/' + res[0])
         if pollutant == 'C137':
-            dispersion = json.dumps(c137_json)
+            dispersion = json.dumps(row[3])
         else:
-            dispersion = json.dumps(i131_json)
+            dispersion = json.dumps(row[4])
     send = {}
     send['stations'] = [class_name]
     send['scores'] = [results[0][1]]
