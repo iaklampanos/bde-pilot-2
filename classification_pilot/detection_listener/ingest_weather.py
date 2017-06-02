@@ -24,6 +24,9 @@ def main():
     fl = resp['FileStatuses']['FileStatus']
     for f in sys.argv[1:]:
         if not(f in fl):
+            lfl = f.split('/')
+            lfl = lfl[len(lfl)-1]
+            print lfl
             lfl_nc = netCDF_subset(f,[500,700,900],['GHT'])
             items = lfl_nc.extract_data()
             ght_pkl = items.reshape(items.shape[1:])
