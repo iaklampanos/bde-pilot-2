@@ -149,12 +149,11 @@ def cdetections(date,pollutant,metric,origin):
     row = cur.fetchone()
     if 'mult' in origin:
         items = cPickle.loads(str(row[2]))
-        items = scale(items)
+        items = scale(items.sum(axis=0))
     else:
         items = cPickle.loads(str(row[2]))
         items = items[:,1,:,:]
-        print items.shape
-        items = scale(items)
+        items = scale(items.sum(axis=0))
     det_map = np.zeros(shape=(501 ,501))
     urllib.urlretrieve(
         'http://namenode:50070/webhdfs/v1/sc5/clusters/lat.npy?op=OPEN', 'lat.npy')
