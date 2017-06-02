@@ -187,6 +187,7 @@ def cdetections(date,pollutant,metric,origin):
     class_name = str(class_name[0])
     disp_results = []
     cur.execute("SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station=\'"+class_name+"\';")
+    res = cur.fetchall()
     for row in res:
         if pollutant == 'C137':
             det = cPickle.loads(str(row[2]))
