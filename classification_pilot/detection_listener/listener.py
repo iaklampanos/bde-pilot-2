@@ -247,7 +247,7 @@ def cdetections(date,pollutant,metric,origin):
         else:
             dispersion = json.dumps(i131_json)
     else:
-        os.system('rm ' + APPS_ROOT + '/' + res[0])
+        # os.system('rm ' + APPS_ROOT + '/' + res[0])
         if pollutant == 'C137':
             dispersion = json.dumps(c137_json)
         else:
