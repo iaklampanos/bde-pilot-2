@@ -185,7 +185,7 @@ def cdetections(date,pollutant,metric,origin):
     cur.execute("SELECT station from class group by station order by station;")
     res = cur.fetchall()
     res = [i for i in res]
-    class_name = [str(res[i][0]) for i in cl]
+    class_name = [str(res[i][0]) for c,i in enumerate(cl) if c > 17:continue]
     print class_name
     dispersions = []
     scores = []
