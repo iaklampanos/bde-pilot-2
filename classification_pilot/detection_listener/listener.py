@@ -201,10 +201,10 @@ def cdetections(date,pollutant,metric,origin):
     weather_results = []
     for row in res:
         if 'mult' in origin:
-            citems = cPickle.loads(str(row[2]))
+            citems = cPickle.loads(str(row[1]))
             citems = scale(citems.sum(axis=0))
         else:
-            citems = cPickle.loads(str(row[2]))
+            citems = cPickle.loads(str(row[1]))
             citems = citems[:,1,:,:]
             citems = scale(citems.sum(axis=0))
         weather_results.append((row[0],1-scipy.spatial.distance.cosine(items.flatten(),citems.flatten())))
