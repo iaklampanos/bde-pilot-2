@@ -19,6 +19,7 @@ from geojson import Feature, Point, MultiPoint, MultiLineString, LineString, Fea
 import cPickle
 import gzip
 from sklearn.preprocessing import maxabs_scale,scale
+from scipy.ndimage.filters import gaussian_filter
 
 BOOTSTRAP_SERVE_LOCAL = True
 app = Flask(__name__)
