@@ -181,11 +181,11 @@ def cdetections(date,pollutant,metric,origin):
             det_map = det_map.reshape(1,1,det_map.shape[0],det_map.shape[1])
             cl = m[1].get_output(items,det_map)[0].argsort()[:3]
             cl = list(cl)
-            cl = [int(c) for c in cl]
+            cl = [int(c) for c in cl if c < 18]
     cur.execute("SELECT station from class group by station order by station;")
     res = cur.fetchall()
     res = [i for i in res]
-    class_name = [str(res[i][0]) for c,i in enumerate(cl) if c > 17 continue]
+    class_name = [str(res[i][0]) for i in cl]
     print class_name
     dispersions = []
     scores = []
