@@ -191,7 +191,7 @@ def cdetections(date,pollutant,metric,origin):
     scores = []
     for cln in class_name:
         disp_results = []
-        cur.execute("SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station=\'"+class_name+"\';")
+        cur.execute("SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station=\'"+cln+"\';")
         res = cur.fetchall()
         for row in res:
             if pollutant == 'C137':
@@ -217,7 +217,7 @@ def cdetections(date,pollutant,metric,origin):
             results = [(w[0],w[1]*disp[1]) for w in weather_results if w[0]==disp[0]]
         results = sorted(results, key=lambda k: k[1],reverse=False)
         cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
-                    datetime.datetime.strftime(results[0][0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + class_name + "';")
+                    datetime.datetime.strftime(results[0][0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
         row = cur.fetchone()
         if (row[3] == None) or (row[4] == None):
             urllib.urlretrieve(row[1], row[0])
