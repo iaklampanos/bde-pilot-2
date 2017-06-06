@@ -266,7 +266,7 @@ def cdetections(date, pollutant, metric, origin):
             else:
                 dispersion = json.dumps(row[4])
             dispersions.append(dispersion)
-            scores.append(results[0][1])
+            scores.append(results[1])
     scores, dispersions, class_name = zip(
         *sorted(zip(scores, dispersions, class_name), key=lambda k: k[0], reverse=True))
     send = {}
