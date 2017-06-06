@@ -221,8 +221,7 @@ def cdetections(date, pollutant, metric, origin):
             weather_results, key=lambda k: k[1], reverse=True)
         w = weather_results[0]
         d = disp_results[0]
-        print w[0],d[0]
-        # results = (w[1]*d[1])/d[1]
+        results = (d[0],w[1]*d[1])
         cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
                     datetime.datetime.strftime(results[0][0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
         row = cur.fetchone()
