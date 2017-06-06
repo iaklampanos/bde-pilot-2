@@ -38,9 +38,7 @@ conn = None
 cur = None
 dpass = getpass.getpass()
 APPS_ROOT = os.path.dirname(os.path.abspath(__file__))
-VARS = ['GHT']
-LEVELS = [700]
-MULT = [500,700,900]
+
 
 def dispersion_integral(dataset_name):
     dataset = Dataset(APPS_ROOT + '/' + dataset_name, 'r')
@@ -202,6 +200,8 @@ def cdetections(date,pollutant,metric,origin):
             det = scipy.misc.imresize(det,(167,167))
             det = maxabs_scale(det)
             disp_results.append((row[0],1-scipy.spatial.distance.cosine(det.flatten(),det_map.flatten())))
+        print disp_results
+        print len(disp_results)
         cur.execute("SELECT date,GHT from weather;")
         res = cur.fetchall()
         weather_results = []
@@ -215,8 +215,8 @@ def cdetections(date,pollutant,metric,origin):
                 citems = scale(citems.sum(axis=0))
             weather_results.append((row[0],1-scipy.spatial.distance.cosine(items.flatten(),citems.flatten())))
         for disp in disp_results:
-            results = [(w[0],w[1]*disp[1]) for w in weather_results if w[0]==disp[0]]
-        results = sorted(results, key=lambda k: k[1],reverse=False)
+            results = [(w[0],(w[1]*disp[1])/disp[1]) for w in weather_results if w[0]==disp[0]]
+        results = sorted(results, key=lambda k: k[1],reverse=True)
         cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
                     datetime.datetime.strftime(results[0][0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
         row = cur.fetchone()
@@ -263,7 +263,7 @@ def cdetections(date,pollutant,metric,origin):
             dispersions.append(dispersion)
             scores.append(results[0][1])
     scores, dispersions, class_name = zip(
-        *sorted(zip(scores, dispersions, class_name),key=lambda k: k[0] if k[0] > 0 else float('inf'),reverse=False))
+        *sorted(zip(scores, dispersions, class_name),key=lambda k: k[0],reverse=True))
     send = {}
     send['stations'] = class_name
     send['scores'] = scores
