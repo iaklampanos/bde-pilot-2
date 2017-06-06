@@ -223,7 +223,7 @@ def cdetections(date, pollutant, metric, origin):
         d = disp_results[0]
         results = (d[0],w[1]*d[1])
         cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
-                    datetime.datetime.strftime(results[0][0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
+                    datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
         row = cur.fetchone()
         if (row[3] == None) or (row[4] == None):
             urllib.urlretrieve(row[1], row[0])
@@ -258,7 +258,7 @@ def cdetections(date, pollutant, metric, origin):
             else:
                 dispersion = json.dumps(i131_json)
             dispersions.append(dispersion)
-            scores.append(results[0][1])
+            scores.append(results[1])
         else:
             # os.system('rm ' + APPS_ROOT + '/' + res[0])
             if pollutant == 'C137':
