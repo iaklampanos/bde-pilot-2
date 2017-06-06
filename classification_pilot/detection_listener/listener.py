@@ -177,12 +177,20 @@ def cdetections(date, pollutant, metric, origin):
     det_map = maxabs_scale(det_map)
     for m in models:
         if origin == m[0]:
-            items = items.reshape(1, 1, items.shape[0], items.shape[1])
-            det_map = det_map.reshape(1, 1, det_map.shape[0], det_map.shape[1])
-            cl = m[1].get_output(items, det_map)[0].argsort()
-            cl = list(cl)
-            cl = [int(c) for c in cl if c < 18]
-            cl = cl[:3]
+            if not('mult' in origin):
+                items = items.reshape(1, 1, items.shape[0], items.shape[1])
+                det_map = det_map.reshape(1, 1, det_map.shape[0], det_map.shape[1])
+                cl = m[1].get_output(items, det_map)[0].argsort()
+                cl = list(cl)
+                cl = [int(c) for c in cl if c < 18]
+                cl = cl[:3]
+            else:
+                items = items.reshape(1, 3, items.shape[0], items.shape[1])
+                det_map = det_map.reshape(1, 1, det_map.shape[0], det_map.shape[1])
+                cl = m[1].get_output(items, det_map)[0].argsort()
+                cl = list(cl)
+                cl = [int(c) for c in cl if c < 18]
+                cl = cl[:3]
     cur.execute("SELECT station from class group by station order by station;")
     res = cur.fetchall()
     res = [i for i in res]
