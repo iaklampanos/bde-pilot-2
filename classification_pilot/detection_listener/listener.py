@@ -140,6 +140,7 @@ def calc_winddir(dataset_name, level):
 @app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def cdetections(date, pollutant, metric, origin):
     lat_lon = request.get_json(force=True)
+    print lat_lon
     llat = []
     llon = []
     for llobj in lat_lon:
@@ -269,7 +270,7 @@ def cdetections(date, pollutant, metric, origin):
             else:
                 dispersion = json.dumps(i131_json)
             dispersions.append(dispersion)
-            scores.append(results[1],3)
+            scores.append(results[1])
             # scores.append(round(results[1],3))
         else:
             # os.system('rm ' + APPS_ROOT + '/' + res[0])
@@ -278,7 +279,7 @@ def cdetections(date, pollutant, metric, origin):
             else:
                 dispersion = json.dumps(row[4])
             dispersions.append(dispersion)
-            scores.append(results[1],3)
+            scores.append(results[1])
             # scores.append(round(results[1],3))
     scores, dispersions, class_name = zip(
         *sorted(zip(scores, dispersions, class_name), key=lambda k: k[0], reverse=True))
