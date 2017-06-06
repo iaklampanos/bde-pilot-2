@@ -140,7 +140,6 @@ def calc_winddir(dataset_name, level):
 @app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def cdetections(date, pollutant, metric, origin):
     lat_lon = request.get_json(force=True)
-    print lat_lon
     llat = []
     llon = []
     for llobj in lat_lon:
@@ -171,8 +170,6 @@ def cdetections(date, pollutant, metric, origin):
     for lon in llon:
         lon_idx.append(np.argmin(np.abs(filelon - lon)))
     readings = [(lat_idx[k], lon_idx[k]) for k, i in enumerate(lat_idx)]
-    for r in readings:
-        print filelat[r[0]],filelon[r[1]]
     for r in readings:
         det_map[r] = 1
     det_map = gaussian_filter(det_map, 0.3)
@@ -271,8 +268,7 @@ def cdetections(date, pollutant, metric, origin):
             else:
                 dispersion = json.dumps(i131_json)
             dispersions.append(dispersion)
-            scores.append(results[1])
-            # scores.append(round(results[1],3))
+            scores.append(round(results[1],3))
         else:
             # os.system('rm ' + APPS_ROOT + '/' + res[0])
             if pollutant == 'C137':
@@ -280,8 +276,7 @@ def cdetections(date, pollutant, metric, origin):
             else:
                 dispersion = json.dumps(row[4])
             dispersions.append(dispersion)
-            scores.append(results[1])
-            # scores.append(round(results[1],3))
+            scores.append(round(results[1],3))
     scores, dispersions, class_name = zip(
         *sorted(zip(scores, dispersions, class_name), key=lambda k: k[0], reverse=True))
     send = {}
