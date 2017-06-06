@@ -18,7 +18,7 @@ import time
 from geojson import Feature, Point, MultiPoint, MultiLineString, LineString, FeatureCollection
 import cPickle
 import gzip
-from sklearn.preprocessing import maxabs_scale, scale
+from sklearn.preprocessing import maxabs_scale, scale, minmax_scale
 from scipy.ndimage.filters import gaussian_filter
 import scipy.misc
 
@@ -150,11 +150,12 @@ def cdetections(date, pollutant, metric, origin):
     row = cur.fetchone()
     if 'mult' in origin:
         items = cPickle.loads(str(row[2]))
-        items = scale(items.sum(axis=0))
+        items = items.reshape(items.shape[0],-1)
+        items = minmax_scale(items.sum(axis=0))
     else:
         items = cPickle.loads(str(row[2]))
         items = items[:, 1, :, :]
-        items = scale(items.sum(axis=0))
+        items = minmax_scale(items.sum(axis=0))
     det_map = np.zeros(shape=(501, 501))
     urllib.urlretrieve(
         'http://namenode:50070/webhdfs/v1/sc5/clusters/lat.npy?op=OPEN', 'lat.npy')
@@ -210,11 +211,12 @@ def cdetections(date, pollutant, metric, origin):
         for row in res:
             if 'mult' in origin:
                 citems = cPickle.loads(str(row[1]))
-                citems = scale(citems.sum(axis=0))
+                citems = citems.reshape(citems.shape[0],-1)
+                citems = minmax_scale(citems.sum(axis=0))
             else:
                 citems = cPickle.loads(str(row[1]))
                 citems = citems[:, 1, :, :]
-                citems = scale(citems.sum(axis=0))
+                citems = minmax_scale(citems.sum(axis=0))
             weather_results.append(
                 (row[0], 1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
         weather_results = sorted(
