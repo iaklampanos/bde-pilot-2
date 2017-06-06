@@ -171,7 +171,8 @@ def cdetections(date, pollutant, metric, origin):
     for lon in llon:
         lon_idx.append(np.argmin(np.abs(filelon - lon)))
     readings = [(lat_idx[k], lon_idx[k]) for k, i in enumerate(lat_idx)]
-    print readings
+    for r in readings:
+        print filelat[r[0]],filelon[r[1]]
     for r in readings:
         det_map[r] = 1
     det_map = gaussian_filter(det_map, 0.3)
