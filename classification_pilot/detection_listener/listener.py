@@ -18,7 +18,7 @@ import time
 from geojson import Feature, Point, MultiPoint, MultiLineString, LineString, FeatureCollection
 import cPickle
 import gzip
-from sklearn.preprocessing import maxabs_scale,scale
+from sklearn.preprocessing import maxabs_scale, scale
 from scipy.ndimage.filters import gaussian_filter
 import scipy.misc
 
@@ -83,7 +83,7 @@ def dispersion_integral(dataset_name):
     dsout.close()
 
 
-def calc_winddir(dataset_name,level):
+def calc_winddir(dataset_name, level):
     dataset = Dataset(APPS_ROOT + '/' + dataset_name, 'r')
     u = dataset.variables['UU'][:, level, :, range(0, 64)].reshape(13, 4096)
     v = dataset.variables['VV'][:, level, range(0, 64), :].reshape(13, 4096)
@@ -136,8 +136,9 @@ def calc_winddir(dataset_name,level):
     dataset.close()
     return json.dumps(feature)
 
+
 @app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
-def cdetections(date,pollutant,metric,origin):
+def cdetections(date, pollutant, metric, origin):
     lat_lon = request.get_json(force=True)
     llat = []
     llon = []
@@ -152,9 +153,9 @@ def cdetections(date,pollutant,metric,origin):
         items = scale(items.sum(axis=0))
     else:
         items = cPickle.loads(str(row[2]))
-        items = items[:,1,:,:]
+        items = items[:, 1, :, :]
         items = scale(items.sum(axis=0))
-    det_map = np.zeros(shape=(501 ,501))
+    det_map = np.zeros(shape=(501, 501))
     urllib.urlretrieve(
         'http://namenode:50070/webhdfs/v1/sc5/clusters/lat.npy?op=OPEN', 'lat.npy')
     urllib.urlretrieve(
@@ -167,17 +168,17 @@ def cdetections(date,pollutant,metric,origin):
         lat_idx.append(np.argmin(np.abs(filelat - lat)))
     for lon in llon:
         lon_idx.append(np.argmin(np.abs(filelon - lon)))
-    readings = [(lat_idx[k],lon_idx[k]) for k,i in enumerate(lat_idx)]
+    readings = [(lat_idx[k], lon_idx[k]) for k, i in enumerate(lat_idx)]
     for r in readings:
-            det_map[r] = 1
-    det_map = gaussian_filter(det_map,0.3)
-    det_map = scipy.misc.imresize(det_map,(167,167))
+        det_map[r] = 1
+    det_map = gaussian_filter(det_map, 0.3)
+    det_map = scipy.misc.imresize(det_map, (167, 167))
     det_map = maxabs_scale(det_map)
     for m in models:
         if origin == m[0]:
-            items = items.reshape(1,1,items.shape[0],items.shape[1])
-            det_map = det_map.reshape(1,1,det_map.shape[0],det_map.shape[1])
-            cl = m[1].get_output(items,det_map)[0].argsort()
+            items = items.reshape(1, 1, items.shape[0], items.shape[1])
+            det_map = det_map.reshape(1, 1, det_map.shape[0], det_map.shape[1])
+            cl = m[1].get_output(items, det_map)[0].argsort()
             cl = list(cl)
             cl = [int(c) for c in cl if c < 18]
             cl = cl[:3]
@@ -190,32 +191,37 @@ def cdetections(date,pollutant,metric,origin):
     scores = []
     for cln in class_name:
         disp_results = []
-        cur.execute("SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station=\'"+cln+"\';")
+        cur.execute(
+            "SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station=\'" + cln + "\';")
         res = cur.fetchall()
         for row in res:
             if pollutant == 'C137':
                 det = cPickle.loads(str(row[2]))
             else:
                 det = cPickle.loads(str(row[3]))
-            det = scipy.misc.imresize(det,(167,167))
+            det = scipy.misc.imresize(det, (167, 167))
             det = maxabs_scale(det)
-            disp_results.append((row[0],1-scipy.spatial.distance.cosine(det.flatten(),det_map.flatten())))
-        # cur.execute("SELECT date,GHT from weather;")
-        # res = cur.fetchall()
-        # weather_results = []
-        # for row in res:
-        #     if 'mult' in origin:
-        #         citems = cPickle.loads(str(row[1]))
-        #         citems = scale(citems.sum(axis=0))
-        #     else:
-        #         citems = cPickle.loads(str(row[1]))
-        #         citems = citems[:,1,:,:]
-        #         citems = scale(citems.sum(axis=0))
-        #     weather_results.append((row[0],1-scipy.spatial.distance.cosine(items.flatten(),citems.flatten())))
-        # for disp in disp_results:
-        #     results = [(w[0],w[1]*disp[1]) for w in weather_results if w[0]==disp[0]]
-        results = sorted(disp_results, key=lambda k: k[1],reverse=True)
-        print results
+            disp_results.append(
+                (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
+        disp_results = sorted(disp_results, key=lambda k: k[1], reverse=True)
+        cur.execute("SELECT date,GHT from weather;")
+        res = cur.fetchall()
+        weather_results = []
+        for row in res:
+            if 'mult' in origin:
+                citems = cPickle.loads(str(row[1]))
+                citems = scale(citems.sum(axis=0))
+            else:
+                citems = cPickle.loads(str(row[1]))
+                citems = citems[:, 1, :, :]
+                citems = scale(citems.sum(axis=0))
+            weather_results.append(
+                (row[0], 1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
+        weather_results = sorted(
+            weather_results, key=lambda k: k[1], reverse=True)
+        w = weather_results[0]
+        d = disp_results[0]
+        results = (w[1]*d[1])/d[1]
         cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
                     datetime.datetime.strftime(results[0][0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
         row = cur.fetchone()
@@ -262,12 +268,13 @@ def cdetections(date,pollutant,metric,origin):
             dispersions.append(dispersion)
             scores.append(results[0][1])
     scores, dispersions, class_name = zip(
-        *sorted(zip(scores, dispersions, class_name),key=lambda k: k[0],reverse=True))
+        *sorted(zip(scores, dispersions, class_name), key=lambda k: k[0], reverse=True))
     send = {}
     send['stations'] = class_name
     send['scores'] = scores
     send['dispersions'] = dispersions
     return json.dumps(send)
+
 
 @app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def detections(date, pollutant, metric, origin):
@@ -285,7 +292,7 @@ def detections(date, pollutant, metric, origin):
         items = cPickle.loads(str(row[2]))
     else:
         items = cPickle.loads(str(row[2]))
-        items = items[:,1,:,:]
+        items = items[:, 1, :, :]
     ds = Dataset_transformations(items, 1000, items.shape)
     x = items.shape[4]
     y = items.shape[5]
@@ -297,11 +304,13 @@ def detections(date, pollutant, metric, origin):
                 clust_obj = m[2]
                 ds._items = m[1].get_hidden(ds._items.T)
                 cd = clust_obj.centroids_distance(ds, features_first=False)
-                cluster_date = utils.reconstruct_date(clust_obj._desc_date[cd[0][0]])
+                cluster_date = utils.reconstruct_date(
+                    clust_obj._desc_date[cd[0][0]])
             else:
                 clust_obj = m[1]
                 cd = clust_obj.centroids_distance(ds, features_first=True)
-                cluster_date = utils.reconstruct_date(clust_obj._desc_date[cd[0][0]])
+                cluster_date = utils.reconstruct_date(
+                    clust_obj._desc_date[cd[0][0]])
     results = []
     results2 = []
     urllib.urlretrieve(
@@ -311,10 +320,10 @@ def detections(date, pollutant, metric, origin):
     filelat = np.load('lat.npy')
     filelon = np.load('lon.npy')
     descriptor = origin.split('_')
-    descriptor = descriptor[len(descriptor)-1]
+    descriptor = descriptor[len(descriptor) - 1]
     timestamp = datetime.datetime.strptime(cluster_date, '%y-%m-%d-%H')
     cur.execute("select filename,hdfs_path,station,c137_pickle,i131_pickle from cluster where date=TIMESTAMP \'" +
-                datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "' and descriptor='"+ descriptor +"'")
+                datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "' and descriptor='" + descriptor + "'")
     for row in cur:
         if pollutant == 'C137':
             det_obj = Detection(cPickle.loads(
@@ -332,11 +341,12 @@ def detections(date, pollutant, metric, origin):
             results.append((row[2], 0))
         os.system('rm ' + APPS_ROOT + '/' + 'lat.npy')
         os.system('rm ' + APPS_ROOT + '/' + 'lon.npy')
-    results = sorted(results, key=lambda k: k[1] if k[1] > 0 else float('inf'), reverse=False)
+    results = sorted(results, key=lambda k: k[1] if k[
+                     1] > 0 else float('inf'), reverse=False)
     top3 = results[:3]
     print top3
     top3_names = [top[0] for top in top3]
-    top3_scores = [round(top[1],3) for top in top3]
+    top3_scores = [round(top[1], 3) for top in top3]
     stations = []
     dates = []
     scores = []
@@ -389,7 +399,7 @@ def detections(date, pollutant, metric, origin):
                 else:
                     dispersions.append(json.dumps(row[4]))
     scores, dispersions, stations = zip(
-        *sorted(zip(scores, dispersions, stations),key=lambda k: k[0] if k[0] > 0 else float('inf'),reverse=False))
+        *sorted(zip(scores, dispersions, stations), key=lambda k: k[0] if k[0] > 0 else float('inf'), reverse=False))
     send = {}
     send['stations'] = stations
     send['scores'] = scores
@@ -407,7 +417,7 @@ def get_methods():
 
 
 @app.route('/getClosestWeather/<date>/<level>', methods=['GET'])
-def get_closest(date,level):
+def get_closest(date, level):
     level = int(level)
     if level == 22:
         cur.execute("select filename,hdfs_path,wind_dir500,EXTRACT(EPOCH FROM TIMESTAMP '" +
@@ -426,7 +436,7 @@ def get_closest(date,level):
         return json.dumps({'error': 'date is out of bounds'})
     if res[2] == None:
         urllib.urlretrieve(res[1], res[0])
-        json_dir = calc_winddir(res[0],level)
+        json_dir = calc_winddir(res[0], level)
         os.system('rm ' + APPS_ROOT + '/' + res[0])
         if level == 22:
             cur.execute("UPDATE weather SET  wind_dir500=\'" +
