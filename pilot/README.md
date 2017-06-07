@@ -37,9 +37,19 @@ $ docker -D exec -it sc5_sextant bash
 # exit
 ```
 
+#### Ingest classification dispersions
+```sh
+$ docker cp <netcdf_dispersion_files_dir>/ sc5_sextant:/pilot_data/
+$ docker -D exec -it sc5_sextant bash
+# cd /bde-pilot-2/pilot/detection_listener
+# ls -d /pilot_data/<netcdf_dispersion_files_dir>/* >> classes.txt
+# cat classes.txt | xargs -n <# of files per processor> -P <# of processors> python ingest_class.py
+# exit
+```
+
 #### Info
 - <netcdf_weather_files>: NetCDF files containing 3 days worth of six hours time frames. These files are used as the current weather in order to perform source estimation.
-- ```sh
+  - ```sh
         Recommended data sources: ECMWF,NCAR
         Recommended structure: ERA-Interim
     ```
@@ -50,9 +60,3 @@ $ docker -D exec -it sc5_sextant bash
 - <clustering_method>: Clustering configuration i.e shallow_ae (Single autoencoder), deep_ae (Stacked autoencoders), etc.
 
 - <descriptor>: descriptor used for clustering_method i.e km2 (double kmeans), dense (density-based descriptors)
-
-
-docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/ingest_weather.py -i <netcdf_weather_files>/
-docker cp <netcdf_dispersion_files>/ sc5_sextant:/pilot_data/
-docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/ingest_cluster.py -i <netcdf_dispersion_files>/ -m '<clustering_method>' -d '<descriptor>' -hp <hdfs_path>
-docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/ingest_model.py -i <model_template.zip> -m "<clustering_method>"
