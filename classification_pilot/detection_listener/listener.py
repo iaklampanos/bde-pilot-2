@@ -351,8 +351,8 @@ def detections(date, pollutant, metric, origin):
             results.append((row[2], det_obj.cosine()))
         else:
             results.append((row[2], 0))
-        os.system('rm ' + APPS_ROOT + '/' + 'lat.npy')
-        os.system('rm ' + APPS_ROOT + '/' + 'lon.npy')
+    os.system('rm ' + APPS_ROOT + '/' + 'lat.npy')
+    os.system('rm ' + APPS_ROOT + '/' + 'lon.npy')
     results = sorted(results, key=lambda k: k[1] if k[
                      1] > 0 else float('inf'), reverse=False)
     top3 = results[:3]
