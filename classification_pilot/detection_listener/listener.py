@@ -300,9 +300,11 @@ def detections(date, pollutant, metric, origin):
     urllib.urlretrieve(res[1], res[0])
     if 'mult' in origin:
         items = cPickle.loads(str(res[2]))
+        items = items.reshape(1,items.shape[0],items.shape[1],items.shape[2],items.shape[3])
     else:
         items = cPickle.loads(str(res[2]))
         items = items[:, 1, :, :]
+        items = items.reshape(1,items.shape[0],items.shape[1],items.shape[2],items.shape[3])
     ds = Dataset_transformations(items, 1000, items.shape)
     x = items.shape[2]
     y = items.shape[3]
