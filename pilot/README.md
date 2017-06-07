@@ -47,6 +47,11 @@ $ docker -D exec -it sc5_sextant bash
 # exit
 ```
 
+#### RUN
+```sh
+$ docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/listener.py
+```
+
 #### Info
 - <netcdf_weather_files>: NetCDF files containing 3 days worth of six hours time frames. These files are used as the current weather in order to perform source estimation.
   - ```sh
