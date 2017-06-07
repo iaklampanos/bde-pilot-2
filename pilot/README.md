@@ -15,11 +15,26 @@ $ docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/df
 $ docker cp <netcdf_weather_files_dir>/ sc5_sextant:/pilot_data/
 $ docker -D exec -it sc5_sextant bash
 # cd /bde-pilot-2/pilot/detection_listener
-#
-docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/ingest_weather.py -i <netcdf_weather_files>/
-docker cp <netcdf_dispersion_files>/ sc5_sextant:/pilot_data/
-docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/ingest_cluster.py -i <netcdf_dispersion_files>/ -m '<clustering_method>' -d '<descriptor>' -hp <hdfs_path>
-docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/ingest_model.py -i <model_template.zip> -m "<clustering_method>"
+# ls -d /pilot_data/<netcdf_weather_files_dir>/* >> weather.txt
+# cat weather.txt | xargs -n <# of files per processor> -P <# of processors> python ingest_weather.py
+# exit
+```
+#### Ingest neural network models
+```sh
+$ docker cp <model_template.zip> sc5_sextant:/pilot_data/
+$ docker -D exec -it sc5_sextant bash
+# cd /bde-pilot-2/pilot/detection_listener
+# python ingest_model.py -i /pilot_data/<model_template.zip> -m "<clustering/classification method>" -ht "<html_repr>"
+# exit
+```
+
+#### Ingest cluster dispersions
+```sh
+$ docker cp <netcdf_dispersion_files_dir>/ sc5_sextant:/pilot_data/
+$ docker -D exec -it sc5_sextant bash
+# cd /bde-pilot-2/pilot/detection_listener
+# python ingest_cluster.py -i <netcdf_dispersion_files_dir>/ -m '<clustering_method>' -d '<descriptor>' -hp <hdfs_path>
+# exit
 ```
 
 #### Info
@@ -32,6 +47,12 @@ docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/inge
 
 - <model_template.zip>: zip files that contain the NeuralNetwork model that is used for source estimation. Usually exported from model_template class and neural network scripts.
 
-- <clustering_method>: Clustering configuration i.e shallow_ae (Single autoencoder), deep_ae (Stacked autoencoders)
+- <clustering_method>: Clustering configuration i.e shallow_ae (Single autoencoder), deep_ae (Stacked autoencoders), etc.
 
 - <descriptor>: descriptor used for clustering_method i.e km2 (double kmeans), dense (density-based descriptors)
+
+
+docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/ingest_weather.py -i <netcdf_weather_files>/
+docker cp <netcdf_dispersion_files>/ sc5_sextant:/pilot_data/
+docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/ingest_cluster.py -i <netcdf_dispersion_files>/ -m '<clustering_method>' -d '<descriptor>' -hp <hdfs_path>
+docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/ingest_model.py -i <model_template.zip> -m "<clustering_method>"
