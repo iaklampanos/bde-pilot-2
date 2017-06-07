@@ -16,7 +16,7 @@ if __name__ == '__main__':
                         help='model path')
     parser.add_argument('-m', '--method', required=True, type=str,
                         help='clustering method')
-    parser.add_argument('-h', '--html', required=True, type=str,
+    parser.add_argument('-ht', '--html', required=True, type=str,
                         help='html description')
     opts = parser.parse_args()
     getter = attrgetter('input','method','html')
