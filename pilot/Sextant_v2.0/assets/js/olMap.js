@@ -994,7 +994,7 @@ function getMethods(){
         var methodlist = JSON.parse(req.responseText);
         var str = '';
         for (var i=0;i<methodlist.length;i++){
-           str += '<input type="radio" name="cluster" value="' + methodlist[i] + '">' + methodlist[i] + '<br>';
+           str += '<input type="radio" name="cluster" value="' + methodlist[i]['origin'] + '">' + methodlist[i]['html'] + '<br>';
         }
         document.getElementById('clust').innerHTML = str;
       }

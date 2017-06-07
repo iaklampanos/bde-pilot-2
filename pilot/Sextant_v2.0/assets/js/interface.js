@@ -617,23 +617,34 @@ function estimateLocation() {
               var eheader = document.getElementById('estimate');
               loader.style.display = 'block';
               eheader.style.display = 'none';
-              var req = new XMLHttpRequest();
-              req.open("POST", listener_ip+"detections/" + timestamp + "/" + pollcheckedVal() + "/" + metriccheckedVal() + "/" + methodcheckedVal(), true);
-              req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
-              req.send(JSON.stringify(locs));
+              if (methodcheckedVal().indexOf('classification') == -1)
+              {
+                var req = new XMLHttpRequest();
+                req.open("POST", listener_ip+"detections/" + timestamp + "/" + pollcheckedVal() + "/" + metriccheckedVal() + "/" + methodcheckedVal(), true);
+                req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+                req.send(JSON.stringify(locs));
+              }
+              else {
+                var req = new XMLHttpRequest();
+                req.open("POST", listener_ip+"class_detections/" + timestamp + "/" + pollcheckedVal() + "/" + metriccheckedVal() + "/" + methodcheckedVal(), true);
+                req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+                req.send(JSON.stringify(locs));
+              }
               req.onloadend = function() {
                   resp = JSON.parse(req.responseText);
               if (resp["scores"][0]-resp["scores"][2] !=0  && metriccheckedVal() == 'cosine') {
                     res_str = 'Estimated sources: <br> <table style="border-collapse: collapse;"><tr><th style="padding: 8px;">Station<br>name</th><th style="padding: 8px;">Score</th></tr>';
                     for (var i=0; i<resp['scores'].length;i++){
-                        res_str += '<tr><td style="padding: 8px;"><a onClick="drawDispersion('+i+')">'+resp['stations'][i]+'</a></td><td style="padding: 8px;">'+ ((resp['scores'][i] == 0)?'No overlap':resp['scores'][i]) +'</td></tr>';
+                        if (resp['scores'][i] != 0) {
+                          res_str += '<tr><td style="padding: 8px;"><a onClick="drawDispersion('+i+')">'+resp['stations'][i]+'</a></td><td style="padding: 8px;">'+ resp['scores'][i] +'</td></tr>';
+                        }
                     }
                     res_str += '</table>';
                     res.innerHTML = res_str;
                     loader.style.display = 'none';
                     eheader.style.display = 'block';
                 }
-                else {
+              else {
                      alert('Either detection points are out of grid or there is no overlap between detection points and calculated dispersions');
                      loader.style.display = 'none';
                      eheader.style.display = 'block';
