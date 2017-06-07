@@ -299,9 +299,9 @@ def detections(date, pollutant, metric, origin):
     res = cur.fetchone()
     urllib.urlretrieve(res[1], res[0])
     if 'mult' in origin:
-        items = cPickle.loads(str(row[2]))
+        items = cPickle.loads(str(res[2]))
     else:
-        items = cPickle.loads(str(row[2]))
+        items = cPickle.loads(str(res[2]))
         items = items[:, 1, :, :]
     ds = Dataset_transformations(items, 1000, items.shape)
     x = items.shape[4]
