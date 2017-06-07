@@ -38,9 +38,9 @@ if __name__ == '__main__':
         print inp
         hpath = inp.split('/')
         hpath = hpath[len(hpath)-1]
-        hdfs.create_file('/sc5/models/'+inp, open(inp,'rb'))
-        path = "http://namenode:50070/webhdfs/v1/sc5/models/"+inp+"?op=OPEN"
-        cur.execute("INSERT INTO models(origin,filename,hdfs_path,html) VALUES(\'"+method+"\',\'"+inp+"\',\'"+path+"\',\'"+html+"\')")
+        hdfs.create_file('/sc5/models/'+hpath, open(inp,'rb'))
+        path = "http://namenode:50070/webhdfs/v1/sc5/models/"+hpath+"?op=OPEN"
+        cur.execute("INSERT INTO models(origin,filename,hdfs_path,html) VALUES(\'"+method+"\',\'"+hpath+"\',\'"+path+"\',\'"+html+"\')")
     conn.commit()
     cur.close()
     conn.close()
