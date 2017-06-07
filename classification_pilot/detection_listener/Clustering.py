@@ -107,7 +107,7 @@ class Clustering(Dataset):
         frames_filled = frames_total = 0
         # print len(times), len(times_f), len(data), np.max(times_f)
         for c in clusters:
-            
+
             indexes = np.array([x for x in c])
             cdata = data[indexes]
             ctimes_f = times_f[indexes]
@@ -175,14 +175,14 @@ class Clustering(Dataset):
                 # plt.axvline(x=start_time_offset, color='r', linestyle='--')
                 # plt.axvline(x=end_time_offset, color='r', linestyle='--')
                 # plt.plot(X_plot, dens, 'k-')
-                
+
                 c_descs.append(c_desc)
             # plt.show()
             # break
 
             # print c_desc
             c_descriptors.append(c_descs)
-        
+
         log('Frames filled from neighbours: ' + str(frames_filled) + '/' +
             str(frames_total))
         self._descriptors = c_descriptors
@@ -222,7 +222,7 @@ class Clustering(Dataset):
         items = dataset.get_items()
         if features_first:
             items = np.transpose(items)
-        dists = [(x, np.linalg.norm(self._centroids[x]-items)) 
+        dists = [(x, np.linalg.norm(self._centroids[x]-items))
                  for x in range(0, self._n_clusters)]
         dists = sorted(dists, key=lambda x: x[1], reverse=False)
         return dists
@@ -253,23 +253,23 @@ class Clustering(Dataset):
     def load(self, filename='Clustering_object.zip'):
         self = utils.load(filename)
 
-from Dataset_transformations import Dataset_transformations
-from netcdf_subset import netCDF_subset
-import numpy as np
-if __name__ == '__main__':
-    data_dict = netCDF_subset(
-        'test_modified.nc', [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
-    items = [data_dict.extract_data()]
-    items = np.array(items)
-    #print items.shape
-    ds = Dataset_transformations(items, 1000, items.shape)
-    ds.twod_transformation()
-    ds.normalize()
-    times = data_dict.get_times()
-    clust_obj = Clustering(ds, n_clusters=14, n_init=1, features_first=True)
-    clust_obj.kmeans()
-    # print clust_obj._labels.shape
-    clust_obj.create_density_descriptors(12, times)
-    # clust_obj.create_descriptors(12)
-    # print np.array(np.array(clust_obj._descriptors)[0][0]).shape
-    print clust_obj._descriptors.shape
+# from Dataset_transformations import Dataset_transformations
+# from netcdf_subset import netCDF_subset
+# import numpy as np
+# if __name__ == '__main__':
+#     data_dict = netCDF_subset(
+#         'test_modified.nc', [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
+#     items = [data_dict.extract_data()]
+#     items = np.array(items)
+#     #print items.shape
+#     ds = Dataset_transformations(items, 1000, items.shape)
+#     ds.twod_transformation()
+#     ds.normalize()
+#     times = data_dict.get_times()
+#     clust_obj = Clustering(ds, n_clusters=14, n_init=1, features_first=True)
+#     clust_obj.kmeans()
+#     # print clust_obj._labels.shape
+#     clust_obj.create_density_descriptors(12, times)
+#     # clust_obj.create_descriptors(12)
+#     # print np.array(np.array(clust_obj._descriptors)[0][0]).shape
+#     print clust_obj._descriptors.shape
