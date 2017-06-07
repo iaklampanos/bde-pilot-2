@@ -36,6 +36,8 @@ if __name__ == '__main__':
     hdfs = PyWebHdfsClient(host='namenode', port='50070')
     if inp not in hdfs_list:
         print inp
+        hpath = inp.split('/')
+        hpath = hpath[len(hpath)-1]
         hdfs.create_file('/sc5/models/'+inp, open(inp,'rb'))
         path = "http://namenode:50070/webhdfs/v1/sc5/models/"+inp+"?op=OPEN"
         cur.execute("INSERT INTO models(origin,filename,hdfs_path,html) VALUES(\'"+method+"\',\'"+inp+"\',\'"+path+"\',\'"+html+"\')")
