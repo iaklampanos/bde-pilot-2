@@ -1,7 +1,8 @@
 """
    CLASS INFO
    -------------------------------------------------------------------------------------------
-     Dataset_utils
+     Dataset_utils contains everything that has to do with loading/saving of netCDF files or other file types.
+     Dataset_utils is used as a module that acts as a bridge between the disk and the pilot ( loading models etc.)
    -------------------------------------------------------------------------------------------
 """
 import cPickle
@@ -19,6 +20,8 @@ from netCDF4 import Dataset
 import datetime
 
 def save(filename, *objects):
+    # Save object and compress it at the same time (it can be used for multiple
+    # objects or a single object)
     fil = gzip.open(filename, 'wb')
     for obj in objects:
         cPickle.dump(obj, fil,protocol=cPickle.HIGHEST_PROTOCOL)
@@ -26,6 +29,7 @@ def save(filename, *objects):
 
 
 def load(filename):
+    # Load compressed object as python generator
     fil = gzip.open(filename, 'rb')
     while True:
         try:
@@ -36,11 +40,13 @@ def load(filename):
 
 
 def load_single(filename):
+    # Load compressed object as object
     fil = gzip.open(filename, 'rb')
     c = cPickle.load(fil)
     fil.close()
     return c
 
+# Export the time range of an netCDF file visualized as bars.
 
 # def export_timebars(outp, start_date, nc_sub, clust_obj):
 #     oc = oct2py.Oct2Py()
@@ -61,6 +67,11 @@ def load_single(filename):
 
 
 def plot_pixel_image(image, image2, x, y):
+    # Plot 2 images in the same figure
+    # x and y represent the shape of each image
+    # the two images shouldn't have the same shape but they should be
+    # able to be reshaped into (x,y) 
+    # (e.g image(13,4096) -> image(13,64,64) where x=64 and y=64)
     fig = plt.figure()
     ax = fig.add_subplot(1, 2, 1)
     pixels = image.reshape((x, y))
@@ -74,6 +85,7 @@ def plot_pixel_image(image, image2, x, y):
     plt.show()
 
 def plot_image(image, x, y):
+    # Plot single image
     fig = plt.figure()
     ax = fig.add_subplot(1, 2, 1)
     pixels = image.reshape((x, y))
@@ -87,6 +99,7 @@ def plot_image(image, x, y):
 #     oc.eval('plot(loss)',plot_width='2048', plot_height='1536')
 
 def reconstruct_date(date_str, dot_nc=False):
+    # Change datetime object format
     if dot_nc:
         date = datetime.datetime.strptime(
             date_str.split('.')[0], '%Y-%m-%d_%H:%M:%S')
@@ -94,7 +107,10 @@ def reconstruct_date(date_str, dot_nc=False):
         date = datetime.datetime.strptime(date_str, '%Y-%m-%d_%H:%M:%S')
     return datetime.datetime.strftime(date, '%y-%m-%d-%H')
 
+"""
 def plot_concentration(pollutant_array, x=45, y=150):
+    # "Special" plot that resizes the dispersion into a smaller grid
+    # EDIT: may not needed anymore
     fit = plt.figure()
     integ = np.zeros(shape=(pollutant_array.shape[
                      1] * pollutant_array.shape[2] * pollutant_array.shape[3]))
@@ -106,6 +122,7 @@ def plot_concentration(pollutant_array, x=45, y=150):
     integ_plot = integ_plot[:,range(x,y)]
     plt.imshow(integ_plot,interpolation='nearest')
     plt.show()
+"""
 
 def load_mnist(dataset="training", digits=np.arange(10), path="."):
     """
@@ -148,6 +165,8 @@ def load_mnist(dataset="training", digits=np.arange(10), path="."):
 
 
 def export_descriptor_kmeans(outp, nc_sub, clust_obj):
+    # Exports double kmeans cluster descriptors as netCDF files
+    # check @Clustering.py(create_km2_decsriptors) for more info
     print clust_obj.get_items().shape
     descriptors = clust_obj._descriptors
     for pos, desc in enumerate(descriptors):
@@ -155,6 +174,8 @@ def export_descriptor_kmeans(outp, nc_sub, clust_obj):
             outp + '/desc_kmeans_' + str(pos) + '.nc', desc)
 
 def export_descriptor_mult_dense(outp, nc_sub, clust_obj):
+    # Exports density based cluster descriptors as netCDF files
+    # check @Clustering.py(create_density_descriptors) for more info
     print clust_obj.get_items().shape
     descriptors = clust_obj._descriptors
     for pos, desc in enumerate(descriptors):
@@ -164,6 +185,7 @@ def export_descriptor_mult_dense(outp, nc_sub, clust_obj):
 
 
 def rename_descriptors(path):
+    # Renames the file descriptors based on their date "id"
     filelist = sorted(os.listdir(path))
     start_dts = [
         Dataset(path + '/' + f, 'r').SIMULATION_START_DATE for f in filelist]
@@ -171,7 +193,8 @@ def rename_descriptors(path):
         os.system('ncks -3 '+path + '/' + f+' '+path + '/' + f)
         os.rename(path + '/' + f, start_dts[pos] + '.nc')
 
-
+# EDIT: these methods may be obsolete
+"""
 def export_descriptor_max(out_path, nc_sub, clust_obj):
     max_ret_list = nc_sub.find_continuous_timeslots(clust_obj._index_list)
     for pos, c in enumerate(max_ret_list):
@@ -204,3 +227,4 @@ def export_cluster_descriptor_middle(out_path,  nc_sub, clust_obj, desc_frames, 
             nc_sub.exact_copy_mean(out_path +
                                    '/cluster_descriptor_meanmiddle' + str(pos) +
                                    '.nc', range(c[0], c[1]), len(range(c[0], c[1])), desc_div)
+"""
