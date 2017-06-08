@@ -1,18 +1,18 @@
+"""
+   CLASS INFO
+   -------------------------------------------------------------------------------------------
+     Dataset_transformations contains every method that has to do with processing or altering a dataset's structure. Regularyl used in netCDF data for easy transformation of N-dim arrays to 2D and normalization.
+   -------------------------------------------------------------------------------------------
+"""
 import numpy as np
 from Dataset import Dataset
 from sklearn.preprocessing import minmax_scale
 
 class Dataset_transformations(Dataset):
 
-    def __init__(self, items, items_iterator, dims, similarities=None):
+    def __init__(self, items, items_iterator, similarities=None):
         super(Dataset_transformations, self).__init__(
-            items, items_iterator, dims, similarities)
-
-    def set_encoded(self, encoded):
-        self._encoded_items = encoded
-
-    def set_nnet_output(self, output):
-        self._reconstructed_items = output
+            items, items_iterator, similarities)
 
     def twod_transformation(self):
         # Check if every netcdf subset timeslots are the same
@@ -52,10 +52,10 @@ class Dataset_transformations(Dataset):
         self._y = self._items.shape[1]
 
     def normalize(self):
-        self._items = minmax_scale(self._items)
-        # for j in range(0, self._items.shape[1]):
-        #     mean = self._items[:, j].mean()
-        #     self._items[:, j] = np.subtract(self._items[:, j], mean)
-        #     self._items[:, j] = np.divide(
-        #         self._items[:, j], np.sqrt(np.var(self._items[:, j])+10))
+        # self._items = minmax_scale(self._items)
+        for j in range(0, self._items.shape[1]):
+            mean = self._items[:, j].mean()
+            self._items[:, j] = np.subtract(self._items[:, j], mean)
+            self._items[:, j] = np.divide(
+                self._items[:, j], np.sqrt(np.var(self._items[:, j])+10))
         # print np.min(self._items), np.max(self._items), np.std(self._items)

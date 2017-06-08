@@ -1,6 +1,12 @@
+"""
+   CLASS INFO
+   -------------------------------------------------------------------------------------------
+     Dataset is an abstract class with the objective of representing any dataset of any structure.
+   -------------------------------------------------------------------------------------------
+"""
+
 import numpy as np
 from sklearn.preprocessing import normalize
-
 
 class Dataset(object):
 
@@ -9,9 +15,9 @@ class Dataset(object):
     _dims = None
     _similarities = None
 
-    def __init__(self, items, items_iterator, dims, similarities=None):
+    def __init__(self, items, items_iterator, similarities=None):
         self._items = items
-        self._dims = dims
+        self._dims = items.shape
         self._items_iterator = items_iterator
         self._similarities = similarities
 
