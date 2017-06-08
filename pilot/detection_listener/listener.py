@@ -304,7 +304,7 @@ def detections(date, pollutant, metric, origin):
     else:
         items = cPickle.loads(str(res[2]))
         items = items[:, 1, :, :]
-        items = items.reshape(1,1,items.shape[0],items.shape[1],items.shape[2],items.shape[3])
+        items = items.reshape(1,1,items.shape[0],1,items.shape[1],items.shape[2])
     ds = Dataset_transformations(items, 1000, items.shape)
     x = items.shape[2]
     y = items.shape[3]
