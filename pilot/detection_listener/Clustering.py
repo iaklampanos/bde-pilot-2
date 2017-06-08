@@ -1,7 +1,9 @@
 """
    CLASS INFO
    -------------------------------------------------------------------------------------------
-   Clustering class contains every method that is necessary for creating,exporting and evaluating clusters. Inherits the Dataset/Dataset_transformations which makes it indepedent of data origin and structure.
+   Clustering class contains every method that is necessary for creating,exporting and
+   evaluating clusters. Inherits the Dataset/Dataset_transformations which makes it indepedent
+   of data origin and structure.
    -------------------------------------------------------------------------------------------
 """
 

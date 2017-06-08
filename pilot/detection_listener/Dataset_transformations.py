@@ -1,7 +1,9 @@
 """
    CLASS INFO
    -------------------------------------------------------------------------------------------
-     Dataset_transformations contains every method that has to do with processing or altering a dataset's structure. Regularyl used in netCDF data for easy transformation of N-dim arrays to 2D and normalization.
+     Dataset_transformations contains every method that has to do with processing or altering a
+     dataset's structure. Regularyl used in netCDF data for easy transformation of N-dim arrays
+     to 2D and normalization.
    -------------------------------------------------------------------------------------------
 """
 import numpy as np
