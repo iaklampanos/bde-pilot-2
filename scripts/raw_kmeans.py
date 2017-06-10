@@ -18,6 +18,7 @@ import datetime
 
 PREFIX = "RAW_KMEANS"
 MODEL_PATH = ""
+NC_PATH = '/mnt/disk1/thanasis/data/11_train.nc'
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Extract variables from netcdf file')
@@ -29,7 +30,7 @@ if __name__ == '__main__':
     getter = attrgetter('input', 'output')
     inp, outp = getter(opts)
     export_template = netCDF_subset(
-        '/home/thanasis/11_train.nc', [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
+        NC_PATH, [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
     ds = Dataset_transformations(np.load(inp), 1000, np.load(inp).shape)
     times = export_template.get_times()
     nvarin = []
@@ -51,6 +52,8 @@ if __name__ == '__main__':
     clust_obj = Clustering(ds,n_clusters=15,n_init=100,features_first=False)
     clust_obj.kmeans()
     clust_obj.create_density_descriptors(12,times)
+    export_template = netCDF_subset(
+        NC_PATH, [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
     clust_obj.desc_date(export_template)
     utils.export_descriptor_mult_dense(outp,export_template,clust_obj)
     clust_obj.save(PREFIX+'_mult_dense.zip')
