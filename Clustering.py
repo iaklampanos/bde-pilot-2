@@ -31,8 +31,7 @@ class Clustering(Dataset):
     def __init__(self, dataset, n_clusters, n_init,
                  max_iter=300, features_first=False, similarities=None):
         super(Clustering, self).__init__(
-            dataset.get_items(), dataset.get_items_iterator(),
-            dataset.get_dims(), dataset.get_similarities())
+            dataset.get_items(), dataset.get_items_iterator(), dataset.get_similarities())
         # Flag that indicates if the dataset shape is in (samples,features) order
         # or (features,samples)
         self._features_first = features_first
