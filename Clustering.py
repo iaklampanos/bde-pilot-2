@@ -1,3 +1,12 @@
+"""
+   CLASS INFO
+   -------------------------------------------------------------------------------------------
+   Clustering class contains every method that is necessary for creating,exporting and
+   evaluating clusters. Inherits the Dataset/Dataset_transformations which makes it indepedent
+   of data origin and structure.
+   -------------------------------------------------------------------------------------------
+"""
+
 import numpy as np
 from Dataset import Dataset
 from sklearn.cluster import KMeans, MiniBatchKMeans, AgglomerativeClustering
@@ -24,18 +33,21 @@ class Clustering(Dataset):
         super(Clustering, self).__init__(
             dataset.get_items(), dataset.get_items_iterator(),
             dataset.get_dims(), dataset.get_similarities())
+        # Flag that indicates if the dataset shape is in (samples,features) order
+        # or (features,samples)
         self._features_first = features_first
         data = self.get_items()
+        # if (features,samples) then transpose
         if self._features_first:
             self._items = np.transpose(self.get_items())
-        self._n_clusters = n_clusters
-        self._n_init = n_init
-        self._max_iter = max_iter
-        self._clustering_dist = None
-        self._labels = None
-        self._centroids = None
+        self._n_clusters = n_clusters # cluster number
+        self._n_init = n_init # number of times that k-means will be repeated
+        self._max_iter = max_iter # maximum number of iterations of the k-means algorithm for a single run
+        self._clustering_dist = None # sample distirbution in clusters
+        self._labels = None # cluster assignment array
+        self._centroids = None # cluster centroids
         self._index_list = None  # result of k-means ( list of lists of int )
-        self._link = None
+        self._link = None # sklearn KMeans object
 
     def kmeans(self):
         data = self.get_items()
@@ -66,26 +78,35 @@ class Clustering(Dataset):
         self._leaves = self._link.leaves_
         self.get_clut_list(self._labels)
 
-    # TODO: Change name - refactor callers
-    def create_descriptors(self, frames):
+    def create_km2_descriptors(self, frames):
+        """
+        This function outputs cluster descriptors using KMeans clustering twice.
+        Once the KMeans clustering has been completed and led to splitting the samples
+        in clusters, we proceed in repeating the k-means clustering individually in each
+        cluster using k=<frames>, where frames is a number indicating the exported netcdf
+        time range in slots of 6 hours (e.g 3 days = 72 hours = 12 frames of 6 hour slots).
+        Each frame being the outcome of the second clustering is lated averaged and becomes
+        a frame of the exported netcdf file descriptor.
+        """
         data = self.get_items()
+        # Get initial k-means result
         clut_list = self._index_list[0]
         c_desc = []
+        # for each cluster (c contains the indices of initial samples)
         for c in clut_list:
+            # Repeat k-means for each individual cluster
             cluster_data = data[c]
             kj = KMeans(n_clusters=frames, n_init=self._n_init,
                         max_iter=self._max_iter, n_jobs=-1).fit(cluster_data).labels_
             avg = []
+            # Convert local indices to "global indices" so we are able to backtrace
+            # which data need to be averaged in order to become a frame.
             for j in range(0, frames):
                 idx = [idx for idx, frame in enumerate(
                     kj) if frame == j]
                 avg.append(c[idx])
             c_desc.append(avg)
         self._descriptors = c_desc
-
-    # TODO: Change name - see comment above
-    def create_kmeans_descriptors(self, frames):
-        create_descriptors(self, frames)
 
     def create_density_descriptors(self, frames, times, lmax_limit=5):
         """
@@ -107,7 +128,7 @@ class Clustering(Dataset):
         frames_filled = frames_total = 0
         # print len(times), len(times_f), len(data), np.max(times_f)
         for c in clusters:
-            
+
             indexes = np.array([x for x in c])
             cdata = data[indexes]
             ctimes_f = times_f[indexes]
@@ -175,19 +196,24 @@ class Clustering(Dataset):
                 # plt.axvline(x=start_time_offset, color='r', linestyle='--')
                 # plt.axvline(x=end_time_offset, color='r', linestyle='--')
                 # plt.plot(X_plot, dens, 'k-')
-                
+
                 c_descs.append(c_desc)
             # plt.show()
             # break
 
             # print c_desc
             c_descriptors.append(c_descs)
-        
+
         log('Frames filled from neighbours: ' + str(frames_filled) + '/' +
             str(frames_total))
         self._descriptors = c_descriptors
 
     def get_clut_list(self, V):
+        """
+        Creates clustering distirbution and index list of each clustering
+        Params
+        V: linkage/KMeans object
+        """
         clut_list = []
         clut_indices = []
         for nc in range(0, self._n_clusters):
@@ -219,15 +245,21 @@ class Clustering(Dataset):
     #                 plot_width='2048', plot_height='1536')
 
     def centroids_distance(self, dataset, features_first=False):
+        # Returns the distances of each cluster centroid from given
+        # dataset in ascending order.
         items = dataset.get_items()
         if features_first:
             items = np.transpose(items)
-        dists = [(x, np.linalg.norm(self._centroids[x]-items)) 
+        dists = [(x, np.linalg.norm(self._centroids[x]-items))
                  for x in range(0, self._n_clusters)]
         dists = sorted(dists, key=lambda x: x[1], reverse=False)
         return dists
 
     def desc_date(self,nc_subset):
+        # Creates the desc_date attribute. desc_date is used for indexing purposes.
+        # Due to the fact that the exported netCDF frames are artificially made, we need
+        # to give them a "real" id in the form of date. The id of an artificially made frame
+        # is the first date inside each frame.
         desc_date = []
         for pos,i in enumerate(self._descriptors):
             gvalue = nc_subset._dataset.variables[nc_subset._time_name][i[0][0]]
@@ -253,23 +285,25 @@ class Clustering(Dataset):
     def load(self, filename='Clustering_object.zip'):
         self = utils.load(filename)
 
-from Dataset_transformations import Dataset_transformations
-from netcdf_subset import netCDF_subset
-import numpy as np
-if __name__ == '__main__':
-    data_dict = netCDF_subset(
-        'test_modified.nc', [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
-    items = [data_dict.extract_data()]
-    items = np.array(items)
-    #print items.shape
-    ds = Dataset_transformations(items, 1000, items.shape)
-    ds.twod_transformation()
-    ds.normalize()
-    times = data_dict.get_times()
-    clust_obj = Clustering(ds, n_clusters=14, n_init=1, features_first=True)
-    clust_obj.kmeans()
-    # print clust_obj._labels.shape
-    clust_obj.create_density_descriptors(12, times)
-    # clust_obj.create_descriptors(12)
-    # print np.array(np.array(clust_obj._descriptors)[0][0]).shape
-    print clust_obj._descriptors.shape
+# Example use of Clustering class
+
+# from Dataset_transformations import Dataset_transformations
+# from netcdf_subset import netCDF_subset
+# import numpy as np
+# if __name__ == '__main__':
+#     data_dict = netCDF_subset(
+#         'test_modified.nc', [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
+#     items = [data_dict.extract_data()]
+#     items = np.array(items)
+#     #print items.shape
+#     ds = Dataset_transformations(items, 1000)
+#     ds.twod_transformation()
+#     ds.normalize()
+#     times = data_dict.get_times()
+#     clust_obj = Clustering(ds, n_clusters=14, n_init=1, features_first=True)
+#     clust_obj.kmeans()
+#     # print clust_obj._labels.shape
+#     clust_obj.create_density_descriptors(12, times)
+#     # clust_obj.create_descriptors(12)
+#     # print np.array(np.array(clust_obj._descriptors)[0][0]).shape
+#     print clust_obj._descriptors.shape

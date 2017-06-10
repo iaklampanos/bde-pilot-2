@@ -13,25 +13,6 @@ import cPickle
 import base64
 import sys
 
-def make_latlon_files(inp,hp):
-    for lfl in sorted(os.listdir(inp)):
-        for nc in sorted(os.listdir(inp + '/' + lfl)):
-            if nc.endswith("nc"):
-                loc_path = inp + '/' + lfl + '/' + nc
-                netcdf = Dataset(loc_path, 'r')
-                lat = netcdf.variables['latitude'][:]
-                lon = netcdf.variables['longitude'][:]
-                np.save(inp + '/' + lfl + '/'+'lat.npy',lat)
-                np.save(inp + '/' + lfl + '/'+'lon.npy',lon)
-                try:
-                    hdfs.create_file('/sc5/classes/lat.npy', open(inp + '/' + lfl + '/'+'lat.npy', 'rb'))
-                    hdfs.create_file('/sc5/classes/lon.npy', open(inp + '/' + lfl + '/'+'lon.npy', 'rb'))
-                except:
-                    pass
-                os.system('rm '+inp + '/' + lfl + '/'+'lat.npy')
-                os.system('rm '+inp + '/' + lfl + '/'+'lon.npy')
-                break
-        break
 
 with open('db_info.json','r') as data_file:
     dbpar = json.load(data_file)
