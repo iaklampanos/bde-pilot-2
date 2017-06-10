@@ -8,9 +8,7 @@ from netcdf_subset import netCDF_subset
 from operator import attrgetter
 from argparse import ArgumentParser
 from Dataset_transformations import Dataset_transformations
-from ClusteringExperiment import ClusteringExperiment
 from Clustering import Clustering
-from Autoencoder import AutoEncoder
 from theano import tensor as T
 import dataset_utils as utils
 import numpy as np
@@ -49,7 +47,7 @@ if __name__ == '__main__':
         times.append(date_object)
     print times[0:10]
     print ds._items.shape
-    clust_obj = Clustering(ds,n_clusters=15,n_init=100,features_first=False)
+    clust_obj = Clustering(ds,n_clusters=15,n_init=1,features_first=False)
     clust_obj.kmeans()
     clust_obj.create_density_descriptors(12,times)
     export_template = netCDF_subset(
