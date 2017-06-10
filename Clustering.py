@@ -268,6 +268,20 @@ class Clustering(Dataset):
             desc_date.append(sim_date)
         self._desc_date = desc_date
         return desc_date
+        
+    def mult_desc_date(self,nc_subset):
+        desc_date = []
+        for pos,i in enumerate(self._descriptors):
+            c_date = []
+            for j in i:
+                gvalue = nc_subset._dataset.variables[nc_subset._time_name][j[0][0]]
+                sim_date = ""
+                for gv in gvalue:
+                    sim_date += gv
+                c_date.append(sim_date)
+            desc_date.append(c_date)
+        self._desc_date = desc_date
+        return desc_date
 
     def CH_evaluation(self):
         return metrics.calinski_harabaz_score(self.get_items(), self._labels)
