@@ -181,7 +181,7 @@ def export_descriptor_mult_dense(outp, nc_sub, clust_obj):
     for pos, desc in enumerate(descriptors):
         for pos2,dense in enumerate(desc):
             nc_sub.exact_copy_kmeans(
-                outp + '/desc_kmeans_' + str(pos) + '_'+str(pos2)+'.nc', dense)
+                outp + '/desc_mult_dense_' + str(pos) + '_'+str(pos2)+'.nc', dense)
 
 
 def rename_descriptors(path):
