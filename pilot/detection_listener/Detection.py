@@ -15,6 +15,8 @@ from scipy.ndimage.filters import gaussian_filter
 import scipy
 from sklearn.preprocessing import maxabs_scale
 
+RESIZE_DIM = 167
+
 class Detection(object):
 
     def __init__(self, dispersion, filelat, filelon, llat, llon):
@@ -37,8 +39,8 @@ class Detection(object):
         self._lat_idx = lat_idx
         self._lon_idx = lon_idx
 
-    def create_detection_map(self):
-        # Creates detection grid which is a (x,y) grid full of zeros, except where the 
+    def create_detection_map(self,resize=False):
+        # Creates detection grid which is a (x,y) grid full of zeros, except where the
         # Detection points are.
         pollutant_array = self._conc
         # Initialize grid
@@ -49,6 +51,8 @@ class Detection(object):
                 det_map[r] = 1
         # Apply filter for better estimation
         det_map = gaussian_filter(det_map,0.3)
+        if resize:
+            det_map = scipy.misc.imresize(det_map, (RESIZE_DIM, RESIZE_DIM))
         # Scale
         det_map = maxabs_scale(det_map)
         self._det_map = det_map
