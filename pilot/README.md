@@ -64,6 +64,6 @@ $ docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/li
 
 - <clustering_method>: Clustering configuration i.e shallow_ae (Single autoencoder), deep_ae (Stacked autoencoders), etc.
 
-- <descriptor>: descriptor used for clustering_method i.e km2 (double kmeans), dense (density-based descriptors).
+- <descriptor> : descriptor used for clustering_method i.e km2 (double kmeans), dense (density-based descriptors).
 
 - <html_repr>: String that presents the estimation method to the end user.
