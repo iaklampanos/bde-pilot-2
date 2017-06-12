@@ -190,7 +190,7 @@ def rename_descriptors(path):
     start_dts = [
         Dataset(path + '/' + f, 'r').SIMULATION_START_DATE for f in filelist]
     for pos, f in enumerate(filelist):
-        os.system('ncks -3 '+path + '/' + f+' '+path + '/' + f)
+        os.system('ncks -3 -O '+path + '/' + f+' '+path + '/' + f)
         os.rename(path + '/' + f, start_dts[pos] + '.nc')
 
 # EDIT: these methods may be obsolete

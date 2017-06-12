@@ -10,7 +10,7 @@ $ docker -D exec -it sc5_sextant bash /sc5.sh
 $ docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/dfs_init.py
 ```
 
-#### Ingest data
+#### Ingest weather files
 ```sh
 $ docker cp <netcdf_weather_files_dir>/ sc5_sextant:/pilot_data/
 $ docker -D exec -it sc5_sextant bash
@@ -28,7 +28,7 @@ $ docker -D exec -it sc5_sextant bash
 # exit
 ```
 
-#### Ingest cluster dispersions
+#### Ingest cluster dispersions files
 ```sh
 $ docker cp <netcdf_dispersion_files_dir>/ sc5_sextant:/pilot_data/
 $ docker -D exec -it sc5_sextant bash
@@ -37,7 +37,7 @@ $ docker -D exec -it sc5_sextant bash
 # exit
 ```
 
-#### Ingest classification dispersions
+#### Ingest classification dispersions files
 ```sh
 $ docker cp <netcdf_dispersion_files_dir>/ sc5_sextant:/pilot_data/
 $ docker -D exec -it sc5_sextant bash
@@ -58,10 +58,12 @@ $ docker -D exec -it sc5_sextant python /bde-pilot-2/pilot/detection_listener/li
         Recommended data sources: ECMWF,NCAR
         Recommended structure: ERA-Interim
     ```
-- <netcdf_dispersion_files>: NetCDF files that contain dispersions for different clustering methods,descriptors and configurations. Usually these files are the output of an atmospheric dispersion model i.e HYSPLIT,DIPCOT
+- <netcdf_dispersion_files>: NetCDF files that contain dispersions for different clustering methods,descriptors and configurations. Usually these files are the output of an atmospheric dispersion model i.e HYSPLIT,DIPCOT.
 
 - <model_template.zip>: zip files that contain the NeuralNetwork model that is used for source estimation. Usually exported from model_template class and neural network scripts.
 
 - <clustering_method>: Clustering configuration i.e shallow_ae (Single autoencoder), deep_ae (Stacked autoencoders), etc.
 
-- <descriptor>: descriptor used for clustering_method i.e km2 (double kmeans), dense (density-based descriptors)
+- <descriptor>: descriptor used for clustering_method i.e km2 (double kmeans), dense (density-based descriptors).
+
+- <html_repr>: String that presents the estimation method to the end user.

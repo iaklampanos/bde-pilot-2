@@ -1,3 +1,11 @@
+"""
+   CLASS INFO
+   -------------------------------------------------------------------------------------------
+    netCDF_subset class acts as an interface between any python script and any netCDF file.
+    Enables data extraction, netCDF file reading and writing.
+   -------------------------------------------------------------------------------------------
+"""
+
 import numpy as np
 from netCDF4 import Dataset, num2date, date2num
 from datetime import timedelta

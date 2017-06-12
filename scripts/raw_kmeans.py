@@ -14,8 +14,8 @@ import dataset_utils as utils
 import numpy as np
 import datetime
 
-PREFIX = "RAW_KMEANS"
-MODEL_PATH = ""
+PREFIX = "GHT700_CONV"
+MODEL_PATH = "/mnt/disk1/thanasis/NIPS/models/conv_ght_700/CONV_GHT_700_model_cpu.zip"
 NC_PATH = '/mnt/disk1/thanasis/data/11_train.nc'
 
 if __name__ == '__main__':
@@ -30,6 +30,7 @@ if __name__ == '__main__':
     export_template = netCDF_subset(
         NC_PATH, [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
     ds = Dataset_transformations(np.load(inp), 1000, np.load(inp).shape)
+    print ds._items.shape
     times = export_template.get_times()
     nvarin = []
     for var in export_template.get_times():
@@ -47,14 +48,15 @@ if __name__ == '__main__':
         times.append(date_object)
     print times[0:10]
     if MODEL_PATH != "":
+        print 'Loading model.....'
         m = utils.load_single(MODEL_PATH)
         ds._items = m.get_hidden(ds._items)
     print ds._items.shape
-    clust_obj = Clustering(ds,n_clusters=15,n_init=1,features_first=False)
+    clust_obj = Clustering(ds,n_clusters=15,n_init=100,features_first=False)
     clust_obj.kmeans()
     clust_obj.create_density_descriptors(12,times)
     export_template = netCDF_subset(
         NC_PATH, [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
-    clust_obj.desc_date(export_template)
+    clust_obj.mult_desc_date(export_template)
     utils.export_descriptor_mult_dense(outp,export_template,clust_obj)
     clust_obj.save(PREFIX+'_mult_dense.zip')

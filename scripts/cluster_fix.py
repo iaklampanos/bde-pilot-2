@@ -2,8 +2,9 @@ from netCDF4 import Dataset
 import numpy as np
 import os
 import datetime
+import sys
 
-list = sorted(os.listdir('descriptors'))
+list = sorted(os.listdir(sys.argv[1]))
 for l in list:
     no_nc = l.split('.')[0]
     date = datetime.datetime.strptime(no_nc,'%Y-%m-%d_%H:%M:%S')
@@ -13,7 +14,7 @@ for l in list:
         date = date+datetime.timedelta(hours=6)
         dates.append(datetime.datetime.strftime(date,'%Y-%m-%d_%H:%M:%S'))
     print dates,len(dates)
-    dataset = Dataset('./descriptors/'+l,'r')
+    dataset = Dataset(sys.argv[1]+l,'r')
     s1_d = []
     for d in dates:
         s1 = []
@@ -44,3 +45,4 @@ for l in list:
     dsout.close()
     # dataset = Dataset('check.nc','r')
     # #print dataset.variables['Times'][:]
+
