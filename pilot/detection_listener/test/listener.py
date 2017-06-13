@@ -3,6 +3,11 @@ from flask import Flask, request
 from flask_cors import CORS, cross_origin
 import json
 import api_methods
+import getpass
+import psycopg2
+import os
+import dataset_utils as utils
+import urllib
 
 BOOTSTRAP_SERVE_LOCAL = True
 app = Flask(__name__)
@@ -23,18 +28,24 @@ APPS_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 @app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
-api_methods.cdetections(date, pollutant, metric, origin)
+def cdetections(date, pollutant, metric, origin):
+    lat_lon = request.get_json(force=True)
+    return api_methods.cdetections(cur, lat_lon, date, pollutant, metric, origin)
 
 
 @app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
-api_methods.detections(date, pollutant, metric, origin)
+def detections(date, pollutant, metric, origin):
+    lat_lon = request.get_json(force=True)
+    return api_methods.detections(cur, lat_lon, date, pollutant, metric, origin)
 
 @app.route('/getMethods/', methods=['GET'])
-api_methods.get_methods()
+def getMethods():
+    return api_methods.get_methods(cur)
 
 
 @app.route('/getClosestWeather/<date>/<level>', methods=['GET'])
-api_methods.get_closest(date, level)
+def getClosestWeather(date, level):
+    return api_methods.get_closest(cur, date, level)
 
 if __name__ == '__main__':
     with open('db_info.json', 'r') as data_file:
