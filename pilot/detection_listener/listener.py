@@ -230,7 +230,7 @@ def cdetections(date, pollutant, metric, origin):
         for w in weather_results:
             if w[0] == disp_results[0][0]:
                 d = disp_results[0]
-                results = (d[0],w[1]*d[1] if w[1] > 0.0 else d[1])
+                results = (d[0],w[1]*d[1])
         cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
                     datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
         row = cur.fetchone()
