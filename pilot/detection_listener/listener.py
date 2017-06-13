@@ -211,7 +211,7 @@ def cdetections(date, pollutant, metric, origin):
             det = scipy.misc.imresize(det, (167, 167))
             det = maxabs_scale(det)
             disp_results.append(
-                (row[0], 1-scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
+                (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
         disp_results = sorted(disp_results, key=lambda k: k[1], reverse=True)
         cur.execute("SELECT date,GHT from weather;")
         res = cur.fetchall()
@@ -226,7 +226,7 @@ def cdetections(date, pollutant, metric, origin):
                 citems = citems[:, 1, :, :]
                 citems = minmax_scale(citems.sum(axis=0))
             weather_results.append(
-                (row[0],1-scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
+                (row[0],1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
         for w in weather_results:
             if w[0] == disp_results[0][0]:
                 d = disp_results[0]
