@@ -35,34 +35,34 @@ if __name__ == '__main__':
     print items.shape
     items = pca.fit_transform(items)
     print items.shape
-    #ds = Dataset_transformations(items, 1000)
-    #print ds._items.shape
-    #times = export_template.get_times()
-    #nvarin = []
-    #for var in export_template.get_times():
-        #str = ""
-        #for v in var:
-            #str += v
-        #nvarin.append(str)
-    #times = []
-    #for var in nvarin:
-        #under_split = var.split('_')
-        #date_split = under_split[0].split('-')
-        #time_split = under_split[1].split(':')
-        #date_object = datetime.datetime(int(date_split[0]), int(date_split[1]), int(
-            #date_split[2]), int(time_split[0]), int(time_split[1]))
-        #times.append(date_object)
-    #print times[0:10]
-    #if MODEL_PATH != "":
-        #print 'Loading model.....'
-        #m = utils.load_single(MODEL_PATH)
-        #ds._items = m.get_hidden(ds._items)
-    #print ds._items.shape
-    #clust_obj = Clustering(ds,n_clusters=15,n_init=100,features_first=False)
-    #clust_obj.kmeans()
-    #clust_obj.create_density_descriptors(12,times)
-    #export_template = netCDF_subset(
-        #NC_PATH, [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
-    #clust_obj.mult_desc_date(export_template)
-    #utils.export_descriptor_mult_dense(outp,export_template,clust_obj)
-    #clust_obj.save(PREFIX+'_mult_dense.zip')
+    ds = Dataset_transformations(items, 1000)
+    print ds._items.shape
+    times = export_template.get_times()
+    nvarin = []
+    for var in export_template.get_times():
+        str = ""
+        for v in var:
+            str += v
+        nvarin.append(str)
+    times = []
+    for var in nvarin:
+        under_split = var.split('_')
+        date_split = under_split[0].split('-')
+        time_split = under_split[1].split(':')
+        date_object = datetime.datetime(int(date_split[0]), int(date_split[1]), int(
+            date_split[2]), int(time_split[0]), int(time_split[1]))
+        times.append(date_object)
+    print times[0:10]
+    if MODEL_PATH != "":
+        print 'Loading model.....'
+        m = utils.load_single(MODEL_PATH)
+        ds._items = m.get_hidden(ds._items)
+    print ds._items.shape
+    clust_obj = Clustering(ds,n_clusters=15,n_init=100,features_first=False)
+    clust_obj.kmeans()
+    clust_obj.create_km2_descriptors(12)
+    export_template = netCDF_subset(
+        NC_PATH, [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
+    clust_obj.mult_desc_date(export_template)
+    utils.export_descriptor_kmeans(outp,export_template,clust_obj)
+    clust_obj.save(PREFIX+'_mult_dense.zip')
