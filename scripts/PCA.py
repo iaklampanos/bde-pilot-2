@@ -58,6 +58,6 @@ if __name__ == '__main__':
     clust_obj.create_km2_descriptors(12)
     export_template = netCDF_subset(
         NC_PATH, [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
-    clust_obj.mult_desc_date(export_template)
+    clust_obj.desc_date(export_template)
     utils.export_descriptor_kmeans(outp,export_template,clust_obj)
     clust_obj.save(PREFIX+'_mult_dense.zip')
