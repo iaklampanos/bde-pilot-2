@@ -53,11 +53,6 @@ if __name__ == '__main__':
             date_split[2]), int(time_split[0]), int(time_split[1]))
         times.append(date_object)
     print times[0:10]
-    if MODEL_PATH != "":
-        print 'Loading model.....'
-        m = utils.load_single(MODEL_PATH)
-        ds._items = m.get_hidden(ds._items)
-    print ds._items.shape
     clust_obj = Clustering(ds,n_clusters=15,n_init=100,features_first=False)
     clust_obj.kmeans()
     clust_obj.create_km2_descriptors(12)
