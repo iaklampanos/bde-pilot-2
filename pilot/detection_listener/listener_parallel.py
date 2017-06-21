@@ -271,6 +271,8 @@ def cdetections(date, pollutant, metric, origin):
             t.start()
             weather_results.append(queue.get())
         weather_results = list(itertools.chain.from_iterable(weather_results))
+        print len(weather_results)
+        print weather_results[0]
         for w in weather_results:
             if w[0] == disp_results[0][0]:
                 d = disp_results[0]
