@@ -253,7 +253,7 @@ def get_disp_frame(cur, results):
     return scores, dispersions
 
 
-def cdetections(cur, lat_lon, date, pollutant, metric, origin):
+def cdetections(cur, models, lat_lon, date, pollutant, metric, origin):
     items = load_class_weather(cur, date, origin)
     (filelat, filelon, llat, llon) = load_lat_lon(lat_lon)
     det_obj = Detection(np.zeros(shape=(501, 501)),
