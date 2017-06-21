@@ -266,7 +266,7 @@ def cdetections(date, pollutant, metric, origin):
         disp_results = []
         threads = []
         for i in range(4):
-            t = threading.Thread(target=worker, args=(res[idx[i]:idx[i]+batch_size],queue,origin,items))
+            t = threading.Thread(target=worker2, args=(res[idx[i]:idx[i]+batch_size],queue,origin,items))
             threads.append(t)
             t.start()
             weather_results.append(queue.get())
