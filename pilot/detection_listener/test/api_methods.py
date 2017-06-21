@@ -416,7 +416,7 @@ def get_top3_stations(cur, top3, timestamp, origin):
     return scores, dispersions, stations
 
 
-def detections(cur, lat_lon, date, pollutant, metric, origin):
+def detections(cur, models, lat_lon, date, pollutant, metric, origin):
     items = load_weather_data(cur, date, origin)
     cluster_date = load_cluster_date(items, models)
     descriptor = origin.split('_')

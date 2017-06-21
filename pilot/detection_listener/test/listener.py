@@ -36,7 +36,7 @@ def cdetections(date, pollutant, metric, origin):
 @app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def detections(date, pollutant, metric, origin):
     lat_lon = request.get_json(force=True)
-    return api_methods.detections(cur, lat_lon, date, pollutant, metric, origin)
+    return api_methods.detections(cur, models, lat_lon, date, pollutant, metric, origin)
 
 @app.route('/getMethods/', methods=['GET'])
 def getMethods():
