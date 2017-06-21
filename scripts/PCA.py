@@ -55,9 +55,9 @@ if __name__ == '__main__':
     print times[0:10]
     clust_obj = Clustering(ds,n_clusters=15,n_init=100,features_first=False)
     clust_obj.kmeans()
-    clust_obj.create_km2_descriptors(12)
+    clust_obj.single_dense_descriptor(12,times)
     export_template = netCDF_subset(
         NC_PATH, [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
     clust_obj.desc_date(export_template)
     utils.export_descriptor_kmeans(outp,export_template,clust_obj)
-    clust_obj.save(PREFIX+'_mult_dense.zip')
+    clust_obj.save(PREFIX+'_dense.zip')

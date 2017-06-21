@@ -18,7 +18,8 @@ from sklearn.preprocessing import maxabs_scale, scale, minmax_scale
 from scipy.ndimage.filters import gaussian_filter
 import scipy.misc
 import json
-
+import threading
+import Queue
 
 def dispersion_integral(dataset_name):
     dataset = Dataset(APPS_ROOT + '/' + dataset_name, 'r')
@@ -154,12 +155,9 @@ def load_models(models, origin):
     return cl
 
 
-def calc_scores(cur, cln):
+def worker(batch,q):
     disp_results = []
-    cur.execute(
-        "SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station=\'" + cln + "\';")
-    res = cur.fetchall()
-    for row in res:
+    for row in batch:
         if pollutant == 'C137':
             det = cPickle.loads(str(row[2]))
         else:
@@ -168,6 +166,22 @@ def calc_scores(cur, cln):
         det = maxabs_scale(det)
         disp_results.append(
             (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
+    q.put(disp_results)
+
+def calc_scores(cur, cln):
+    cur.execute(
+        "SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station=\'" + cln + "\';")
+    res = cur.fetchall()
+    batch_size = len(res) / 4
+    idx = xrange(0,len(res),batch_size)
+    queue = Queue.Queue()
+    disp_results = []
+    for i in range(4):
+        t = threading.Thread(target=worker, args=(res[idx[i]:idx[i]+batch_size],queue))
+        threads.append(t)
+        t.start()
+        disp_results.append(queue.get()[0])
+    print len(disp_results)
     disp_results = sorted(disp_results, key=lambda k: k[1], reverse=True)
     cur.execute("SELECT date,GHT from weather;")
     res = cur.fetchall()
@@ -253,11 +267,10 @@ def cdetections(cur, lat_lon, date, pollutant, metric, origin):
     print class_name
     for cln in class_name:
         (disp_results, weather_results) = calc_weather_score(cur, cln)
-        weather_results = sorted(
-            weather_results, key=lambda k: k[1], reverse=True)
-        w = weather_results[0]
-        d = disp_results[0]
-        results = (d[0], w[1] * d[1])
+        for w in weather_results:
+            if w[0] == disp_results[0][0]:
+                d = disp_results[0]
+                results = (d[0],w[1]*d[1])
         scores, dispersions = get_disp_frame(cur, results)
     scores, dispersions, class_name = zip(
         *sorted(zip(scores, dispersions, class_name), key=lambda k: k[0], reverse=True))

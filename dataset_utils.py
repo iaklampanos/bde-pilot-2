@@ -70,7 +70,7 @@ def plot_pixel_image(image, image2, x, y):
     # Plot 2 images in the same figure
     # x and y represent the shape of each image
     # the two images shouldn't have the same shape but they should be
-    # able to be reshaped into (x,y) 
+    # able to be reshaped into (x,y)
     # (e.g image(13,4096) -> image(13,64,64) where x=64 and y=64)
     fig = plt.figure()
     ax = fig.add_subplot(1, 2, 1)

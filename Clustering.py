@@ -57,6 +57,15 @@ class Clustering(Dataset):
         self._centroids = self._link.cluster_centers_
         self.get_clut_list(self._labels)
 
+    def kmeans_plus(self, init):
+        data = self.get_items()
+        # print data.shape
+        self._link = KMeans(n_clusters=self._n_clusters, init=init,
+                            max_iter=self._max_iter, n_jobs=-1).fit(data)
+        self._labels = self._link.labels_
+        self._centroids = self._link.cluster_centers_
+        self.get_clut_list(self._labels)
+
     def batch_kmeans(self, max_no_imprv):
         self._max_no_imprv = max_no_imprv
         data = self.get_items()
@@ -206,8 +215,8 @@ class Clustering(Dataset):
         log('Frames filled from neighbours: ' + str(frames_filled) + '/' +
             str(frames_total))
         self._descriptors = c_descriptors
-        
-        
+
+
     def single_dense_descriptor(self, frames, times):
         """
         Create max-density cluster descriptors.
@@ -351,7 +360,7 @@ class Clustering(Dataset):
             desc_date.append(sim_date)
         self._desc_date = desc_date
         return desc_date
-        
+
     def mult_desc_date(self,nc_subset):
         desc_date = []
         for pos,i in enumerate(self._descriptors):
