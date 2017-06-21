@@ -340,6 +340,7 @@ def load_cluster_date(items, models, origin):
 
 def calc_station_scores(cur, lat_lon, timestamp, origin, descriptor, pollutant):
     (filelat, filelon, llat, llon) = load_lat_lon(lat_lon)
+    results = []
     cur.execute("select filename,hdfs_path,station,c137_pickle,i131_pickle from cluster where date=TIMESTAMP \'" +
                 datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "' and descriptor='" + descriptor + "'")
     for row in cur:
