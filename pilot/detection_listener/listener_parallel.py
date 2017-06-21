@@ -257,6 +257,7 @@ def cdetections(date, pollutant, metric, origin):
         #     disp_results.append(
         #         (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
         disp_results = sorted(disp_results, key=lambda k: k[1], reverse=True)
+        print disp_results[0][0]
         cur.execute("SELECT date,GHT from weather;")
         res = cur.fetchall()
         weather_results = []
