@@ -170,7 +170,7 @@ def worker(batch,q,pollutant,det_map):
             (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
     q.put(disp_results)
 
-def calc_scores(cur, cln, pollutant,det_map):
+def calc_scores(cur, cln, pollutant,det_map,origin):
     cur.execute(
         "SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station=\'" + cln + "\';")
     res = cur.fetchall()
@@ -183,7 +183,7 @@ def calc_scores(cur, cln, pollutant,det_map):
         t = threading.Thread(target=worker, args=(res[idx[i]:idx[i]+batch_size],queue,pollutant,det_map))
         threads.append(t)
         t.start()
-        disp_results.append(queue.get()[0])
+        disp_results.append(queue.get())
     print len(disp_results)
     disp_results = sorted(disp_results, key=lambda k: k[1], reverse=True)
     cur.execute("SELECT date,GHT from weather;")
@@ -269,7 +269,7 @@ def cdetections(cur, models, lat_lon, date, pollutant, metric, origin):
     class_name = [str(res[i][0]) for i in cl]
     print class_name
     for cln in class_name:
-        (disp_results, weather_results) = calc_scores(cur, cln, pollutant, det_map)
+        (disp_results, weather_results) = calc_scores(cur, cln, pollutant, det_map, origin)
         for w in weather_results:
             if w[0] == disp_results[0][0]:
                 d = disp_results[0]
