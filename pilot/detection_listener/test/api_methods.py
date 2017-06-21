@@ -338,7 +338,7 @@ def load_cluster_date(items, models, origin):
     return cluster_date
 
 
-def calc_station_scores(cur, lat_lon, timestamp, origin, descriptor):
+def calc_station_scores(cur, lat_lon, timestamp, origin, descriptor, pollutant):
     (filelat, filelon, llat, llon) = load_lat_lon(lat_lon)
     cur.execute("select filename,hdfs_path,station,c137_pickle,i131_pickle from cluster where date=TIMESTAMP \'" +
                 datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "' and descriptor='" + descriptor + "'")
@@ -422,7 +422,7 @@ def detections(cur, models, lat_lon, date, pollutant, metric, origin):
     descriptor = origin.split('_')
     descriptor = descriptor[len(descriptor) - 1]
     timestamp = datetime.datetime.strptime(cluster_date, '%y-%m-%d-%H')
-    results = calc_station_scores(cur, lat_lon, timestamp, origin, descriptor)
+    results = calc_station_scores(cur, lat_lon, timestamp, origin, descriptor, pollutant)
     results = sorted(results, key=lambda k: k[1] if k[
                      1] > 0 else float('inf'), reverse=False)
     top3 = results[:3]
