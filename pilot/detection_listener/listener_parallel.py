@@ -23,6 +23,7 @@ from scipy.ndimage.filters import gaussian_filter
 import scipy.misc
 import threading
 import Queue
+import itertools
 
 BOOTSTRAP_SERVE_LOCAL = True
 app = Flask(__name__)
@@ -228,7 +229,8 @@ def cdetections(date, pollutant, metric, origin):
             threads.append(t)
             t.start()
             disp_results.append(queue.get())
-        print len(disp_results[0])
+        disp_results = list(itertools.chain.from_iterable(a))
+        print len(disp_results)
         # for row in res:
         #     if pollutant == 'C137':
         #         det = cPickle.loads(str(row[2]))
