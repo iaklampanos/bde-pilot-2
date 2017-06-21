@@ -166,7 +166,7 @@ def worker2(batch,q,origin,items):
             citems = minmax_scale(citems.sum(axis=0))
         weather_results.append(
             (row[0],1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
-    q.put(disp_results)
+    q.put(weather_results)
 
 @app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def cdetections(date, pollutant, metric, origin):
