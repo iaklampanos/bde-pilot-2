@@ -313,7 +313,7 @@ def load_weather_data(cur, date, origin):
         items = items[:, 1, :, :]
         items = items.reshape(
             1, 1, items.shape[0], 1, items.shape[1], items.shape[2])
-    return items
+    return items,res
 
 
 def load_cluster_date(items, models, origin):
@@ -361,7 +361,7 @@ def calc_station_scores(cur, lat_lon, timestamp, origin, descriptor, pollutant):
     return results
 
 
-def get_top3_stations(cur, top3, timestamp, origin):
+def get_top3_stations(cur, res, top3, timestamp, origin):
     top3_names = [top[0] for top in top3]
     top3_scores = [round(top[1], 3) for top in top3]
     stations = []
@@ -418,7 +418,7 @@ def get_top3_stations(cur, top3, timestamp, origin):
 
 
 def detections(cur, models, lat_lon, date, pollutant, metric, origin):
-    items = load_weather_data(cur, date, origin)
+    (items,res) = load_weather_data(cur, date, origin)
     cluster_date = load_cluster_date(items, models, origin)
     descriptor = origin.split('_')
     descriptor = descriptor[len(descriptor) - 1]
@@ -428,7 +428,7 @@ def detections(cur, models, lat_lon, date, pollutant, metric, origin):
                      1] > 0 else float('inf'), reverse=False)
     top3 = results[:3]
     print top3
-    scores, dispersions, stations = get_top3_stations(cur, top3, timestamp, origin)
+    scores, dispersions, stations = get_top3_stations(cur, res, top3, timestamp, origin)
     scores, dispersions, stations = zip(
         *sorted(zip(scores, dispersions, stations), key=lambda k: k[0] if k[0] > 0 else float('inf'), reverse=False))
     send = {}
