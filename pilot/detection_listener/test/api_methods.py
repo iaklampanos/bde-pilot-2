@@ -268,7 +268,7 @@ def cdetections(cur, models, lat_lon, date, pollutant, metric, origin):
     class_name = [str(res[i][0]) for i in cl]
     print class_name
     for cln in class_name:
-        (disp_results, weather_results) = calc_weather_score(cur, cln)
+        (disp_results, weather_results) = calc_scores(cur, cln)
         for w in weather_results:
             if w[0] == disp_results[0][0]:
                 d = disp_results[0]
