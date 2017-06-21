@@ -361,7 +361,7 @@ def calc_station_scores(cur, lat_lon, timestamp, origin, descriptor, pollutant):
     return results
 
 
-def get_top3_stations(cur, res, top3, timestamp, origin, pollutant):
+def get_top3_stations(cur, top3, timestamp, origin, pollutant):
     top3_names = [top[0] for top in top3]
     top3_scores = [round(top[1], 3) for top in top3]
     stations = []
@@ -399,7 +399,7 @@ def get_top3_stations(cur, res, top3, timestamp, origin, pollutant):
                           row[0].split('.')[0] + '_i131.json')
                 os.system('rm ' + APPS_ROOT + '/' + row[0])
                 os.system('rm ' + APPS_ROOT + '/' + 'int_' + row[0])
-                os.system('rm ' + APPS_ROOT + '/' + res[0])
+                # os.system('rm ' + APPS_ROOT + '/' + res[0])
                 stations.append(str(row[2]))
                 scores.append(top3_scores[top3_names.index(row[2])])
                 if pollutant == 'C137':
@@ -407,7 +407,7 @@ def get_top3_stations(cur, res, top3, timestamp, origin, pollutant):
                 else:
                     dispersions.append(json.dumps(i131_json))
             else:
-                os.system('rm ' + APPS_ROOT + '/' + res[0])
+                # os.system('rm ' + APPS_ROOT + '/' + res[0])
                 stations.append(str(row[2]))
                 scores.append(top3_scores[top3_names.index(row[2])])
                 if pollutant == 'C137':
@@ -428,7 +428,7 @@ def detections(cur, models, lat_lon, date, pollutant, metric, origin):
                      1] > 0 else float('inf'), reverse=False)
     top3 = results[:3]
     print top3
-    scores, dispersions, stations = get_top3_stations(cur, res, top3, timestamp, origin, pollutant)
+    scores, dispersions, stations = get_top3_stations(cur, top3, timestamp, origin, pollutant)
     scores, dispersions, stations = zip(
         *sorted(zip(scores, dispersions, stations), key=lambda k: k[0] if k[0] > 0 else float('inf'), reverse=False))
     send = {}
