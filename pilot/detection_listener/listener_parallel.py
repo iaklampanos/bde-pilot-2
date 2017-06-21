@@ -153,6 +153,21 @@ def worker(batch,q,pollutant,det_map):
             (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
     q.put(disp_results)
 
+def worker2(batch,q,origin,items):
+    weather_results = []
+    for row in batch:
+        if 'mult' in origin:
+            citems = cPickle.loads(str(row[1]))
+            citems = citems.reshape(citems.shape[0],-1)
+            citems = minmax_scale(citems.sum(axis=0))
+        else:
+            citems = cPickle.loads(str(row[1]))
+            citems = citems[:, 1, :, :]
+            citems = minmax_scale(citems.sum(axis=0))
+        weather_results.append(
+            (row[0],1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
+    q.put(disp_results)
+
 @app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def cdetections(date, pollutant, metric, origin):
     lat_lon = request.get_json(force=True)
@@ -245,17 +260,17 @@ def cdetections(date, pollutant, metric, origin):
         cur.execute("SELECT date,GHT from weather;")
         res = cur.fetchall()
         weather_results = []
-        for row in res:
-            if 'mult' in origin:
-                citems = cPickle.loads(str(row[1]))
-                citems = citems.reshape(citems.shape[0],-1)
-                citems = minmax_scale(citems.sum(axis=0))
-            else:
-                citems = cPickle.loads(str(row[1]))
-                citems = citems[:, 1, :, :]
-                citems = minmax_scale(citems.sum(axis=0))
-            weather_results.append(
-                (row[0],1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
+        batch_size = len(res) / 4
+        idx = xrange(0,len(res),batch_size)
+        queue = Queue.Queue()
+        disp_results = []
+        threads = []
+        for i in range(4):
+            t = threading.Thread(target=worker, args=(res[idx[i]:idx[i]+batch_size],queue,origin,items))
+            threads.append(t)
+            t.start()
+            weather_results.append(queue.get())
+        weather_results = list(itertools.chain.from_iterable(weather_results))
         for w in weather_results:
             if w[0] == disp_results[0][0]:
                 d = disp_results[0]
