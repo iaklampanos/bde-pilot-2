@@ -245,8 +245,8 @@ def cdetections(date, pollutant, metric, origin):
             t.start()
             disp_results.append(queue.get())
         disp_results = list(itertools.chain.from_iterable(disp_results))
-        print len(disp_results)
-        print disp_results[0][0]
+        # print len(disp_results)
+        # print disp_results[0][0]
         # for row in res:
         #     if pollutant == 'C137':
         #         det = cPickle.loads(str(row[2]))
@@ -271,8 +271,8 @@ def cdetections(date, pollutant, metric, origin):
             t.start()
             weather_results.append(queue.get())
         weather_results = list(itertools.chain.from_iterable(weather_results))
-        print len(weather_results)
-        print weather_results[0][0]
+        # print len(weather_results)
+        # print weather_results[0][0]
         for w in weather_results:
             if w[0] == disp_results[0][0]:
                 d = disp_results[0]
