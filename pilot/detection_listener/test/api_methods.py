@@ -361,7 +361,7 @@ def calc_station_scores(cur, lat_lon, timestamp, origin, descriptor, pollutant):
     return results
 
 
-def get_top3_stations(cur, res, top3, timestamp, origin):
+def get_top3_stations(cur, res, top3, timestamp, origin, pollutant):
     top3_names = [top[0] for top in top3]
     top3_scores = [round(top[1], 3) for top in top3]
     stations = []
@@ -428,7 +428,7 @@ def detections(cur, models, lat_lon, date, pollutant, metric, origin):
                      1] > 0 else float('inf'), reverse=False)
     top3 = results[:3]
     print top3
-    scores, dispersions, stations = get_top3_stations(cur, res, top3, timestamp, origin)
+    scores, dispersions, stations = get_top3_stations(cur, res, top3, timestamp, origin, pollutant)
     scores, dispersions, stations = zip(
         *sorted(zip(scores, dispersions, stations), key=lambda k: k[0] if k[0] > 0 else float('inf'), reverse=False))
     send = {}
