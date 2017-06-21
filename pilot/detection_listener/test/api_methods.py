@@ -261,7 +261,7 @@ def cdetections(cur, models, lat_lon, date, pollutant, metric, origin):
     det_obj.get_indices()
     det_obj.create_detection_map(resize=True)
     det_map = det_obj._det_map
-    cl = load_models(cur, models, origin)
+    cl = load_models(models, origin)
     cur.execute("SELECT station from class group by station order by station;")
     res = cur.fetchall()
     res = [i for i in res]
