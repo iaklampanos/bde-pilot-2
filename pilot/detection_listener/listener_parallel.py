@@ -229,7 +229,7 @@ def cdetections(date, pollutant, metric, origin):
             threads.append(t)
             t.start()
             disp_results.append(queue.get())
-        disp_results = list(itertools.chain.from_iterable(a))
+        disp_results = list(itertools.chain.from_iterable(disp_results))
         print len(disp_results)
         # for row in res:
         #     if pollutant == 'C137':
