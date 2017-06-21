@@ -316,7 +316,7 @@ def load_weather_data(cur, date, origin):
     return items
 
 
-def load_cluster_date(items, models):
+def load_cluster_date(items, models, origin):
     ds = Dataset_transformations(items, 1000, items.shape)
     x = items.shape[2]
     y = items.shape[3]
@@ -418,7 +418,7 @@ def get_top3_stations(cur, top3, timestamp, origin):
 
 def detections(cur, models, lat_lon, date, pollutant, metric, origin):
     items = load_weather_data(cur, date, origin)
-    cluster_date = load_cluster_date(items, models)
+    cluster_date = load_cluster_date(items, models, origin)
     descriptor = origin.split('_')
     descriptor = descriptor[len(descriptor) - 1]
     timestamp = datetime.datetime.strptime(cluster_date, '%y-%m-%d-%H')
