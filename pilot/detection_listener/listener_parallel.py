@@ -228,7 +228,7 @@ def cdetections(date, pollutant, metric, origin):
             threads.append(t)
             t.start()
             disp_results.append(queue.get())
-        print len(disp_results)
+        print len(disp_results[0])
         # for row in res:
         #     if pollutant == 'C137':
         #         det = cPickle.loads(str(row[2]))
