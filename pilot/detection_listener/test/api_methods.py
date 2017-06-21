@@ -170,7 +170,7 @@ def worker(batch,q,pollutant):
             (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
     q.put(disp_results)
 
-def calc_scores(cur, cln):
+def calc_scores(cur, cln, pollutant):
     cur.execute(
         "SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station=\'" + cln + "\';")
     res = cur.fetchall()
