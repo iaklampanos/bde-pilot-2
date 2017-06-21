@@ -178,6 +178,7 @@ def calc_scores(cur, cln):
     idx = xrange(0,len(res),batch_size)
     queue = Queue.Queue()
     disp_results = []
+    threads = []
     for i in range(4):
         t = threading.Thread(target=worker, args=(res[idx[i]:idx[i]+batch_size],queue))
         threads.append(t)
