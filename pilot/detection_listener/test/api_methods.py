@@ -135,7 +135,7 @@ def load_class_weather(cur, date, origin):
     return items
 
 
-def load_models(models, origin):
+def load_models(items, models, origin):
     for m in models:
         if origin == m[0]:
             if not('mult' in origin):
@@ -261,7 +261,7 @@ def cdetections(cur, models, lat_lon, date, pollutant, metric, origin):
     det_obj.get_indices()
     det_obj.create_detection_map(resize=True)
     det_map = det_obj._det_map
-    cl = load_models(models, origin)
+    cl = load_models(items, models, origin)
     cur.execute("SELECT station from class group by station order by station;")
     res = cur.fetchall()
     res = [i for i in res]
