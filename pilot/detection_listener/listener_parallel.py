@@ -516,7 +516,6 @@ def get_closest(date, level):
 
 if __name__ == '__main__':
     try:
-        app.run(host='0.0.0.0',threaded=True)
         with open('db_info.json', 'r') as data_file:
             dbpar = json.load(data_file)
         conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
@@ -541,5 +540,6 @@ if __name__ == '__main__':
             except:
                 models.append((row[0], m, c))
             os.system('rm ' + APPS_ROOT + '/' + row[1])
+        app.run(host='0.0.0.0',threaded=True)
     except Exception:
         pass
