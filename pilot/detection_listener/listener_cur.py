@@ -21,6 +21,10 @@ import gzip
 from sklearn.preprocessing import maxabs_scale, scale, minmax_scale
 from scipy.ndimage.filters import gaussian_filter
 import scipy.misc
+import threading
+import Queue
+import itertools
+import base64
 
 BOOTSTRAP_SERVE_LOCAL = True
 app = Flask(__name__)
@@ -36,7 +40,7 @@ clust_obj = None
 exper = None
 conn = None
 cur = None
-dpass = getpass.getpass()
+# dpass = getpass.getpass()
 APPS_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -137,9 +141,37 @@ def calc_winddir(dataset_name, level):
     return json.dumps(feature)
 
 
+def worker(batch,q,pollutant,det_map):
+    disp_results = []
+    for row in batch:
+        if pollutant == 'C137':
+            det = cPickle.loads(str(row[2]))
+        else:
+            det = cPickle.loads(str(row[3]))
+        det = scipy.misc.imresize(det, (167, 167))
+        det = maxabs_scale(det)
+        disp_results.append(
+            (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
+    q.put(disp_results)
+
+def worker2(batch,q,origin,items):
+    weather_results = []
+    for row in batch:
+        if 'mult' in origin:
+            citems = cPickle.loads(str(row[1]))
+            citems = citems.reshape(citems.shape[0],-1)
+            citems = minmax_scale(citems.sum(axis=0))
+        else:
+            citems = cPickle.loads(str(row[1]))
+            citems = citems[:, 1, :, :]
+            citems = minmax_scale(citems.sum(axis=0))
+        weather_results.append(
+            (row[0],1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
+    q.put(weather_results)
+
 @app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def cdetections(date, pollutant, metric, origin):
-    cur = conn.cursor()
+    # cur = conn.cursor()
     lat_lon = request.get_json(force=True)
     llat = []
     llon = []
@@ -204,30 +236,45 @@ def cdetections(date, pollutant, metric, origin):
         cur.execute(
             "SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station=\'" + cln + "\';")
         res = cur.fetchall()
-        for row in res:
-            if pollutant == 'C137':
-                det = cPickle.loads(str(row[2]))
-            else:
-                det = cPickle.loads(str(row[3]))
-            det = scipy.misc.imresize(det, (167, 167))
-            det = maxabs_scale(det)
-            disp_results.append(
-                (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
+        batch_size = len(res) / 4
+        idx = xrange(0,len(res),batch_size)
+        queue = Queue.Queue()
+        disp_results = []
+        threads = []
+        for i in range(4):
+            t = threading.Thread(target=worker, args=(res[idx[i]:idx[i]+batch_size],queue,pollutant,det_map))
+            threads.append(t)
+            t.start()
+            disp_results.append(queue.get())
+        disp_results = list(itertools.chain.from_iterable(disp_results))
+        print len(disp_results)
+        print disp_results[0][0]
+        # for row in res:
+        #     if pollutant == 'C137':
+        #         det = cPickle.loads(str(row[2]))
+        #     else:
+        #         det = cPickle.loads(str(row[3]))
+        #     det = scipy.misc.imresize(det, (167, 167))
+        #     det = maxabs_scale(det)
+        #     disp_results.append(
+        #         (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
         disp_results = sorted(disp_results, key=lambda k: k[1], reverse=True)
+        print disp_results[0][0]
         cur.execute("SELECT date,GHT from weather;")
         res = cur.fetchall()
         weather_results = []
-        for row in res:
-            if 'mult' in origin:
-                citems = cPickle.loads(str(row[1]))
-                citems = citems.reshape(citems.shape[0],-1)
-                citems = minmax_scale(citems.sum(axis=0))
-            else:
-                citems = cPickle.loads(str(row[1]))
-                citems = citems[:, 1, :, :]
-                citems = minmax_scale(citems.sum(axis=0))
-            weather_results.append(
-                (row[0],1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
+        batch_size = len(res) / 4
+        idx = xrange(0,len(res),batch_size)
+        queue = Queue.Queue()
+        threads = []
+        for i in range(4):
+            t = threading.Thread(target=worker2, args=(res[idx[i]:idx[i]+batch_size],queue,origin,items))
+            threads.append(t)
+            t.start()
+            weather_results.append(queue.get())
+        weather_results = list(itertools.chain.from_iterable(weather_results))
+        print len(weather_results)
+        print weather_results[0][0]
         for w in weather_results:
             if w[0] == disp_results[0][0]:
                 d = disp_results[0]
@@ -288,7 +335,7 @@ def cdetections(date, pollutant, metric, origin):
 
 @app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def detections(date, pollutant, metric, origin):
-    cur = conn.cursor()
+    # cur = conn.cursor()
     lat_lon = request.get_json(force=True)
     llat = []
     llon = []
@@ -422,7 +469,7 @@ def detections(date, pollutant, metric, origin):
 
 @app.route('/getMethods/', methods=['GET'])
 def get_methods():
-    cur = conn.cursor()
+    # cur = conn.cursor()
     cur.execute("select origin,html from models;")
     origins = []
     for row in cur:
@@ -435,7 +482,7 @@ def get_methods():
 
 @app.route('/getClosestWeather/<date>/<level>', methods=['GET'])
 def get_closest(date, level):
-    cur = conn.cursor()
+    # cur = conn.cursor()
     level = int(level)
     if level == 22:
         cur.execute("select filename,hdfs_path,wind_dir500,EXTRACT(EPOCH FROM TIMESTAMP '" +
@@ -472,32 +519,30 @@ def get_closest(date, level):
     else:
         return json.dumps(res[2])
 
-if __name__ == '__main__':
-    with open('db_info.json', 'r') as data_file:
-        dbpar = json.load(data_file)
-    conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
-                            "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + dpass + "'")
-    cur = conn.cursor()
-    inp = 'parameters.json'
-    models = []
-    cur.execute("SELECT * from models")
-    for row in cur:
-        print row[1]
-        urllib.urlretrieve(row[2], row[1])
-        config = utils.load(row[1])
-        m = config.next()
-        try:
-            c = config.next()
-        except:
-            c = m
-        current = [mod[1] for mod in models]
-        try:
-            pos = current.index(m)
-            models.append((row[0], models[pos][1], c))
-        except:
-            models.append((row[0], m, c))
-        os.system('rm ' + APPS_ROOT + '/' + row[1])
+with open('db_info.json', 'r') as data_file:
+     dbpar = json.load(data_file)
+conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
+                        "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + base64.b64decode(dbpar['pass']) + "'")
+cur = conn.cursor()
+inp = 'parameters.json'
+models = []
+cur.execute("SELECT * from models")
+for row in cur:
+    print str(os.getpid())+row[1]
+    urllib.urlretrieve(row[2], str(os.getpid())+row[1])
+    config = utils.load(str(os.getpid())+row[1])
+    m = config.next()
     try:
-        app.run(host='0.0.0.0')
-    except Exception:
-        pass
+        c = config.next()
+    except:
+        c = m
+    current = [mod[1] for mod in models]
+    try:
+        pos = current.index(m)
+        models.append((row[0], models[pos][1], c))
+    except:
+        models.append((row[0], m, c))
+    os.system('rm ' + APPS_ROOT + '/' + str(os.getpid())+row[1])
+
+if __name__ == '__main__': 
+    app.run(host='0.0.0.0')
