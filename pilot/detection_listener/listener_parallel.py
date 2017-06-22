@@ -515,24 +515,6 @@ def get_closest(date, level):
         return json.dumps(res[2])
 
 if __name__ == '__main__':
-    models = []
-    cur.execute("SELECT * from models")
-    for row in cur:
-        print row[1]
-        urllib.urlretrieve(row[2], row[1])
-        config = utils.load(row[1])
-        m = config.next()
-        try:
-            c = config.next()
-        except:
-            c = m
-        current = [mod[1] for mod in models]
-        try:
-            pos = current.index(m)
-            models.append((row[0], models[pos][1], c))
-        except:
-            models.append((row[0], m, c))
-        os.system('rm ' + APPS_ROOT + '/' + row[1])
     try:
         app.run(host='0.0.0.0',threaded=True)
         with open('db_info.json', 'r') as data_file:
@@ -541,5 +523,23 @@ if __name__ == '__main__':
                                 "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + dpass + "'")
         cur = conn.cursor()
         inp = 'parameters.json'
+        models = []
+        cur.execute("SELECT * from models")
+        for row in cur:
+            print row[1]
+            urllib.urlretrieve(row[2], row[1])
+            config = utils.load(row[1])
+            m = config.next()
+            try:
+                c = config.next()
+            except:
+                c = m
+            current = [mod[1] for mod in models]
+            try:
+                pos = current.index(m)
+                models.append((row[0], models[pos][1], c))
+            except:
+                models.append((row[0], m, c))
+            os.system('rm ' + APPS_ROOT + '/' + row[1])
     except Exception:
         pass
