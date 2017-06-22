@@ -283,6 +283,7 @@ def cdetections(date, pollutant, metric, origin):
             cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
                         datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
         except:
+            d = disp_results[0]
             results = (d[0],d[1])
             cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
                         datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
