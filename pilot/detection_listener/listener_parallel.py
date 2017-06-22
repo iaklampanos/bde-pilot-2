@@ -170,6 +170,7 @@ def worker2(batch,q,origin,items):
 
 @app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def cdetections(date, pollutant, metric, origin):
+    cur = conn.cursor()
     lat_lon = request.get_json(force=True)
     llat = []
     llon = []
@@ -333,6 +334,7 @@ def cdetections(date, pollutant, metric, origin):
 
 @app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def detections(date, pollutant, metric, origin):
+    cur = conn.cursor()
     lat_lon = request.get_json(force=True)
     llat = []
     llon = []
@@ -466,6 +468,7 @@ def detections(date, pollutant, metric, origin):
 
 @app.route('/getMethods/', methods=['GET'])
 def get_methods():
+    cur = conn.cursor()
     cur.execute("select origin,html from models;")
     origins = []
     for row in cur:
@@ -478,6 +481,7 @@ def get_methods():
 
 @app.route('/getClosestWeather/<date>/<level>', methods=['GET'])
 def get_closest(date, level):
+    cur = conn.cursor()
     level = int(level)
     if level == 22:
         cur.execute("select filename,hdfs_path,wind_dir500,EXTRACT(EPOCH FROM TIMESTAMP '" +
@@ -515,31 +519,31 @@ def get_closest(date, level):
         return json.dumps(res[2])
 
 if __name__ == '__main__':
+    with open('db_info.json', 'r') as data_file:
+        dbpar = json.load(data_file)
+    conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
+                            "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + dpass + "'")
+    cur = conn.cursor()
+    inp = 'parameters.json'
+    models = []
+    cur.execute("SELECT * from models")
+    for row in cur:
+        print row[1]
+        urllib.urlretrieve(row[2], row[1])
+        config = utils.load(row[1])
+        m = config.next()
+        try:
+            c = config.next()
+        except:
+            c = m
+        current = [mod[1] for mod in models]
+        try:
+            pos = current.index(m)
+            models.append((row[0], models[pos][1], c))
+        except:
+            models.append((row[0], m, c))
+        os.system('rm ' + APPS_ROOT + '/' + row[1])
     try:
-        with open('db_info.json', 'r') as data_file:
-            dbpar = json.load(data_file)
-        conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
-                                "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + dpass + "'")
-        cur = conn.cursor()
-        inp = 'parameters.json'
-        models = []
-        cur.execute("SELECT * from models")
-        for row in cur:
-            print row[1]
-            urllib.urlretrieve(row[2], row[1])
-            config = utils.load(row[1])
-            m = config.next()
-            try:
-                c = config.next()
-            except:
-                c = m
-            current = [mod[1] for mod in models]
-            try:
-                pos = current.index(m)
-                models.append((row[0], models[pos][1], c))
-            except:
-                models.append((row[0], m, c))
-            os.system('rm ' + APPS_ROOT + '/' + row[1])
         app.run(host='0.0.0.0',threaded=True)
     except Exception:
         pass
