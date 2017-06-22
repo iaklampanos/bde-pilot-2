@@ -515,12 +515,6 @@ def get_closest(date, level):
         return json.dumps(res[2])
 
 if __name__ == '__main__':
-    with open('db_info.json', 'r') as data_file:
-        dbpar = json.load(data_file)
-    conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
-                            "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + dpass + "'")
-    cur = conn.cursor()
-    inp = 'parameters.json'
     models = []
     cur.execute("SELECT * from models")
     for row in cur:
@@ -540,6 +534,12 @@ if __name__ == '__main__':
             models.append((row[0], m, c))
         os.system('rm ' + APPS_ROOT + '/' + row[1])
     try:
-        app.run(host='0.0.0.0')
+        app.run(host='0.0.0.0',threaded=True)
+        with open('db_info.json', 'r') as data_file:
+            dbpar = json.load(data_file)
+        conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
+                                "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + dpass + "'")
+        cur = conn.cursor()
+        inp = 'parameters.json'
     except Exception:
         pass
