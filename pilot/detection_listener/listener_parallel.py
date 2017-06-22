@@ -170,7 +170,7 @@ def worker2(batch,q,origin,items):
 
 @app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def cdetections(date, pollutant, metric, origin):
-    cur = conn.cursor()
+    # cur = conn.cursor()
     lat_lon = request.get_json(force=True)
     llat = []
     llon = []
@@ -334,7 +334,7 @@ def cdetections(date, pollutant, metric, origin):
 
 @app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def detections(date, pollutant, metric, origin):
-    cur = conn.cursor()
+    # cur = conn.cursor()
     lat_lon = request.get_json(force=True)
     llat = []
     llon = []
@@ -468,7 +468,7 @@ def detections(date, pollutant, metric, origin):
 
 @app.route('/getMethods/', methods=['GET'])
 def get_methods():
-    cur = conn.cursor()
+    # cur = conn.cursor()
     cur.execute("select origin,html from models;")
     origins = []
     for row in cur:
@@ -481,7 +481,7 @@ def get_methods():
 
 @app.route('/getClosestWeather/<date>/<level>', methods=['GET'])
 def get_closest(date, level):
-    cur = conn.cursor()
+    # cur = conn.cursor()
     level = int(level)
     if level == 22:
         cur.execute("select filename,hdfs_path,wind_dir500,EXTRACT(EPOCH FROM TIMESTAMP '" +
@@ -544,6 +544,6 @@ if __name__ == '__main__':
             models.append((row[0], m, c))
         os.system('rm ' + APPS_ROOT + '/' + row[1])
     try:
-        app.run(host='0.0.0.0',threaded=True)
+        app.run(host='0.0.0.0')
     except Exception:
         pass
