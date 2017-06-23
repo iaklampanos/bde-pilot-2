@@ -296,7 +296,7 @@ def cdetections(date, pollutant, metric, origin):
             row = cur.fetchone()
         if (row[3] == None) or (row[4] == None):
             urllib.urlretrieve(row[1], str(os.getpid())+row[0])
-            dispersion_integral(row[0])
+            dispersion_integral(str(os.getpid())+row[0])
             os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
                       str(os.getpid())+row[0] + '\\":C137 ' + str(os.getpid())+row[0].split('.')[0] + '_c137.tiff')
             os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
