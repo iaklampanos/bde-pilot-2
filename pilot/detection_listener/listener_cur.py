@@ -295,7 +295,6 @@ def cdetections(date, pollutant, metric, origin):
                             datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
             row = cur.fetchone()
         if (row[3] == None) or (row[4] == None):
-<<<<<<< HEAD
             urllib.urlretrieve(row[1], str(os.getpid())+row[0])
             dispersion_integral(row[0])
             os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
@@ -329,10 +328,9 @@ def cdetections(date, pollutant, metric, origin):
                 dispersion = json.dumps(i131_json)
             dispersions.append(dispersion)
             scores.append(round(results[1],3))
-=======
             with lock:
                 urllib.urlretrieve(row[1], row[0])
-                dispersion_integral(row[0])
+                dispersion_integral(str(os.getpid())+row[0])
                 os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
                           row[0] + '\\":C137 ' + row[0].split('.')[0] + '_c137.tiff')
                 os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
@@ -364,7 +362,6 @@ def cdetections(date, pollutant, metric, origin):
                     dispersion = json.dumps(i131_json)
                 dispersions.append(dispersion)
                 scores.append(round(results[1],3))
->>>>>>> e0fdeccf09a91370f8b43f1df4b0530e53564ff8
         else:
             # os.system('rm ' + APPS_ROOT + '/' + res[0])
             if pollutant == 'C137':
@@ -467,7 +464,7 @@ def detections(date, pollutant, metric, origin):
         if row[2] in top3_names:
             if (row[3] == None) or (row[4] == None):
                 urllib.urlretrieve(row[1], str(os.getpid())+row[0])
-                dispersion_integral(row[0])
+                dispersion_integral(str(os.getpid())+row[0])
                 os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
                           str(os.getpid())+row[0] + '\\":C137 ' + str(os.getpid())+row[0].split('.')[0] + '_c137.tiff')
                 os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
