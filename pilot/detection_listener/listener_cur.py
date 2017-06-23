@@ -283,20 +283,20 @@ def cdetections(date, pollutant, metric, origin):
                     datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
         row = cur.fetchone()
         if (row[3] == None) or (row[4] == None):
-            urllib.urlretrieve(row[1], row[0])
+            urllib.urlretrieve(row[1], str(os.getpid())+row[0])
             dispersion_integral(row[0])
             os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
-                      row[0] + '\\":C137 ' + row[0].split('.')[0] + '_c137.tiff')
+                      str(os.getpid())+row[0] + '\\":C137 ' + str(os.getpid())+row[0].split('.')[0] + '_c137.tiff')
             os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
-                      row[0] + '\\":I131 ' + row[0].split('.')[0] + '_i131.tiff')
+                      str(os.getpid())+row[0] + '\\":I131 ' + str(os.getpid())+row[0].split('.')[0] + '_i131.tiff')
             os.system('make png TIFF_IN=' +
-                      row[0].split('.')[0] + '_c137.tiff')
+                      str(os.getpid())+row[0].split('.')[0] + '_c137.tiff')
             os.system('make png TIFF_IN=' +
-                      row[0].split('.')[0] + '_i131.tiff')
+                      str(os.getpid())+row[0].split('.')[0] + '_i131.tiff')
             os.system('make clean')
-            with open(row[0].split('.')[0] + '_c137.json', 'r') as c137:
+            with open(str(os.getpid())+row[0].split('.')[0] + '_c137.json', 'r') as c137:
                 c137_json = json.load(c137)
-            with open(row[0].split('.')[0] + '_i131.json', 'r') as i131:
+            with open(str(os.getpid())+row[0].split('.')[0] + '_i131.json', 'r') as i131:
                 i131_json = json.load(i131)
             cur.execute("UPDATE class SET  c137=\'" +
                         json.dumps(c137_json) + "\' WHERE filename=\'" + row[0] + "\'")
@@ -304,11 +304,11 @@ def cdetections(date, pollutant, metric, origin):
                         json.dumps(i131_json) + "\' WHERE filename=\'" + row[0] + "\'")
             conn.commit()
             os.system('rm ' + APPS_ROOT + '/' +
-                      row[0].split('.')[0] + '_c137.json')
+                      str(os.getpid())+row[0].split('.')[0] + '_c137.json')
             os.system('rm ' + APPS_ROOT + '/' +
-                      row[0].split('.')[0] + '_i131.json')
-            os.system('rm ' + APPS_ROOT + '/' + row[0])
-            os.system('rm ' + APPS_ROOT + '/' + 'int_' + row[0])
+                      str(os.getpid())+row[0].split('.')[0] + '_i131.json')
+            os.system('rm ' + APPS_ROOT + '/' + str(os.getpid())+row[0])
+            os.system('rm ' + APPS_ROOT + '/' + 'int_' + str(os.getpid())+row[0])
             # os.system('rm ' + APPS_ROOT + '/' + res[0])
             if pollutant == 'C137':
                 dispersion = json.dumps(c137_json)
@@ -345,7 +345,7 @@ def detections(date, pollutant, metric, origin):
     cur.execute("select filename,hdfs_path,GHT,EXTRACT(EPOCH FROM TIMESTAMP '" +
                 date + "' - date)/3600/24 as diff from weather order by diff desc;")
     res = cur.fetchone()
-    urllib.urlretrieve(res[1], res[0])
+    urllib.urlretrieve(res[1], str(os.getpid())+res[0])
     if 'mult' in origin:
         items = cPickle.loads(str(res[2]))
         items = items.reshape(1,1,items.shape[0],items.shape[1],items.shape[2],items.shape[3])
@@ -417,20 +417,20 @@ def detections(date, pollutant, metric, origin):
     for row in rows:
         if row[2] in top3_names:
             if (row[3] == None) or (row[4] == None):
-                urllib.urlretrieve(row[1], row[0])
+                urllib.urlretrieve(row[1], str(os.getpid())+row[0])
                 dispersion_integral(row[0])
                 os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
-                          row[0] + '\\":C137 ' + row[0].split('.')[0] + '_c137.tiff')
+                          str(os.getpid())+row[0] + '\\":C137 ' + str(os.getpid())+row[0].split('.')[0] + '_c137.tiff')
                 os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
-                          row[0] + '\\":I131 ' + row[0].split('.')[0] + '_i131.tiff')
+                         str(os.getpid())+row[0] + '\\":I131 ' + str(os.getpid())+row[0].split('.')[0] + '_i131.tiff')
                 os.system('make png TIFF_IN=' +
-                          row[0].split('.')[0] + '_c137.tiff')
+                          str(os.getpid())+row[0].split('.')[0] + '_c137.tiff')
                 os.system('make png TIFF_IN=' +
-                          row[0].split('.')[0] + '_i131.tiff')
+                          str(os.getpid())+row[0].split('.')[0] + '_i131.tiff')
                 os.system('make clean')
-                with open(row[0].split('.')[0] + '_c137.json', 'r') as c137:
+                with open(str(os.getpid())+row[0].split('.')[0] + '_c137.json', 'r') as c137:
                     c137_json = json.load(c137)
-                with open(row[0].split('.')[0] + '_i131.json', 'r') as i131:
+                with open(str(os.getpid())+row[0].split('.')[0] + '_i131.json', 'r') as i131:
                     i131_json = json.load(i131)
                 cur.execute("UPDATE cluster SET  c137=\'" +
                             json.dumps(c137_json) + "\' WHERE filename=\'" + row[0] + "\'")
@@ -438,12 +438,12 @@ def detections(date, pollutant, metric, origin):
                             json.dumps(i131_json) + "\' WHERE filename=\'" + row[0] + "\'")
                 conn.commit()
                 os.system('rm ' + APPS_ROOT + '/' +
-                          row[0].split('.')[0] + '_c137.json')
+                          str(os.getpid())+row[0].split('.')[0] + '_c137.json')
                 os.system('rm ' + APPS_ROOT + '/' +
-                          row[0].split('.')[0] + '_i131.json')
-                os.system('rm ' + APPS_ROOT + '/' + row[0])
-                os.system('rm ' + APPS_ROOT + '/' + 'int_' + row[0])
-                os.system('rm ' + APPS_ROOT + '/' + res[0])
+                          str(os.getpid())+row[0].split('.')[0] + '_i131.json')
+                os.system('rm ' + APPS_ROOT + '/' + str(os.getpid())+row[0])
+                os.system('rm ' + APPS_ROOT + '/' + 'int_' + str(os.getpid())+row[0])
+                os.system('rm ' + APPS_ROOT + '/' + str(os.getpid())+res[0])
                 stations.append(str(row[2]))
                 scores.append(top3_scores[top3_names.index(row[2])])
                 if pollutant == 'C137':
@@ -544,5 +544,5 @@ for row in cur:
         models.append((row[0], m, c))
     os.system('rm ' + APPS_ROOT + '/' + str(os.getpid())+row[1])
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     app.run(host='0.0.0.0')
