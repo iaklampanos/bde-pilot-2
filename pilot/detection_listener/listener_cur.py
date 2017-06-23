@@ -497,7 +497,7 @@ def detections(date, pollutant, metric, origin):
                 else:
                     dispersions.append(json.dumps(i131_json))
             else:
-                os.system('rm ' + APPS_ROOT + '/' + res[0])
+                os.system('rm ' + APPS_ROOT + '/' + str(os.getpid())+res[0])
                 stations.append(str(row[2]))
                 scores.append(top3_scores[top3_names.index(row[2])])
                 if pollutant == 'C137':
