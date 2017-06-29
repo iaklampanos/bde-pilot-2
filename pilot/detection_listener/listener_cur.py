@@ -151,7 +151,7 @@ def worker(batch,q,pollutant,det_map):
         det = scipy.misc.imresize(det, (167, 167))
         det = maxabs_scale(det)
         disp_results.append(
-            (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
+            (str(os.getpid())+row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
     q.put(disp_results)
 
 def worker2(batch,q,origin,items):
@@ -166,7 +166,7 @@ def worker2(batch,q,origin,items):
             citems = citems[:, 1, :, :]
             citems = minmax_scale(citems.sum(axis=0))
         weather_results.append(
-            (row[0],1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
+            (str(os.getpid())+row[0],1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
     q.put(weather_results)
 
 @app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
@@ -257,7 +257,7 @@ def cdetections(date, pollutant, metric, origin):
         #     det = scipy.misc.imresize(det, (167, 167))
         #     det = maxabs_scale(det)
         #     disp_results.append(
-        #         (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
+        #         (str(os.getpid())+row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
         disp_results = sorted(disp_results, key=lambda k: k[1], reverse=True)
         print disp_results[0][0]
         cur.execute("SELECT date,GHT from weather;")
@@ -289,32 +289,32 @@ def cdetections(date, pollutant, metric, origin):
                         datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
         row = cur.fetchone()
         if (row[3] == None) or (row[4] == None):
-            urllib.urlretrieve(row[1], row[0])
-            dispersion_integral(row[0])
+            urllib.urlretrieve(row[1], str(os.getpid())+row[0])
+            dispersion_integral(str(os.getpid())+row[0])
             os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
-                      row[0] + '\\":C137 ' + row[0].split('.')[0] + '_c137.tiff')
+                      str(os.getpid())+row[0] + '\\":C137 ' + str(os.getpid())+row[0].split('.')[0] + '_c137.tiff')
             os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
-                      row[0] + '\\":I131 ' + row[0].split('.')[0] + '_i131.tiff')
+                      str(os.getpid())+row[0] + '\\":I131 ' + str(os.getpid())+row[0].split('.')[0] + '_i131.tiff')
             os.system('make png TIFF_IN=' +
-                      row[0].split('.')[0] + '_c137.tiff')
+                      str(os.getpid())+row[0].split('.')[0] + '_c137.tiff')
             os.system('make png TIFF_IN=' +
-                      row[0].split('.')[0] + '_i131.tiff')
+                      str(os.getpid())+row[0].split('.')[0] + '_i131.tiff')
             os.system('make clean')
-            with open(row[0].split('.')[0] + '_c137.json', 'r') as c137:
+            with open(str(os.getpid())+row[0].split('.')[0] + '_c137.json', 'r') as c137:
                 c137_json = json.load(c137)
-            with open(row[0].split('.')[0] + '_i131.json', 'r') as i131:
+            with open(str(os.getpid())+row[0].split('.')[0] + '_i131.json', 'r') as i131:
                 i131_json = json.load(i131)
             cur.execute("UPDATE class SET  c137=\'" +
-                        json.dumps(c137_json) + "\' WHERE filename=\'" + row[0] + "\'")
+                        json.dumps(c137_json) + "\' WHERE filename=\'" + str(os.getpid())+row[0] + "\'")
             cur.execute("UPDATE class SET  i131=\'" +
-                        json.dumps(i131_json) + "\' WHERE filename=\'" + row[0] + "\'")
+                        json.dumps(i131_json) + "\' WHERE filename=\'" + str(os.getpid())+row[0] + "\'")
             conn.commit()
             os.system('rm ' + APPS_ROOT + '/' +
-                      row[0].split('.')[0] + '_c137.json')
+                      str(os.getpid())+row[0].split('.')[0] + '_c137.json')
             os.system('rm ' + APPS_ROOT + '/' +
-                      row[0].split('.')[0] + '_i131.json')
-            os.system('rm ' + APPS_ROOT + '/' + row[0])
-            os.system('rm ' + APPS_ROOT + '/' + 'int_' + row[0])
+                      str(os.getpid())+row[0].split('.')[0] + '_i131.json')
+            os.system('rm ' + APPS_ROOT + '/' + str(os.getpid())+row[0])
+            os.system('rm ' + APPS_ROOT + '/' + 'int_' + str(os.getpid())+row[0])
             # os.system('rm ' + APPS_ROOT + '/' + res[0])
             if pollutant == 'C137':
                 dispersion = json.dumps(c137_json)
@@ -423,32 +423,32 @@ def detections(date, pollutant, metric, origin):
     for row in rows:
         if row[2] in top3_names:
             if (row[3] == None) or (row[4] == None):
-                urllib.urlretrieve(row[1], row[0])
-                dispersion_integral(row[0])
+                urllib.urlretrieve(row[1], str(os.getpid())+row[0])
+                dispersion_integral(str(os.getpid())+row[0])
                 os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
-                          row[0] + '\\":C137 ' + row[0].split('.')[0] + '_c137.tiff')
+                          str(os.getpid())+row[0] + '\\":C137 ' + str(os.getpid())+row[0].split('.')[0] + '_c137.tiff')
                 os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
-                          row[0] + '\\":I131 ' + row[0].split('.')[0] + '_i131.tiff')
+                          str(os.getpid())+row[0] + '\\":I131 ' + str(os.getpid())+row[0].split('.')[0] + '_i131.tiff')
                 os.system('make png TIFF_IN=' +
-                          row[0].split('.')[0] + '_c137.tiff')
+                          str(os.getpid())+row[0].split('.')[0] + '_c137.tiff')
                 os.system('make png TIFF_IN=' +
-                          row[0].split('.')[0] + '_i131.tiff')
+                          str(os.getpid())+row[0].split('.')[0] + '_i131.tiff')
                 os.system('make clean')
-                with open(row[0].split('.')[0] + '_c137.json', 'r') as c137:
+                with open(str(os.getpid())+row[0].split('.')[0] + '_c137.json', 'r') as c137:
                     c137_json = json.load(c137)
-                with open(row[0].split('.')[0] + '_i131.json', 'r') as i131:
+                with open(str(os.getpid())+row[0].split('.')[0] + '_i131.json', 'r') as i131:
                     i131_json = json.load(i131)
                 cur.execute("UPDATE cluster SET  c137=\'" +
-                            json.dumps(c137_json) + "\' WHERE filename=\'" + row[0] + "\'")
+                            json.dumps(c137_json) + "\' WHERE filename=\'" + str(os.getpid())+row[0] + "\'")
                 cur.execute("UPDATE cluster SET  i131=\'" +
-                            json.dumps(i131_json) + "\' WHERE filename=\'" + row[0] + "\'")
+                            json.dumps(i131_json) + "\' WHERE filename=\'" + str(os.getpid())+row[0] + "\'")
                 conn.commit()
                 os.system('rm ' + APPS_ROOT + '/' +
-                          row[0].split('.')[0] + '_c137.json')
+                          str(os.getpid())+row[0].split('.')[0] + '_c137.json')
                 os.system('rm ' + APPS_ROOT + '/' +
-                          row[0].split('.')[0] + '_i131.json')
-                os.system('rm ' + APPS_ROOT + '/' + row[0])
-                os.system('rm ' + APPS_ROOT + '/' + 'int_' + row[0])
+                          str(os.getpid())+row[0].split('.')[0] + '_i131.json')
+                os.system('rm ' + APPS_ROOT + '/' + str(os.getpid())+row[0])
+                os.system('rm ' + APPS_ROOT + '/' + 'int_' + str(os.getpid())+row[0])
                 os.system('rm ' + APPS_ROOT + '/' + res[0])
                 stations.append(str(row[2]))
                 scores.append(top3_scores[top3_names.index(row[2])])
@@ -481,7 +481,7 @@ def get_methods():
     for row in cur:
         origin = {}
         origin['html'] = row[1]
-        origin['origin'] = row[0]
+        origin['origin'] = str(os.getpid())+row[0]
         origins.append(origin)
     return json.dumps(origins)
 
@@ -545,9 +545,9 @@ for row in cur:
     current = [mod[1] for mod in models]
     try:
         pos = current.index(m)
-        models.append((row[0], models[pos][1], c))
+        models.append((str(os.getpid())+row[0], models[pos][1], c))
     except:
-        models.append((row[0], m, c))
+        models.append((str(os.getpid())+row[0], m, c))
     os.system('rm ' + APPS_ROOT + '/' + str(os.getpid())+row[1])
 
 if __name__ == '__main__':

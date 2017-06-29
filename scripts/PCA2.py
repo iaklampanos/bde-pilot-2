@@ -16,7 +16,7 @@ import datetime
 from sklearn.decomposition import PCA
 
 
-PREFIX = "PCA_INV_SEED"
+PREFIX = "PCA_INV_SEED_16"
 NC_PATH = '/mnt/disk1/thanasis/data/11_train.nc'
 
 if __name__ == '__main__':
@@ -30,14 +30,15 @@ if __name__ == '__main__':
     inp, outp = getter(opts)
     export_template = netCDF_subset(
         NC_PATH, [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
-    pca = PCA(n_components=15)
+    pca = PCA(n_components=16)
     items = np.load(inp)
     X = pca.fit_transform(items.T).T
+    print 'hello'
     print X.shape
-    pcared = PCA(n_components=9)
+    pcared = PCA(n_components=16)
     seed = pcared.fit_transform(X)
     print seed.shape
-    pcared2 = PCA(n_components=9)
+    pcared2 = PCA(n_components=16)
     items = pcared2.fit_transform(items)
     print items.shape
     ds = Dataset_transformations(items, 1000)
@@ -58,12 +59,13 @@ if __name__ == '__main__':
             date_split[2]), int(time_split[0]), int(time_split[1]))
         times.append(date_object)
     print times[0:10]
-    clust_obj = Clustering(ds,n_clusters=15,n_init=100,features_first=False)
+    clust_obj = Clustering(ds,n_clusters=16,n_init=100,features_first=False)
     clust_obj.kmeans_plus(init=seed)
     print clust_obj._centroids.shape
-    clust_obj.single_dense_descriptor(12,times)
+    # clust_obj.create_km2_descriptors(12)
+    clust_obj.create_density_descriptors(12,times)
     export_template = netCDF_subset(
         NC_PATH, [700], ['GHT'], lvlname='num_metgrid_levels', timename='Times')
-    clust_obj.desc_date(export_template)
-    utils.export_descriptor_kmeans(outp,export_template,clust_obj)
-    clust_obj.save(PREFIX+'_dense.zip')
+    clust_obj.mult_desc_date(export_template)
+    utils.export_descriptor_mult_dense(outp,export_template,clust_obj)
+    clust_obj.save(PREFIX+'_mult_dense.zip')
