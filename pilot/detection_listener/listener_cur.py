@@ -171,7 +171,6 @@ def worker2(batch,q,origin,items):
 
 @app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def cdetections(date, pollutant, metric, origin):
-    # cur = conn.cursor()
     lat_lon = request.get_json(force=True)
     llat = []
     llon = []
@@ -236,45 +235,30 @@ def cdetections(date, pollutant, metric, origin):
         cur.execute(
             "SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station=\'" + cln + "\';")
         res = cur.fetchall()
-        batch_size = len(res) / 4
-        idx = xrange(0,len(res),batch_size)
-        queue = Queue.Queue()
-        disp_results = []
-        threads = []
-        for i in range(4):
-            t = threading.Thread(target=worker, args=(res[idx[i]:idx[i]+batch_size],queue,pollutant,det_map))
-            threads.append(t)
-            t.start()
-            disp_results.append(queue.get())
-        disp_results = list(itertools.chain.from_iterable(disp_results))
-        print len(disp_results)
-        print disp_results[0][0]
-        # for row in res:
-        #     if pollutant == 'C137':
-        #         det = cPickle.loads(str(row[2]))
-        #     else:
-        #         det = cPickle.loads(str(row[3]))
-        #     det = scipy.misc.imresize(det, (167, 167))
-        #     det = maxabs_scale(det)
-        #     disp_results.append(
-        #         (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
+        for row in res:
+            if pollutant == 'C137':
+                det = cPickle.loads(str(row[2]))
+            else:
+                det = cPickle.loads(str(row[3]))
+            det = scipy.misc.imresize(det, (167, 167))
+            det = maxabs_scale(det)
+            disp_results.append(
+                (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
         disp_results = sorted(disp_results, key=lambda k: k[1], reverse=True)
-        print disp_results[0][0]
         cur.execute("SELECT date,GHT from weather;")
         res = cur.fetchall()
         weather_results = []
-        batch_size = len(res) / 4
-        idx = xrange(0,len(res),batch_size)
-        queue = Queue.Queue()
-        threads = []
-        for i in range(4):
-            t = threading.Thread(target=worker2, args=(res[idx[i]:idx[i]+batch_size],queue,origin,items))
-            threads.append(t)
-            t.start()
-            weather_results.append(queue.get())
-        weather_results = list(itertools.chain.from_iterable(weather_results))
-        print len(weather_results)
-        print weather_results[0][0]
+        for row in res:
+            if 'mult' in origin:
+                citems = cPickle.loads(str(row[1]))
+                citems = citems.reshape(citems.shape[0],-1)
+                citems = minmax_scale(citems.sum(axis=0))
+            else:
+                citems = cPickle.loads(str(row[1]))
+                citems = citems[:, 1, :, :]
+                citems = minmax_scale(citems.sum(axis=0))
+            weather_results.append(
+                (row[0],1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
         for w in weather_results:
             if w[0] == disp_results[0][0]:
                 d = disp_results[0]
