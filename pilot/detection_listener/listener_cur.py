@@ -486,7 +486,7 @@ def get_methods():
     return json.dumps(origins)
 
 
-@app.route('/getClosestWeather/<date>/<level>', methods=['GET'])``
+@app.route('/getClosestWeather/<date>/<level>', methods=['GET'])
 def get_closest(date, level):
     # cur = conn.cursor()
     level = int(level)
