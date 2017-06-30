@@ -50,8 +50,8 @@ def make_celery(app):
 
 flask_app = Flask(__name__)
 flask_app.config.update(
-    CELERY_BROKER_URL='redis://localhost:5000',
-    CELERY_RESULT_BACKEND='redis://localhost:5000'
+    CELERY_BROKER_URL='redis://localhost:6379',
+    CELERY_RESULT_BACKEND='redis://localhost:6379'
 )
 celery = make_celery(flask_app)
 
@@ -488,7 +488,6 @@ def detections(cur, models, lat_lon, date, pollutant, metric, origin):
 
 @celery.task()
 def get_methods(cur):
-    print '123'
     cur.execute("select origin,html from models;")
     origins = []
     for row in cur:
@@ -563,7 +562,6 @@ def detections(date, pollutant, metric, origin):
 @app.route('/getMethods/', methods=['GET'])
 def getMethods():
     task = get_methods.apply_async(args=[cur])
-    print task
     return task
 
 
