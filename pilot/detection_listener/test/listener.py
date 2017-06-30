@@ -563,7 +563,7 @@ def detections(date, pollutant, metric, origin):
 def getMethods():
     task = get_methods.delay(cur)
     print task
-    return task
+    # return json.dumps('{}')
 
 
 @app.route('/getClosestWeather/<date>/<level>', methods=['GET'])
