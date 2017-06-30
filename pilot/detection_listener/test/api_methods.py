@@ -280,7 +280,12 @@ def cdetections(cur, models, lat_lon, date, pollutant, metric, origin):
             if w[0] == disp_results[0][0]:
                 d = disp_results[0]
                 results = (d[0],w[1]*d[1])
-        scores, dispersions = get_disp_frame(cur, results)
+        try:
+            scores, dispersions = get_disp_frame(cur, results)
+        except:
+            d = disp_results[0]
+            results = (d[0],d[1])
+            scores, dispersions = get_disp_frame(cur, results)
     scores, dispersions, class_name = zip(
         *sorted(zip(scores, dispersions, class_name), key=lambda k: k[0], reverse=True))
     send = {}
