@@ -295,7 +295,7 @@ def get_disp_frame(cur, cln, pollutant, results):
         scores.append(round(results[1], 3))
     return scores, dispersions
 
-@celery.task
+@celery.task()
 def cdetections(cur, models, lat_lon, date, pollutant, metric, origin):
     items = load_class_weather(cur, date, origin)
     (filelat, filelon, llat, llon) = load_lat_lon(lat_lon)
@@ -465,7 +465,7 @@ def get_top3_stations(cur, top3, timestamp, origin, pollutant):
                     dispersions.append(json.dumps(row[4]))
     return scores, dispersions, stations
 
-@celery.task
+@celery.task()
 def detections(cur, models, lat_lon, date, pollutant, metric, origin):
     (items,res) = load_weather_data(cur, date, origin)
     cluster_date = load_cluster_date(items, models, origin)
@@ -486,7 +486,7 @@ def detections(cur, models, lat_lon, date, pollutant, metric, origin):
     send['dispersions'] = dispersions
     return json.dumps(send)
 
-@celery.task
+@celery.task()
 def get_methods(cur):
     cur.execute("select origin,html from models;")
     origins = []
@@ -497,7 +497,7 @@ def get_methods(cur):
         origins.append(origin)
     return json.dumps(origins)
 
-@celery.task
+@celery.task()
 def get_closest(cur, date, level):
     level = int(level)
     if level == 22:
