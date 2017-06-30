@@ -211,7 +211,7 @@ def calc_scores(cur, items, cln, pollutant,det_map,origin):
     return disp_results, weather_results
 
 
-def get_disp_frame(cur, cln, results):
+def get_disp_frame(cur, cln, pollutant, results):
     dispersions = []
     scores = []
     cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
@@ -283,11 +283,11 @@ def cdetections(cur, models, lat_lon, date, pollutant, metric, origin):
                 d = disp_results[0]
                 results = (d[0],w[1]*d[1])
         try:
-            scores, dispersions = get_disp_frame(cur, cln, results)
+            scores, dispersions = get_disp_frame(cur, cln, results, pollutant)
         except:
             d = disp_results[0]
             results = (d[0],d[1])
-            scores, dispersions = get_disp_frame(cur,cln, results)
+            scores, dispersions = get_disp_frame(cur, cln, results, pollutant)
     scores, dispersions, class_name = zip(
         *sorted(zip(scores, dispersions, class_name), key=lambda k: k[0], reverse=True))
     send = {}
