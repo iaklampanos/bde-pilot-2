@@ -291,6 +291,7 @@ def cdetections(cur, models, lat_lon, date, pollutant, metric, origin):
             scores, dispersions = get_disp_frame(cur, cln, pollutant, results)
     scores, dispersions, class_name = zip(
         *sorted(zip(scores, dispersions, class_name), key=lambda k: k[0], reverse=True))
+    print scores
     send = {}
     send['stations'] = class_name
     send['scores'] = scores
