@@ -214,6 +214,7 @@ def calc_scores(cur, items, cln, pollutant,det_map,origin):
 def get_disp_frame(cur, cln, pollutant, results):
     dispersions = []
     scores = []
+    print results[0]
     cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
                 datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
     row = cur.fetchone()
