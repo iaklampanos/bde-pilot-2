@@ -231,6 +231,7 @@ def cdetections(date, pollutant, metric, origin):
     dispersions = []
     scores = []
     for cln in class_name:
+        print '1'
         disp_results = []
         cur.execute(
             "SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station=\'" + cln + "\';")
@@ -244,6 +245,7 @@ def cdetections(date, pollutant, metric, origin):
             det = maxabs_scale(det)
             disp_results.append(
                 (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
+        print '2'
         disp_results = sorted(disp_results, key=lambda k: k[1], reverse=True)
         cur.execute("SELECT date,GHT from weather;")
         res = cur.fetchall()
@@ -259,6 +261,7 @@ def cdetections(date, pollutant, metric, origin):
                 citems = minmax_scale(citems.sum(axis=0))
             weather_results.append(
                 (row[0],1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
+        print '3'
         for w in weather_results:
             if w[0] == disp_results[0][0]:
                 d = disp_results[0]
@@ -272,6 +275,7 @@ def cdetections(date, pollutant, metric, origin):
             cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
                         datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
         row = cur.fetchone()
+        print '4'
         if (row[3] == None) or (row[4] == None):
             urllib.urlretrieve(row[1], str(os.getpid())+row[0])
             dispersion_integral(str(os.getpid())+row[0])
@@ -314,6 +318,7 @@ def cdetections(date, pollutant, metric, origin):
                 dispersion = json.dumps(row[4])
             dispersions.append(dispersion)
             scores.append(round(results[1],3))
+    print '5'
     scores, dispersions, class_name = zip(
         *sorted(zip(scores, dispersions, class_name), key=lambda k: k[0], reverse=True))
     send = {}
