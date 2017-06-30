@@ -542,7 +542,7 @@ clust_obj = None
 exper = None
 conn = None
 cur = None
-dpass = getpass.getpass()
+# dpass = getpass.getpass()
 APPS_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
