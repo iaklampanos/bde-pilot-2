@@ -488,6 +488,7 @@ def detections(cur, models, lat_lon, date, pollutant, metric, origin):
 
 @celery.task()
 def get_methods(cur):
+    print '123'
     cur.execute("select origin,html from models;")
     origins = []
     for row in cur:
