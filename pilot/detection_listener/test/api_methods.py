@@ -230,9 +230,9 @@ def get_disp_frame(cur, cln, pollutant, results):
         os.system('make png TIFF_IN=' +
                   row[0].split('.')[0] + '_i131.tiff')
         os.system('make clean')
-        with open(row[0].split('.')[0] + '_c137.json', 'r') as c137:
+        with open(APPS_ROOT+ '/' + row[0].split('.')[0] + '_c137.json', 'r') as c137:
             c137_json = json.load(c137)
-        with open(row[0].split('.')[0] + '_i131.json', 'r') as i131:
+        with open(APPS_ROOT + '/' + row[0].split('.')[0] + '_i131.json', 'r') as i131:
             i131_json = json.load(i131)
         cur.execute("UPDATE class SET  c137=\'" +
                     json.dumps(c137_json) + "\' WHERE filename=\'" + row[0] + "\'")
