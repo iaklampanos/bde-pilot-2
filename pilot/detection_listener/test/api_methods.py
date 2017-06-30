@@ -190,6 +190,7 @@ def calc_scores(cur, items, cln, pollutant,det_map,origin):
         threads.append(t)
         t.start()
         disp_results.append(queue.get())
+    disp_results = list(itertools.chain.from_iterable(disp_results))
     print len(disp_results)
     disp_results = sorted(disp_results, key=lambda k: k[1], reverse=True)
     cur.execute("SELECT date,GHT from weather;")
