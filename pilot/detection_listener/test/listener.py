@@ -561,7 +561,7 @@ def detections(date, pollutant, metric, origin):
 
 @app.route('/getMethods/', methods=['GET'])
 def getMethods():
-    task = get_methods.apply_async(args=[cur])
+    task = get_methods.delay(args=[cur])
     print task
     return task
 
