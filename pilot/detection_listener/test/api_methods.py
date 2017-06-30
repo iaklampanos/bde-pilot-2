@@ -23,6 +23,11 @@ import Queue
 
 APPS_ROOT = os.path.dirname(os.path.abspath(__file__))
 
+with open('db_info.json', 'r') as data_file:
+    dbpar = json.load(data_file)
+conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
+                        "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + dpass + "'")
+
 def dispersion_integral(dataset_name):
     dataset = Dataset(APPS_ROOT + '/' + dataset_name, 'r')
     dsout = Dataset(APPS_ROOT + '/' + 'int_' + dataset_name,
