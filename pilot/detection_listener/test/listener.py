@@ -570,32 +570,26 @@ def getClosestWeather(date, level):
     task = get_closest.apply_async(args=[cur, date, level])
     return task
 
-if __name__ == '__main__':
-    with open('db_info.json', 'r') as data_file:
-        dbpar = json.load(data_file)
-    conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
-                            "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + dpass + "'")
-    cur = conn.cursor()
-    inp = 'parameters.json'
-    models = []
-    cur.execute("SELECT * from models")
-    for row in cur:
-        print row[1]
-        urllib.urlretrieve(row[2], row[1])
-        config = utils.load(row[1])
-        m = config.next()
-        try:
-            c = config.next()
-        except:
-            c = m
-        current = [mod[1] for mod in models]
-        try:
-            pos = current.index(m)
-            models.append((row[0], models[pos][1], c))
-        except:
-            models.append((row[0], m, c))
-        os.system('rm ' + APPS_ROOT + '/' + row[1])
+cur = conn.cursor()
+inp = 'parameters.json'
+models = []
+cur.execute("SELECT * from models")
+for row in cur:
+    print str(os.getpid())+row[1]
+    urllib.urlretrieve(row[2], str(os.getpid())+row[1])
+    config = utils.load(str(os.getpid())+row[1])
+    m = config.next()
     try:
-        app.run(host='0.0.0.0')
-    except Exception:
-        pass
+        c = config.next()
+    except:
+        c = m
+    current = [mod[1] for mod in models]
+    try:
+        pos = current.index(m)
+        models.append((row[0], models[pos][1], c))
+    except:
+        models.append((row[0], m, c))
+    os.system('rm ' + APPS_ROOT + '/' + str(os.getpid())+row[1])
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')
