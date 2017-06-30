@@ -8,12 +8,59 @@ import psycopg2
 import os
 import dataset_utils as utils
 import urllib
+from netcdf_subset import netCDF_subset
+from Dataset_transformations import Dataset_transformations
+from Detection import Detection
+import dataset_utils as utils
+import numpy as np
+from netCDF4 import Dataset
+import urllib
+import psycopg2
+import getpass
+import os
+import math
+import datetime
+import time
+from geojson import Feature, Point, MultiPoint, MultiLineString, LineString, FeatureCollection
+import cPickle
+import gzip
+from sklearn.preprocessing import maxabs_scale, scale, minmax_scale
+from scipy.ndimage.filters import gaussian_filter
+import scipy.misc
+import json
+import threading
+import Queue
+import base64
+import itertools
 
-BOOTSTRAP_SERVE_LOCAL = True
-app = Flask(__name__)
-CORS(app)
+from celery import Celery
 
-app.config.from_object(__name__)
+def make_celery(app):
+    celery = Celery(app.import_name, backend=app.config['CELERY_RESULT_BACKEND'],
+                    broker=app.config['CELERY_BROKER_URL'])
+    celery.conf.update(app.config)
+    TaskBase = celery.Task
+    class ContextTask(TaskBase):
+        abstract = True
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return TaskBase.__call__(self, *args, **kwargs)
+    celery.Task = ContextTask
+    return celery
+
+flask_app = Flask(__name__)
+flask_app.config.update(
+    CELERY_BROKER_URL='redis://localhost:5000',
+    CELERY_RESULT_BACKEND='redis://localhost:5000'
+)
+celery = make_celery(flask_app)
+
+
+# BOOTSTRAP_SERVE_LOCAL = True
+# app = Flask(__name__)
+# CORS(app)
+
+# app.config.from_object(__name__)
 
 
 def dispersion_integral(dataset_name):
