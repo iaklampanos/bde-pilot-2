@@ -50,8 +50,8 @@ def make_celery(app):
 
 flask_app = Flask(__name__)
 flask_app.config.update(
-    CELERY_BROKER_URL='redis://localhost:6379',
-    CELERY_RESULT_BACKEND='redis://localhost:6379'
+    CELERY_BROKER_URL='redis://localhost:5000',
+    CELERY_RESULT_BACKEND='redis://localhost:5000'
 )
 celery = make_celery(flask_app)
 
@@ -570,6 +570,10 @@ def getClosestWeather(date, level):
     task = get_closest.apply_async(args=[cur, date, level])
     return task
 
+with open('db_info.json', 'r') as data_file:
+     dbpar = json.load(data_file)
+conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
+                        "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + base64.b64decode(dbpar['pass']) + "'")
 cur = conn.cursor()
 inp = 'parameters.json'
 models = []
