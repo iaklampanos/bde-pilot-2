@@ -25,13 +25,15 @@ import threading
 import Queue
 import itertools
 import base64
+from klein import Klein
 
-BOOTSTRAP_SERVE_LOCAL = True
-app = Flask(__name__)
-CORS(app)
+# BOOTSTRAP_SERVE_LOCAL = True
+# app = Flask(__name__)
+# CORS(app)
+#
+# app.config.from_object(__name__)
 
-app.config.from_object(__name__)
-
+app = Klein()
 
 inp = None
 parameters = None
@@ -551,4 +553,4 @@ for row in cur:
     os.system('rm ' + APPS_ROOT + '/' + str(os.getpid())+row[1])
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run('localhost',5000)
