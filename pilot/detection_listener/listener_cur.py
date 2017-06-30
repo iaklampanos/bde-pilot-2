@@ -475,7 +475,7 @@ def detections(date, pollutant, metric, origin):
     return json.dumps(send)
 
 
-@app.route('/getMethods/', methods=['GET'])
+@app.route('/getMethods', methods=['GET'])
 def get_methods():
     # cur = conn.cursor()
     cur.execute("select origin,html from models;")
