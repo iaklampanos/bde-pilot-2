@@ -993,8 +993,17 @@ function getMethods(){
       if (req.readyState == XMLHttpRequest.DONE) {
         var methodlist = JSON.parse(req.responseText);
         var str = '';
+        var clustering = 0;
+        var classification = 0;
         for (var i=0;i<methodlist.length;i++){
-           str += '<input type="radio" name="cluster" value="' + methodlist[i]['origin'] + '">' + methodlist[i]['html'] + '<br>';
+           if (methodlist[i]['html'].indexOf('clustering') !== -1){
+             clustering++;
+             str += '<label class="selection-confirm" title="'+ methodlist[i]['html'] +'"><input type="radio" name="cluster" value="' + methodlist[i]['origin'] + '"> Clustering method #' + clustering + '<br>';
+           }
+           else if (methodlist[i]['html'].indexOf('classification') !== -1){
+             classification++;
+             str += '<label class="selection-confirm" title="'+ methodlist[i]['html'] +'"><input type="radio" name="cluster" value="' + methodlist[i]['origin'] + '" disabled> Classification method #' + classification + '<br>';
+           }
         }
         document.getElementById('clust').innerHTML = str;
       }
