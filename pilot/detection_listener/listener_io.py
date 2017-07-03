@@ -180,6 +180,7 @@ def worker2(batch,q,origin,items):
 
 @celery.task(bind=True)
 def class_compute(self,lat_lon,date,pollutant,metric,origin):
+    cur = conn.cursor()
     llat = []
     llon = []
     for llobj in lat_lon:
