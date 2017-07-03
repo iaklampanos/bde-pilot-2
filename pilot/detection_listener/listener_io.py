@@ -26,14 +26,12 @@ import Queue
 import itertools
 import base64
 
-from celery import Celery
+
+from flask_socketio import SocketIO
 
 app = Flask(__name__)
-app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-
-celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
-celery.conf.update(app.config)
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app)
 
 # BOOTSTRAP_SERVE_LOCAL = True
 # app = Flask(__name__)
@@ -178,9 +176,9 @@ def worker2(batch,q,origin,items):
             (row[0],1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
     q.put(weather_results)
 
-@celery.task(bind=True)
-def class_compute(self,lat_lon,date,pollutant,metric,origin):
-    cur = conn.cursor()
+@app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
+def cdetections(date, pollutant, metric, origin):
+    lat_lon = request.get_json(force=True)
     llat = []
     llon = []
     for llobj in lat_lon:
@@ -337,13 +335,6 @@ def class_compute(self,lat_lon,date,pollutant,metric,origin):
     print '6'
     time.sleep(5)
     return json.dumps(send)
-
-@app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
-def cdetections(date, pollutant, metric, origin):
-    lat_lon = request.get_json(force=True)
-    res = class_compute.delay(lat_lon,date,pollutant,metric,origin)
-    return res.get()
-
 
 
 @app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
@@ -558,4 +549,5 @@ for row in cur:
     os.system('rm ' + APPS_ROOT + '/' + str(os.getpid())+row[1])
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    # app.run(host='0.0.0.0')
+    socketio.run(app)
