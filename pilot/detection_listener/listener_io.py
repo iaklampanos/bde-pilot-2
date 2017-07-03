@@ -179,7 +179,7 @@ def worker2(batch,q,origin,items):
     q.put(weather_results)
 
 @celery.task(bind=True)
-def class_compute(lat_lon,date,pollutant,metric,origin):
+def class_compute(self,lat_lon,date,pollutant,metric,origin):
     llat = []
     llon = []
     for llobj in lat_lon:
