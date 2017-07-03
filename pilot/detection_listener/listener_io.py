@@ -339,8 +339,10 @@ def class_compute(self,lat_lon,date, pollutant, metric, origin):
 @app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def cdetections(date, pollutant, metric, origin):
     lat_lon = request.get_json(force=True)
-    res = class_compute.apply_async(args=[lat_lon,date, pollutant, metric, origin])
-    return res.get()
+    time.sleep(140)
+    return 'hello'
+    # res = class_compute.apply_async(args=[lat_lon,date, pollutant, metric, origin])
+    # return res.get()
 
 
 
