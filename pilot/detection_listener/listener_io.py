@@ -26,18 +26,11 @@ import Queue
 import itertools
 import base64
 
-# BOOTSTRAP_SERVE_LOCAL = True
-# app = Flask(__name__)
-# CORS(app)
-#
-# app.config.from_object(__name__)
-
-from flask_socketio import SocketIO
-
-
+BOOTSTRAP_SERVE_LOCAL = True
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app)
+CORS(app)
+
+app.config.from_object(__name__)
 
 
 inp = None
@@ -176,15 +169,175 @@ def worker2(batch,q,origin,items):
             (row[0],1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
     q.put(weather_results)
 
-
 @app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def cdetections(date, pollutant, metric, origin):
+    # cur = conn.cursor()
     lat_lon = request.get_json(force=True)
-    time.sleep(140)
-    return json.dumps({"msg":"hello"})
-    # res = class_compute.apply_async(args=[lat_lon,date, pollutant, metric, origin])
-    # return res.get()
-
+    llat = []
+    llon = []
+    for llobj in lat_lon:
+        llat.append(float(llobj['lat']))
+        llon.append(float(llobj['lon']))
+    cur.execute("select filename,hdfs_path,GHT,EXTRACT(EPOCH FROM TIMESTAMP '" +
+                date + "' - date)/3600/24 as diff from weather order by diff desc;")
+    row = cur.fetchone()
+    if 'mult' in origin:
+        items = cPickle.loads(str(row[2]))
+        items = items.reshape(items.shape[0],-1)
+        items = minmax_scale(items.sum(axis=0))
+    else:
+        items = cPickle.loads(str(row[2]))
+        items = items[:, 1, :, :]
+        items = minmax_scale(items.sum(axis=0))
+    det_map = np.zeros(shape=(501, 501))
+    urllib.urlretrieve(
+        'http://namenode:50070/webhdfs/v1/sc5/clusters/lat.npy?op=OPEN', 'lat.npy')
+    urllib.urlretrieve(
+        'http://namenode:50070/webhdfs/v1/sc5/clusters/lon.npy?op=OPEN', 'lon.npy')
+    filelat = np.load('lat.npy')
+    filelon = np.load('lon.npy')
+    lat_idx = []
+    lon_idx = []
+    for lat in llat:
+        lat_idx.append(np.argmin(np.abs(filelat - lat)))
+    for lon in llon:
+        lon_idx.append(np.argmin(np.abs(filelon - lon)))
+    readings = [(lat_idx[k], lon_idx[k]) for k, i in enumerate(lat_idx)]
+    for r in readings:
+        det_map[r] = 1
+    det_map = gaussian_filter(det_map, 0.3)
+    det_map = scipy.misc.imresize(det_map, (167, 167))
+    det_map = maxabs_scale(det_map)
+    for m in models:
+        if origin == m[0]:
+            if not('mult' in origin):
+                items = items.reshape(1, 1, items.shape[0], items.shape[1])
+                det_map = det_map.reshape(1, 1, det_map.shape[0], det_map.shape[1])
+                cl = m[1].get_output(items, det_map)[0].argsort()
+                cl = list(cl)
+                cl = [int(c) for c in cl if c < 18]
+                cl = cl[:3]
+            else:
+                items = items.reshape(1, 1, 3, 64, 64)
+                det_map = det_map.reshape(1, 1, det_map.shape[0], det_map.shape[1])
+                cl = m[1].get_output(items, det_map)[0].argsort()
+                cl = list(cl)
+                cl = [int(c) for c in cl if c < 18]
+                cl = cl[:3]
+    cur.execute("SELECT station from class group by station order by station;")
+    res = cur.fetchall()
+    res = [i for i in res]
+    class_name = [str(res[i][0]) for i in cl]
+    print class_name
+    dispersions = []
+    scores = []
+    for cln in class_name:
+        disp_results = []
+        cur.execute(
+            "SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station=\'" + cln + "\';")
+        res = cur.fetchall()
+        batch_size = len(res) / 4
+        idx = xrange(0,len(res),batch_size)
+        queue = Queue.Queue()
+        disp_results = []
+        threads = []
+        for i in range(4):
+            t = threading.Thread(target=worker, args=(res[idx[i]:idx[i]+batch_size],queue,pollutant,det_map))
+            threads.append(t)
+            t.start()
+            disp_results.append(queue.get())
+        disp_results = list(itertools.chain.from_iterable(disp_results))
+        print len(disp_results)
+        print disp_results[0][0]
+        # for row in res:
+        #     if pollutant == 'C137':
+        #         det = cPickle.loads(str(row[2]))
+        #     else:
+        #         det = cPickle.loads(str(row[3]))
+        #     det = scipy.misc.imresize(det, (167, 167))
+        #     det = maxabs_scale(det)
+        #     disp_results.append(
+        #         (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
+        disp_results = sorted(disp_results, key=lambda k: k[1], reverse=True)
+        print disp_results[0][0]
+        cur.execute("SELECT date,GHT from weather;")
+        res = cur.fetchall()
+        weather_results = []
+        batch_size = len(res) / 4
+        idx = xrange(0,len(res),batch_size)
+        queue = Queue.Queue()
+        threads = []
+        for i in range(4):
+            t = threading.Thread(target=worker2, args=(res[idx[i]:idx[i]+batch_size],queue,origin,items))
+            threads.append(t)
+            t.start()
+            weather_results.append(queue.get())
+        weather_results = list(itertools.chain.from_iterable(weather_results))
+        print len(weather_results)
+        print weather_results[0][0]
+        for w in weather_results:
+            if w[0] == disp_results[0][0]:
+                d = disp_results[0]
+                results = (d[0],w[1]*d[1])
+        try:
+            cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
+                        datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
+        except:
+            d = disp_results[0]
+            results = (d[0],d[1])
+            cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
+                        datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
+        row = cur.fetchone()
+        if (row[3] == None) or (row[4] == None):
+            urllib.urlretrieve(row[1], row[0])
+            dispersion_integral(row[0])
+            os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
+                      row[0] + '\\":C137 ' + row[0].split('.')[0] + '_c137.tiff')
+            os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
+                      row[0] + '\\":I131 ' + row[0].split('.')[0] + '_i131.tiff')
+            os.system('make png TIFF_IN=' +
+                      row[0].split('.')[0] + '_c137.tiff')
+            os.system('make png TIFF_IN=' +
+                      row[0].split('.')[0] + '_i131.tiff')
+            os.system('make clean')
+            with open(row[0].split('.')[0] + '_c137.json', 'r') as c137:
+                c137_json = json.load(c137)
+            with open(row[0].split('.')[0] + '_i131.json', 'r') as i131:
+                i131_json = json.load(i131)
+            cur.execute("UPDATE class SET  c137=\'" +
+                        json.dumps(c137_json) + "\' WHERE filename=\'" + row[0] + "\'")
+            cur.execute("UPDATE class SET  i131=\'" +
+                        json.dumps(i131_json) + "\' WHERE filename=\'" + row[0] + "\'")
+            conn.commit()
+            os.system('rm ' + APPS_ROOT + '/' +
+                      row[0].split('.')[0] + '_c137.json')
+            os.system('rm ' + APPS_ROOT + '/' +
+                      row[0].split('.')[0] + '_i131.json')
+            os.system('rm ' + APPS_ROOT + '/' + row[0])
+            os.system('rm ' + APPS_ROOT + '/' + 'int_' + row[0])
+            # os.system('rm ' + APPS_ROOT + '/' + res[0])
+            if pollutant == 'C137':
+                dispersion = json.dumps(c137_json)
+            else:
+                dispersion = json.dumps(i131_json)
+            dispersions.append(dispersion)
+            scores.append(round(results[1],3))
+        else:
+            # os.system('rm ' + APPS_ROOT + '/' + res[0])
+            if pollutant == 'C137':
+                dispersion = json.dumps(row[3])
+            else:
+                dispersion = json.dumps(row[4])
+            dispersions.append(dispersion)
+            scores.append(round(results[1],3))
+    scores, dispersions, class_name = zip(
+        *sorted(zip(scores, dispersions, class_name), key=lambda k: k[0], reverse=True))
+    send = {}
+    send['stations'] = class_name
+    send['scores'] = scores
+    send['dispersions'] = dispersions
+    print 'send'
+    return json.dumps(send)
 
 
 @app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
@@ -399,5 +552,4 @@ for row in cur:
     os.system('rm ' + APPS_ROOT + '/' + str(os.getpid())+row[1])
 
 if __name__ == '__main__':
-    # app.run(host='0.0.0.0',debug=True)
-    socketio.run(app)
+    app.run(host='0.0.0.0')
