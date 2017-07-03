@@ -260,33 +260,33 @@ def cdetections(date, pollutant, metric, origin):
         #         (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
         disp_results = sorted(disp_results, key=lambda k: k[1], reverse=True)
         print disp_results[0][0]
-        cur.execute("SELECT date,GHT from weather;")
-        res = cur.fetchall()
-        weather_results = []
-        batch_size = len(res) / 4
-        idx = xrange(0,len(res),batch_size)
-        queue = Queue.Queue()
-        threads = []
-        for i in range(4):
-            t = threading.Thread(target=worker2, args=(res[idx[i]:idx[i]+batch_size],queue,origin,items))
-            threads.append(t)
-            t.start()
-            weather_results.append(queue.get())
-        weather_results = list(itertools.chain.from_iterable(weather_results))
-        print len(weather_results)
-        print weather_results[0][0]
-        for w in weather_results:
-            if w[0] == disp_results[0][0]:
-                d = disp_results[0]
-                results = (d[0],w[1]*d[1])
-        try:
-            cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
-                        datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
-        except:
-            d = disp_results[0]
-            results = (d[0],d[1])
-            cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
-                        datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
+        # cur.execute("SELECT date,GHT from weather;")
+        # res = cur.fetchall()
+        # weather_results = []
+        # batch_size = len(res) / 4
+        # idx = xrange(0,len(res),batch_size)
+        # queue = Queue.Queue()
+        # threads = []
+        # for i in range(4):
+        #     t = threading.Thread(target=worker2, args=(res[idx[i]:idx[i]+batch_size],queue,origin,items))
+        #     threads.append(t)
+        #     t.start()
+        #     weather_results.append(queue.get())
+        # weather_results = list(itertools.chain.from_iterable(weather_results))
+        # print len(weather_results)
+        # print weather_results[0][0]
+        # for w in weather_results:
+        #     if w[0] == disp_results[0][0]:
+        #         d = disp_results[0]
+        #         results = (d[0],w[1]*d[1])
+        # try:
+        #     cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
+        #                 datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
+        # except:
+        d = disp_results[0]
+        results = (d[0],d[1])
+        cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
+                    datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
         row = cur.fetchone()
         if (row[3] == None) or (row[4] == None):
             urllib.urlretrieve(row[1], row[0])
