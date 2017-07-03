@@ -340,7 +340,7 @@ def class_compute(self,lat_lon,date, pollutant, metric, origin):
 def cdetections(date, pollutant, metric, origin):
     lat_lon = request.get_json(force=True)
     time.sleep(140)
-    return 'hello'
+    return {"msg":"hello"}
     # res = class_compute.apply_async(args=[lat_lon,date, pollutant, metric, origin])
     # return res.get()
 
