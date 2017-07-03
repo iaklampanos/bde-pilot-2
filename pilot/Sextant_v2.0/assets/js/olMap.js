@@ -178,7 +178,7 @@ function initMap(results, status, jqXHR) {
 		baseMapType = 'OSM';
 	}
 	else {
-		baseMapType = 'bing';
+		baseMapType = 'road';
 		bingMapsKey = results.toString();
 		bingMap = new ol.layer.Tile({
 		    preload: Infinity,

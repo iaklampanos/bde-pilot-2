@@ -757,7 +757,7 @@ function drawWindDir() {
             else{
                 var styling = new ol.style.Style({
                     stroke: new ol.style.Stroke({
-                        color: [255, 255, 255, 0.65],
+                        color: [136, 136, 136, 1],
                         width: 1
                     })
                 });
