@@ -32,7 +32,7 @@ import base64
 #
 # app.config.from_object(__name__)
 
-from celery import Celery
+from flask_socketio import SocketIO
 
 
 app = Flask(__name__)
