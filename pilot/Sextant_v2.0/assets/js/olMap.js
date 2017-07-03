@@ -998,11 +998,11 @@ function getMethods(){
         for (var i=0;i<methodlist.length;i++){
            if (methodlist[i]['html'].indexOf('clustering') !== -1){
              clustering++;
-             str += '<label title="'+ methodlist[i]['html'] +'"><input type="radio" name="cluster" value="' + methodlist[i]['origin'] + '"> Clustering method #' + clustering + '<br>';
+             str += '<label title="'+ methodlist[i]['html'] +'" style="font-weight: 0;"><input type="radio" name="cluster" value="' + methodlist[i]['origin'] + '"> Clustering method #' + clustering + '<br>';
            }
            else if (methodlist[i]['html'].indexOf('classification') !== -1){
              classification++;
-             str += '<label title="'+ methodlist[i]['html'] +'"><input type="radio" name="cluster" value="' + methodlist[i]['origin'] + '" disabled> Classification method #' + classification + '<br>';
+             str += '<label title="'+ methodlist[i]['html'] +'" style="font-weight: 0;"><input type="radio" name="cluster" value="' + methodlist[i]['origin'] + '" disabled> Classification method #' + classification + '<br>';
            }
         }
         document.getElementById('clust').innerHTML = str;
