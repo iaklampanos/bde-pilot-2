@@ -26,12 +26,32 @@ import Queue
 import itertools
 import base64
 
-BOOTSTRAP_SERVE_LOCAL = True
+# BOOTSTRAP_SERVE_LOCAL = True
+# app = Flask(__name__)
+# CORS(app)
+#
+# app.config.from_object(__name__)
+
+from celery import Celery
+
+def make_celery(app):
+    celery = Celery(app.import_name, broker=app.config['CELERY_BROKER_URL'])
+    celery.conf.update(app.config)
+    TaskBase = celery.Task
+    class ContextTask(TaskBase):
+        abstract = True
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return TaskBase.__call__(self, *args, **kwargs)
+    celery.Task = ContextTask
+    return celery
+
 app = Flask(__name__)
-CORS(app)
-
-app.config.from_object(__name__)
-
+app.config.update(
+    CELERY_BROKER_URL='redis://localhost:6379',
+    CELERY_RESULT_BACKEND='redis://localhost:6379'
+)
+celery = make_celery(app)
 
 inp = None
 parameters = None
@@ -169,10 +189,8 @@ def worker2(batch,q,origin,items):
             (row[0],1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
     q.put(weather_results)
 
-@app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
-def cdetections(date, pollutant, metric, origin):
-    # cur = conn.cursor()
-    lat_lon = request.get_json(force=True)
+@celery.task(bind=True)
+def class_compute(self,lat_lon,date, pollutant, metric, origin):
     llat = []
     llon = []
     for llobj in lat_lon:
@@ -260,33 +278,33 @@ def cdetections(date, pollutant, metric, origin):
         #         (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
         disp_results = sorted(disp_results, key=lambda k: k[1], reverse=True)
         print disp_results[0][0]
-        # cur.execute("SELECT date,GHT from weather;")
-        # res = cur.fetchall()
-        # weather_results = []
-        # batch_size = len(res) / 4
-        # idx = xrange(0,len(res),batch_size)
-        # queue = Queue.Queue()
-        # threads = []
-        # for i in range(4):
-        #     t = threading.Thread(target=worker2, args=(res[idx[i]:idx[i]+batch_size],queue,origin,items))
-        #     threads.append(t)
-        #     t.start()
-        #     weather_results.append(queue.get())
-        # weather_results = list(itertools.chain.from_iterable(weather_results))
-        # print len(weather_results)
-        # print weather_results[0][0]
-        # for w in weather_results:
-        #     if w[0] == disp_results[0][0]:
-        #         d = disp_results[0]
-        #         results = (d[0],w[1]*d[1])
-        # try:
-        #     cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
-        #                 datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
-        # except:
-        d = disp_results[0]
-        results = (d[0],d[1])
-        cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
-                    datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
+        cur.execute("SELECT date,GHT from weather;")
+        res = cur.fetchall()
+        weather_results = []
+        batch_size = len(res) / 4
+        idx = xrange(0,len(res),batch_size)
+        queue = Queue.Queue()
+        threads = []
+        for i in range(4):
+            t = threading.Thread(target=worker2, args=(res[idx[i]:idx[i]+batch_size],queue,origin,items))
+            threads.append(t)
+            t.start()
+            weather_results.append(queue.get())
+        weather_results = list(itertools.chain.from_iterable(weather_results))
+        print len(weather_results)
+        print weather_results[0][0]
+        for w in weather_results:
+            if w[0] == disp_results[0][0]:
+                d = disp_results[0]
+                results = (d[0],w[1]*d[1])
+        try:
+            cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
+                        datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
+        except:
+            d = disp_results[0]
+            results = (d[0],d[1])
+            cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
+                        datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
         row = cur.fetchone()
         if (row[3] == None) or (row[4] == None):
             urllib.urlretrieve(row[1], row[0])
@@ -338,6 +356,14 @@ def cdetections(date, pollutant, metric, origin):
     send['dispersions'] = dispersions
     print 'send'
     return json.dumps(send)
+
+@app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
+def cdetections(date, pollutant, metric, origin):
+    lat_lon = request.get_json(force=True)
+    res = class_compute.delay(lat_lon,date, pollutant, metric, origin)
+    res.wait()
+    return res.get()
+
 
 
 @app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
