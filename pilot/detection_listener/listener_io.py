@@ -333,7 +333,6 @@ def cdetections(date, pollutant, metric, origin):
     send['scores'] = scores
     send['dispersions'] = dispersions
     print '6'
-    time.sleep(5)
     return json.dumps(send)
 
 
