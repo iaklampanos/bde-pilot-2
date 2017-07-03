@@ -178,7 +178,7 @@ def worker2(batch,q,origin,items):
             (row[0],1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
     q.put(weather_results)
 
-@celery.task(bind=True):
+@celery.task(bind=True)
 def class_compute(self,lat_lon,date, pollutant, metric, origin):
     llat = []
     llon = []
