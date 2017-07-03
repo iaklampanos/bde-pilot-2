@@ -340,7 +340,7 @@ def class_compute(self,lat_lon,date,pollutant,metric,origin):
 @app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def cdetections(date, pollutant, metric, origin):
     lat_lon = request.get_json(force=True)
-    class_compute.delay(lat_lon,date,pollutant,metric,origin)
+    res = class_compute.delay(lat_lon,date,pollutant,metric,origin)
     return res.get()
 
 
