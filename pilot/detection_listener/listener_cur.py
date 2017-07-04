@@ -61,7 +61,6 @@ def dispersion_integral(dataset_name):
         else:
             dsout.createDimension(dname, len(
                 dim) if not dim.isunlimited() else None)
-    app.logger.debug(dsout.dimensions)
     for v_name, varin in dataset.variables.iteritems():
         if v_name == 'C137':
             outVar = dsout.createVariable(
@@ -227,11 +226,9 @@ def cdetections(date, pollutant, metric, origin):
     res = cur.fetchall()
     res = [i for i in res]
     class_name = [str(res[i][0]) for i in cl]
-    app.logger.debug(class_name)
     dispersions = []
     scores = []
     for cln in class_name:
-        app.logger.debug(cln+'1')
         disp_results = []
         cur.execute(
             "SELECT date,hdfs_path,c137_pickle,i131_pickle from class where station=\'" + cln + "\';")
@@ -245,7 +242,6 @@ def cdetections(date, pollutant, metric, origin):
             det = maxabs_scale(det)
             disp_results.append(
                 (row[0], 1 - scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
-        app.logger.debug(cln+'2')
         disp_results = sorted(disp_results, key=lambda k: k[1], reverse=True)
         cur.execute("SELECT date,GHT from weather;")
         res = cur.fetchall()
@@ -261,7 +257,6 @@ def cdetections(date, pollutant, metric, origin):
                 citems = minmax_scale(citems.sum(axis=0))
             weather_results.append(
                 (row[0],1 - scipy.spatial.distance.cosine(items.flatten(), citems.flatten())))
-        app.logger.debug(cln+'3')
         for w in weather_results:
             if w[0] == disp_results[0][0]:
                 d = disp_results[0]
@@ -275,7 +270,6 @@ def cdetections(date, pollutant, metric, origin):
             cur.execute("select filename,hdfs_path,date,c137,i131 from class where  date=TIMESTAMP \'" +
                         datetime.datetime.strftime(results[0], '%m-%d-%Y %H:%M:%S') + "\' and station='" + cln + "';")
         row = cur.fetchone()
-        app.logger.debug(cln+'4')
         if (row[3] == None) or (row[4] == None):
             urllib.urlretrieve(row[1], str(os.getpid())+row[0])
             dispersion_integral(str(os.getpid())+row[0])
@@ -318,14 +312,12 @@ def cdetections(date, pollutant, metric, origin):
                 dispersion = json.dumps(row[4])
             dispersions.append(dispersion)
             scores.append(round(results[1],3))
-    app.logger.debug('5')
     scores, dispersions, class_name = zip(
         *sorted(zip(scores, dispersions, class_name), key=lambda k: k[0], reverse=True))
     send = {}
     send['stations'] = class_name
     send['scores'] = scores
     send['dispersions'] = dispersions
-    app.logger.debug('6')
     time.sleep(5)
     return json.dumps(send)
 
@@ -401,7 +393,6 @@ def detections(date, pollutant, metric, origin):
     results = sorted(results, key=lambda k: k[1] if k[
                      1] > 0 else float('inf'), reverse=False)
     top3 = results[:3]
-    app.logger.debug(top3)
     top3_names = [top[0] for top in top3]
     top3_scores = [round(top[1], 3) for top in top3]
     stations = []
@@ -525,7 +516,6 @@ inp = 'parameters.json'
 models = []
 cur.execute("SELECT * from models")
 for row in cur:
-    app.logger.debug(str(os.getpid())+row[1])
     urllib.urlretrieve(row[2], str(os.getpid())+row[1])
     config = utils.load(str(os.getpid())+row[1])
     m = config.next()
