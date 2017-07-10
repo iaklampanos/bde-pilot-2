@@ -913,6 +913,8 @@ a.eventResourceURL {
     border-width: 0px;
     border-color: lightgrey;
     background-color: rgba(185, 106, 139, 0.7);
+    background-size: 100%;
+    background-image: url('/Sextant_v2.0/assets/images/Ic_loop_48px.svg.png')
 
 }
 

@@ -61,40 +61,48 @@ function addInteraction() {
 }
 
 function PaddInteractionMainMap() {
-    if (trigger) {
-        trigger = false;
-        document.getElementById('drawExtentMainMap').style.backgroundColor = 'rgba(185, 106, 139, 0.7)';
-        // document.getElementById('map_canvas').style.display = 'block';
-        // document.getElementById('map_canvas2').style.display = 'none';
-        vector.getSource().clear();
-        clearDispersion();
-        clearWindDir();
-        drawStations();
-        mapFilter.removeInteraction(draw);
-        addSelect()
-    } else {
-        clearDispersion();
-        trigger = true;
-        document.getElementById('drawExtentMainMap').style.backgroundColor = 'rgba(38, 166, 154, 0.7)';
-        // vector.getSource().clear();
-        removeSelect();
-        var value = 'Point';
-
-        draw = new ol.interaction.Draw({
-            source: source,
-            type: /** @type {ol.geom.GeometryType} */ (value),
-            //geometryFunction: geometryFunction,
-            //maxPoints: maxPoints
-        });
-        mapFilter.addInteraction(draw);
-        draw.on('drawend', function(evt) {
-            var feature = evt.feature;
-            var p = feature.getGeometry();
-            feature.setId("detection"+ol.proj.transform(p.getCoordinates(), 'EPSG:3857', 'EPSG:4326'))
-            // ol.proj.transform(p.getCoordinates(), 'EPSG:3857', 'EPSG:4326');
-        });
-
-    }
+    mapF();
+    vector.getSource().clear();
+    clearDispersion();
+    clearWindDir();
+    drawStations();
+    drawNetworks();
+    removeSelect();
+    addSelect();
+    // if (trigger) {
+    //     trigger = false;
+    //     document.getElementById('drawExtentMainMap').style.backgroundColor = 'rgba(185, 106, 139, 0.7)';
+    //     // document.getElementById('map_canvas').style.display = 'block';
+    //     // document.getElementById('map_canvas2').style.display = 'none';
+    //     vector.getSource().clear();
+    //     clearDispersion();
+    //     clearWindDir();
+    //     drawStations();
+    //     mapFilter.removeInteraction(draw);
+    //     addSelect()
+    // } else {
+    //     clearDispersion();
+    //     trigger = true;
+    //     document.getElementById('drawExtentMainMap').style.backgroundColor = 'rgba(38, 166, 154, 0.7)';
+    //     // vector.getSource().clear();
+    //     removeSelect();
+    //     var value = 'Point';
+    //
+    //     draw = new ol.interaction.Draw({
+    //         source: source,
+    //         type: /** @type {ol.geom.GeometryType} */ (value),
+    //         //geometryFunction: geometryFunction,
+    //         //maxPoints: maxPoints
+    //     });
+    //     mapFilter.addInteraction(draw);
+    //     draw.on('drawend', function(evt) {
+    //         var feature = evt.feature;
+    //         var p = feature.getGeometry();
+    //         feature.setId("detection"+ol.proj.transform(p.getCoordinates(), 'EPSG:3857', 'EPSG:4326'))
+    //         // ol.proj.transform(p.getCoordinates(), 'EPSG:3857', 'EPSG:4326');
+    //     });
+    //
+    // }
 }
 
 function mapF() {

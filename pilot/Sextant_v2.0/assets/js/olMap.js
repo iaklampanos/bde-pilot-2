@@ -101,6 +101,7 @@ var defaultVectorStyle = new ol.style.Style({
 	})
 });
 
+
 /*
  * var iconStyle = new ol.style.Style({
         image: new ol.style.Icon(({
@@ -218,6 +219,7 @@ function initialize() {
 	loadBingsSearchEvents();
 	loadBingsSearchLoadMap();
   drawStations();
+  drawNetworks();
   getMethods();
 	animateLegendPanel();
 	if (!map){
@@ -632,7 +634,6 @@ function initialize() {
     document.getElementsByClassName('timeline-band-1')[0].style.backgroundColor = 'rgba(255,255,255,0)';
     mapF();
     addSelect();
-
 }
 
 function clearOverlayFeatures() {
@@ -948,20 +949,20 @@ function drawStations(){
   req.send();
 }
 
-
-
-
-
 var select = new ol.interaction.Select({
     condition: ol.events.condition.click,
     filter: function(feature) {
         try{
            var id = feature.getId();
-           var s = document.getElementById('stat_info');
-             for(i=0; i<s.childNodes.length; i++) {
-               if (s.childNodes[i].id == id)
-               {return true;}
-             }
+           if (id.indexOf('NETWORK_') === -1) {
+             var s = document.getElementById('stat_info');
+               for(i=0; i<s.childNodes.length; i++) {
+                 if (s.childNodes[i].id == id)
+                 {return true;}
+               }
+           } else{
+             return true;
+           }
         }
         catch (e) { return false;}
     }
@@ -971,14 +972,92 @@ function addSelect(){
   animateStatsPanel();
   mapFilter.addInteraction(select);
   select.on('select', function(e) {
-    // alert(e.selected[0].getId());
-    var s = document.getElementById('stat_info');
-    for(i=0; i<s.childNodes.length; i++) {
-    s.childNodes[i].style.display = 'none';
+    var id = e.selected[0].getId();
+    if (id.indexOf('NETWORK_') === -1) {
+      var s = document.getElementById('stat_info');
+      for(i=0; i<s.childNodes.length; i++) {
+      s.childNodes[i].style.display = 'none';
+      }
+      var div = document.getElementById(e.selected[0].getId());
+      div.style.display = 'block';
+    }else{
+      var id = e.selected[0].getId();
+      var style = new ol.style.Style({
+      	stroke: new ol.style.Stroke({
+              color: [255, 153, 0, 1],
+              width: 1
+          }),
+          fill: new ol.style.Fill({
+              color: [255, 153, 0, 0.4]
+          }),/*
+          image: new ol.style.Icon({
+          	src: "./assets/images/map-pin-md.png",
+          	scale: 0.1,
+          	crossOrigin: 'anonymous'
+          })*/
+      	image: new ol.style.Circle({
+      	    fill: new ol.style.Fill({
+      	      color: [255, 153, 0, 0.4]
+      	    }),
+      	    radius: 5,
+      	    stroke: new ol.style.Stroke({
+      	      color: [255, 153, 0, 1],
+      	      width: 1
+      	    })
+      	})
+      });
+      e.selected[0].setStyle(style);
+      e.selected[0].setId("detection_"+id);
     }
-    var div = document.getElementById(e.selected[0].getId());
-    div.style.display = 'block';
   });
+}
+
+function drawNetworks(){
+  var req = new XMLHttpRequest();
+  req.open("GET", "./data/rnetworks.json", true);
+  req.setRequestHeader('Content-Type', 'plain/text; charset=utf-8');
+  req.onreadystatechange = function() {
+      if (req.readyState == XMLHttpRequest.DONE) {
+          var stations = JSON.parse(req.responseText);
+          inner = '';
+          // chart = document.getElementById('stat_info');
+          for (var i = 0; i < stations.length; i++) {
+            lnglt = [parseFloat(stations[i]["lon"]),parseFloat(stations[i]["lat"])];
+            var feat = new ol.Feature(new ol.geom.Point(ol.proj.transform(lnglt, 'EPSG:4326', 'EPSG:3857')));
+            feat.setId('NETWORK_'+stations[i]['title'])
+             var style = new ol.style.Style({
+                  	stroke: new ol.style.Stroke({
+                          color: [96, 96, 96, 1],
+                          width: 1
+                      }),
+                      fill: new ol.style.Fill({
+                          color: [96, 96, 96, 0.4]
+                      }),/*
+                      image: new ol.style.Icon({
+                      	src: "./assets/images/map-pin-md.png",
+                      	scale: 0.1,
+                      	crossOrigin: 'anonymous'
+                      })*/
+                  	image: new ol.style.Circle({
+                  	    fill: new ol.style.Fill({
+                  	      color: [96, 96, 96, 0.4]
+                  	    }),
+                  	    radius: 5,
+                  	    stroke: new ol.style.Stroke({
+                  	      color: [96, 96, 96, 1],
+                  	      width: 1
+                  	    })
+                  	})
+            });
+            feat.setStyle(style);
+            var vec = vector.getSource();
+            vec.addFeature(feat);
+            // inner += '<div id="'+stations[i]['name']+'" style="display:none;"><h2>Station name: '+stations[i]['name']+' ('+stations[i]['country']+')</h2>Coordinates (latitude,longitude): '+stations[i]['lat']+', '+stations[i]['lon']+'<br><img src="'+stations[i]['image']+'" id="plantimg" height="150" width="300"></img></div>';
+          }
+          // chart.innerHTML = inner;
+      }
+  }
+  req.send();
 }
 
 function removeSelect(){
