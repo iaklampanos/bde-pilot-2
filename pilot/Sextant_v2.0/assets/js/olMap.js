@@ -949,26 +949,27 @@ function drawStations(){
   req.send();
 }
 
-var select = new ol.interaction.Select({
-    condition: ol.events.condition.click,
-    filter: function(feature) {
-        try{
-           var id = feature.getId();
-           if (id.indexOf('NETWORK_') === -1) {
-             var s = document.getElementById('stat_info');
-               for(i=0; i<s.childNodes.length; i++) {
-                 if (s.childNodes[i].id == id)
-                 {return true;}
-               }
-           } else{
-             return true;
-           }
-        }
-        catch (e) { return false;}
-    }
-});
+var select;
 
 function addSelect(){
+  select = new ol.interaction.Select({
+      condition: ol.events.condition.click,
+      filter: function(feature) {
+          try{
+             var id = feature.getId();
+             if (id.indexOf('NETWORK_') === -1) {
+               var s = document.getElementById('stat_info');
+                 for(i=0; i<s.childNodes.length; i++) {
+                   if (s.childNodes[i].id == id)
+                   {return true;}
+                 }
+             } else{
+               return true;
+             }
+          }
+          catch (e) { return false;}
+      }
+  });
   animateStatsPanel();
   mapFilter.addInteraction(select);
   select.on('select', function(e) {

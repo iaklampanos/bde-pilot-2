@@ -61,13 +61,12 @@ function addInteraction() {
 }
 
 function PaddInteractionMainMap() {
-    mapF();
     vector.getSource().clear();
     clearDispersion();
     clearWindDir();
+    removeSelect();
     drawStations();
     drawNetworks();
-    removeSelect();
     addSelect();
     // if (trigger) {
     //     trigger = false;
@@ -88,12 +87,12 @@ function PaddInteractionMainMap() {
     //     removeSelect();
     //     var value = 'Point';
     //
-    //     draw = new ol.interaction.Draw({
-    //         source: source,
-    //         type: /** @type {ol.geom.GeometryType} */ (value),
-    //         //geometryFunction: geometryFunction,
-    //         //maxPoints: maxPoints
-    //     });
+        // draw = new ol.interaction.Draw({
+        //     source: source,
+        //     type: /** @type {ol.geom.GeometryType} */ (value),
+        //     //geometryFunction: geometryFunction,
+        //     //maxPoints: maxPoints
+        // });
     //     mapFilter.addInteraction(draw);
     //     draw.on('drawend', function(evt) {
     //         var feature = evt.feature;
@@ -131,6 +130,57 @@ function mapF() {
   //mapFilter.getView().setZoom(currentZoom);
 }
 
+
+function drawCircle(){
+  var value = 'Circle';
+  var geometryFunction = function(coordinates, opt_geometry) {
+      var extent = ol.extent.boundingExtent(coordinates);
+      var geometry = opt_geometry || new ol.geom.Polygon(null);
+      geometry.setCoordinates([[
+        ol.extent.getBottomLeft(extent),
+        ol.extent.getBottomRight(extent),
+        ol.extent.getTopRight(extent),
+        ol.extent.getTopLeft(extent),
+        ol.extent.getBottomLeft(extent)
+      ]]);
+      return geometry;
+  };
+  draw = new ol.interaction.Draw({
+          source: source,
+          type: /** @type {ol.geom.GeometryType} */ (value),
+          geometryFunction: geometryFunction
+  });
+  mapFilter.addInteraction(draw);
+  draw.on('drawend', function(evt) {
+        var extent = evt.feature.getGeometry().getExtent();
+        var style = new ol.style.Style({
+        	stroke: new ol.style.Stroke({
+                color: [255, 153, 0, 1],
+                width: 1
+            }),
+            fill: new ol.style.Fill({
+                color: [255, 153, 0, 0.4]
+            }),
+        	image: new ol.style.Circle({
+        	    fill: new ol.style.Fill({
+        	      color: [255, 153, 0, 0.4]
+        	    }),
+        	    radius: 5,
+        	    stroke: new ol.style.Stroke({
+        	      color: [255, 153, 0, 1],
+        	      width: 1
+        	    })
+        	})
+        });
+        vector.getSource().forEachFeatureIntersectingExtent(extent,function(feature) {
+          var id = feature.getId();
+          feature.setStyle(style);
+          feature.setId("detection_"+id);
+        });
+        mapFilter.removeInteraction(draw);
+      });
+}
+
 function addInteractionMainMap() {
     if (trigger) {
         trigger = false;
@@ -155,11 +205,11 @@ function addInteractionMainMap() {
         points.setMaxFeatures(501);
         //var currentView = map.getView().getCenter();
         //var currentZoom = map.getView().getZoom();
-        mapFilter = new ol.Map({
-            layers: [baseType, vector, points],
-            target: 'map_canvas2',
-            view: map.getView()
-        });
+        // mapFilter = new ol.Map({
+        //     layers: [baseType, vector, points],
+        //     target: 'map_canvas2',
+        //     view: map.getView()
+        // });
         //mapFilter.getView().setZoom(currentZoom);
 
         var geometryFunction, maxPoints;
