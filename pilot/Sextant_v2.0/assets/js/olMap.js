@@ -970,7 +970,6 @@ function addSelect(){
           catch (e) { return false;}
       }
   });
-  animateStatsPanel();
   mapFilter.addInteraction(select);
   select.on('select', function(e) {
     var id = e.selected[0].getId();
@@ -1007,6 +1006,8 @@ function addSelect(){
       	    })
       	})
       });
+      var div = document.getElementById(id);
+      div.style.display = 'block';
       e.selected[0].setStyle(style);
       e.selected[0].setId("detection_"+id);
     }
@@ -1021,7 +1022,7 @@ function drawNetworks(){
       if (req.readyState == XMLHttpRequest.DONE) {
           var stations = JSON.parse(req.responseText);
           inner = '';
-          // chart = document.getElementById('stat_info');
+          chart = document.getElementById('net_info');
           for (var i = 0; i < stations.length; i++) {
             lnglt = [parseFloat(stations[i]["lon"]),parseFloat(stations[i]["lat"])];
             var feat = new ol.Feature(new ol.geom.Point(ol.proj.transform(lnglt, 'EPSG:4326', 'EPSG:3857')));
@@ -1053,9 +1054,9 @@ function drawNetworks(){
             feat.setStyle(style);
             var vec = vector.getSource();
             vec.addFeature(feat);
-            // inner += '<div id="'+stations[i]['name']+'" style="display:none;"><h2>Station name: '+stations[i]['name']+' ('+stations[i]['country']+')</h2>Coordinates (latitude,longitude): '+stations[i]['lat']+', '+stations[i]['lon']+'<br><img src="'+stations[i]['image']+'" id="plantimg" height="150" width="300"></img></div>';
+            inner += '<div id="'+'NETWORK_'+stations[i]['title']+'" style="display:none;">'+stations[i]['title']+' ('+stations[i]['country']+')<br>Coordinates (latitude,longitude): '+stations[i]['lat']+', '+stations[i]['lon']+'<br><br></div>';
           }
-          // chart.innerHTML = inner;
+          chart.innerHTML = inner;
       }
   }
   req.send();

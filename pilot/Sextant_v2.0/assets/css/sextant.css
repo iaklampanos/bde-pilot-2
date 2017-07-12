@@ -913,8 +913,28 @@ a.eventResourceURL {
     border-width: 0px;
     border-color: lightgrey;
     background-color: rgba(185, 106, 139, 0.7);
+
+}
+
+#drawExtentMainMap2 {
+  position: absolute;
+
+	width: 22px;
+	height: 22px;
+
+	top: 50px;
+	left: 3px;
+
+	color:lightgrey;
+
+	border-radius: 0px 0px 3px 3px;
+
+    border-style: solid;
+    border-width: 0px;
+    border-color: lightgrey;
+    background-color: rgba(185, 106, 139, 0.7);
     background-size: 100%;
-    background-image: url('/Sextant_v2.0/assets/images/Ic_loop_48px.svg.png')
+    background-image: url('/Sextant_v2.0/assets/images/Trash_font_awesome.svg.png')
 
 }
 

@@ -60,48 +60,54 @@ function addInteraction() {
     });
 }
 
+function mapClear(){
+  vector.getSource().clear();
+  clearDispersion();
+  clearWindDir();
+  removeSelect();
+  drawStations();
+  drawNetworks();
+  addSelect();
+}
+
+function pointClear(){
+   vector.getSource().clear();
+   removeSelect();
+   drawStations();
+   drawNetworks();
+   addSelect();
+}
+
 function PaddInteractionMainMap() {
-    vector.getSource().clear();
-    clearDispersion();
-    clearWindDir();
-    removeSelect();
-    drawStations();
-    drawNetworks();
-    addSelect();
-    // if (trigger) {
-    //     trigger = false;
-    //     document.getElementById('drawExtentMainMap').style.backgroundColor = 'rgba(185, 106, 139, 0.7)';
-    //     // document.getElementById('map_canvas').style.display = 'block';
-    //     // document.getElementById('map_canvas2').style.display = 'none';
-    //     vector.getSource().clear();
-    //     clearDispersion();
-    //     clearWindDir();
-    //     drawStations();
-    //     mapFilter.removeInteraction(draw);
-    //     addSelect()
-    // } else {
-    //     clearDispersion();
-    //     trigger = true;
-    //     document.getElementById('drawExtentMainMap').style.backgroundColor = 'rgba(38, 166, 154, 0.7)';
-    //     // vector.getSource().clear();
-    //     removeSelect();
-    //     var value = 'Point';
-    //
-        // draw = new ol.interaction.Draw({
-        //     source: source,
-        //     type: /** @type {ol.geom.GeometryType} */ (value),
-        //     //geometryFunction: geometryFunction,
-        //     //maxPoints: maxPoints
-        // });
-    //     mapFilter.addInteraction(draw);
-    //     draw.on('drawend', function(evt) {
-    //         var feature = evt.feature;
-    //         var p = feature.getGeometry();
-    //         feature.setId("detection"+ol.proj.transform(p.getCoordinates(), 'EPSG:3857', 'EPSG:4326'))
-    //         // ol.proj.transform(p.getCoordinates(), 'EPSG:3857', 'EPSG:4326');
-    //     });
-    //
-    // }
+    if (trigger) {
+        trigger = false;
+        document.getElementById('drawExtentMainMap').style.backgroundColor = 'rgba(185, 106, 139, 0.7)';
+        // document.getElementById('map_canvas').style.display = 'block';
+        // document.getElementById('map_canvas2').style.display = 'none';
+        mapFilter.removeInteraction(draw);
+    } else {
+        clearDispersion();
+        trigger = true;
+        document.getElementById('drawExtentMainMap').style.backgroundColor = 'rgba(38, 166, 154, 0.7)';
+        // vector.getSource().clear();
+        removeSelect();
+        var value = 'Point';
+
+        draw = new ol.interaction.Draw({
+            source: source,
+            type: /** @type {ol.geom.GeometryType} */ (value),
+            //geometryFunction: geometryFunction,
+            //maxPoints: maxPoints
+        });
+        mapFilter.addInteraction(draw);
+        draw.on('drawend', function(evt) {
+            var feature = evt.feature;
+            var p = feature.getGeometry();
+            feature.setId("detection"+ol.proj.transform(p.getCoordinates(), 'EPSG:3857', 'EPSG:4326'))
+            // ol.proj.transform(p.getCoordinates(), 'EPSG:3857', 'EPSG:4326');
+        });
+
+    }
 }
 
 function mapF() {
@@ -145,6 +151,7 @@ function drawCircle(){
       ]]);
       return geometry;
   };
+  removeSelect();
   draw = new ol.interaction.Draw({
           source: source,
           type: /** @type {ol.geom.GeometryType} */ (value),
@@ -174,10 +181,13 @@ function drawCircle(){
         });
         vector.getSource().forEachFeatureIntersectingExtent(extent,function(feature) {
           var id = feature.getId();
+          var div = document.getElementById(id);
+          div.style.display = 'block';
           feature.setStyle(style);
           feature.setId("detection_"+id);
         });
         mapFilter.removeInteraction(draw);
+        addSelect();
       });
 }
 

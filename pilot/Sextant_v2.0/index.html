@@ -2222,13 +2222,13 @@
       <div id="coordinates"></div>
 
       <div id="drawMapChangeset">
-        <button id="drawExtentMainMap" onClick="PaddInteractionMainMap()" title="Reload Map"></button>
-        <button id="popChangesetModal" onClick="drawCircle()" title="Draw Detection Circle"><i id="myPencil" class="fa fa-pencil" aria-hidden="true"></i></button>
+        <button id="drawExtentMainMap" onClick="PaddInteractionMainMap()" title="Draw Detection"><i id="myPencil" class="fa fa-map-marker fa-lg" aria-hidden="true"></i></button>
+        <button id="popChangesetModal" onClick="drawCircle()" title="Draw Detection Box"><i id="myPencil" class="fa fa-pencil" aria-hidden="true"></i></button>
         <!---
       	<button id="drawExtentMainMap" onClick="addInteractionMainMap()" title="Draw Extent"><i id="myPencil" class="fa fa-pencil" aria-hidden="true"></i></button>
         <button id="popChangesetModal" onClick="loadMapChangeset()" title="Change Detection" data-toggle="modal" data-target="#modalChangeset"><i id="myTarget" class="fa fa-crosshairs" aria-hidden="true"></i></button>
-        <button id="popEventsModal" onClick="loadMapEvents()" title="Event Detection" data-toggle="modal" data-target="#modalEventDetection"><i id="myTargetEvent" class="fa fa-bullseye" aria-hidden="true"></i></button>
         --->
+        <button id="drawExtentMainMap2" onClick="pointClear()" title="Deselect all points"></button>
       </div>
 
       <div id="tmContainer">
@@ -2302,6 +2302,9 @@
 
 	  	  <div id="statsChart">
           <div id="stat_info" style="height:100%;width:100%;border:1px solid #ccc;font:16px/26px Georgia, Garamond, Serif;overflow:auto;"></div>
+	  	  </div>
+        <div id="statsChart" style="left:63%;">
+          <div id="net_info" style="height:100%;width:50%;border:1px solid #ccc;font:16px/26px Georgia, Garamond, Serif;overflow:auto;"></div>
 	  	  </div>
 	  </div>
 
@@ -2442,10 +2445,10 @@
                     <form action="" id="clust">
                     </form>
                   </div>
-                  <h4>Estimation metric</h4>
-                  <div class="col-md-11 col-sm-11">
+                  <h4 style="display:none;">Estimation metric</h4>
+                  <div class="col-md-11 col-sm-11" style="display:none;">
                     <form action="" id="est_met">
-                      <input type="radio" name="estimation_metric" value="cosine">cosine<br>
+                      <input type="radio" name="estimation_metric" value="cosine" checked="checked">cosine<br>
                     </form>
                   </div>
               </div>
