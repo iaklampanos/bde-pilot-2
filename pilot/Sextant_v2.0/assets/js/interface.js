@@ -623,33 +623,37 @@ function estimateLocation() {
                 req.open("POST", listener_ip+"detections/" + timestamp + "/" + pollcheckedVal() + "/" + metriccheckedVal() + "/" + methodcheckedVal(), true);
                 req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
                 req.send(JSON.stringify(locs));
+                req.onloadend = function() {
+                    resp = JSON.parse(req.responseText);
+                    if (resp["scores"][0]-resp["scores"][2] !=0  && metriccheckedVal() == 'cosine') {
+                          res_str = 'Estimated sources: <br> <table style="border-collapse: collapse;"><tr><th style="padding: 8px;">Station<br>name</th><th style="padding: 8px;">Score</th></tr>';
+                          for (var i=0; i<resp['scores'].length;i++){
+                              if (resp['scores'][i] != 0) {
+                                res_str += '<tr><td style="padding: 8px;"><a onClick="drawDispersion('+i+')">'+resp['stations'][i]+'</a></td><td style="padding: 8px;">'+ resp['scores'][i] +'</td></tr>';
+                              }
+                          }
+                          res_str += '</table>';
+                          res.innerHTML = res_str;
+                          loader.style.display = 'none';
+                          eheader.style.display = 'block';
+                      }
+                    else {
+                           alert('Either detection points are out of grid or there is no overlap between detection points and calculated dispersions');
+                           loader.style.display = 'none';
+                           eheader.style.display = 'block';
+                        }
+                  };
               }
               else {
                 var req = new XMLHttpRequest();
                 req.open("POST", listener_ip+"class_detections/" + timestamp + "/" + pollcheckedVal() + "/" + metriccheckedVal() + "/" + methodcheckedVal(), true);
                 req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
                 req.send(JSON.stringify(locs));
+                req.onloadend = function() {
+                    resp = JSON.parse(req.responseText);
+                    checkTaskProgress(resp['id']);
+                };
               }
-              req.onloadend = function() {
-                  resp = JSON.parse(req.responseText);
-              if (resp["scores"][0]-resp["scores"][2] !=0  && metriccheckedVal() == 'cosine') {
-                    res_str = 'Estimated sources: <br> <table style="border-collapse: collapse;"><tr><th style="padding: 8px;">Station<br>name</th><th style="padding: 8px;">Score</th></tr>';
-                    for (var i=0; i<resp['scores'].length;i++){
-                        if (resp['scores'][i] != 0) {
-                          res_str += '<tr><td style="padding: 8px;"><a onClick="drawDispersion('+i+')">'+resp['stations'][i]+'</a></td><td style="padding: 8px;">'+ resp['scores'][i] +'</td></tr>';
-                        }
-                    }
-                    res_str += '</table>';
-                    res.innerHTML = res_str;
-                    loader.style.display = 'none';
-                    eheader.style.display = 'block';
-                }
-              else {
-                     alert('Either detection points are out of grid or there is no overlap between detection points and calculated dispersions');
-                     loader.style.display = 'none';
-                     eheader.style.display = 'block';
-                  }
-              };
       }else {
           alert('You should mark some detection points before estimating the source\'s location');
       }
@@ -657,6 +661,46 @@ function estimateLocation() {
         alert('You should choose a weather file, pollutant & clustering method before estimating the source\'s location');
     }
 
+}
+
+function checkTaskProgress(id){
+  var loader = document.getElementById('loader_ic');
+  var eheader = document.getElementById('estimate');
+  var res = document.getElementById('source_result');
+  var req = new XMLHttpRequest();
+  req.open("GET", listener_ip+"status/" + id, true);
+  req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+  req.send();
+  req.onloadend = function() {
+      resp = JSON.parse(req.responseText);
+      if (resp['state'] != 'PENDING' && resp['state'] != 'PROGRESS') {
+           if ('result' in resp) {
+               resp = JSON.parse(resp['result']);
+               if (resp["scores"][0]-resp["scores"][2] !=0  && metriccheckedVal() == 'cosine') {
+                     res_str = 'Estimated sources: <br> <table style="border-collapse: collapse;"><tr><th style="padding: 8px;">Station<br>name</th><th style="padding: 8px;">Score</th></tr>';
+                     for (var i=0; i<resp['scores'].length;i++){
+                         if (resp['scores'][i] != 0) {
+                           res_str += '<tr><td style="padding: 8px;"><a onClick="drawDispersion('+i+')">'+resp['stations'][i]+'</a></td><td style="padding: 8px;">'+ resp['scores'][i] +'</td></tr>';
+                         }
+                     }
+                     res_str += '</table>';
+                     res.innerHTML = res_str;
+                     loader.style.display = 'none';
+                     eheader.style.display = 'block';
+                 }
+                 else {
+                        alert('Either detection points are out of grid or there is no overlap between detection points and calculated dispersions');
+                        loader.style.display = 'none';
+                        eheader.style.display = 'block';
+                  }
+           }
+      }
+      else{
+        setTimeout(function() {
+                   checkTaskProgress(id);
+               }, 2000);
+      }
+  };
 }
 
 function drawDispersion(idx){

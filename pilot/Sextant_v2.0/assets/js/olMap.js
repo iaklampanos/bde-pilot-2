@@ -1083,7 +1083,7 @@ function getMethods(){
            }
            else if (methodlist[i]['html'].indexOf('classification') !== -1){
              classification++;
-             str += '<label title="'+ methodlist[i]['html'] +'" style="font-weight: 0;"><input type="radio" name="cluster" value="' + methodlist[i]['origin'] + '" disabled> Classification method #' + classification + '<br>';
+             str += '<label title="'+ methodlist[i]['html'] +'" style="font-weight: 0;"><input type="radio" name="cluster" value="' + methodlist[i]['origin'] + '"> Classification method #' + classification + '<br>';
            }
         }
         document.getElementById('clust').innerHTML = str;
