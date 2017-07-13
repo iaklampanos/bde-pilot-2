@@ -8,12 +8,20 @@ import psycopg2
 import os
 import dataset_utils as utils
 import urllib
+from celery import Celery
 
-BOOTSTRAP_SERVE_LOCAL = True
 app = Flask(__name__)
-CORS(app)
+app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 
-app.config.from_object(__name__)
+celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+celery.conf.update(app.config)
+
+# BOOTSTRAP_SERVE_LOCAL = True
+# app = Flask(__name__)
+# CORS(app)
+#
+# app.config.from_object(__name__)
 
 
 inp = None
@@ -26,11 +34,47 @@ cur = None
 dpass = getpass.getpass()
 APPS_ROOT = os.path.dirname(os.path.abspath(__file__))
 
+@celery.task(bind=True)
+def go_async(self, lat_lon, date, pollutant, metric, origin):
+    return api_methods.cdetections(cur, models, lat_lon, date, pollutant, metric, origin)
+
 
 @app.route('/class_detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
 def cdetections(date, pollutant, metric, origin):
     lat_lon = request.get_json(force=True)
-    return api_methods.cdetections(cur, models, lat_lon, date, pollutant, metric, origin)
+    task = go_async.apply_async(lat_lon, date, pollutant, metric, origin)
+    return jsonify({}), 202, {'Location': url_for('taskstatus',
+                                                  task_id=task.id)}
+
+@app.route('/status/<task_id>')
+def taskstatus(task_id):
+    task = long_task.AsyncResult(task_id)
+    if task.state == 'PENDING':
+        // job did not start yet
+        response = {
+            'state': task.state,
+            'current': 0,
+            'total': 1,
+            'status': 'Pending...'
+        }
+    elif task.state != 'FAILURE':
+        response = {
+            'state': task.state,
+            'current': task.info.get('current', 0),
+            'total': task.info.get('total', 1),
+            'status': task.info.get('status', '')
+        }
+        if 'result' in task.info:
+            response['result'] = task.info['result']
+    else:
+        # something went wrong in the background job
+        response = {
+            'state': task.state,
+            'current': 1,
+            'total': 1,
+            'status': str(task.info),  # this is the exception raised
+        }
+    return jsonify(response)
 
 
 @app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
