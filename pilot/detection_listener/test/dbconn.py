@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 import json
 import base64
 
-class DBConn:
+class DBConn(object):
 
     instance = None
     engine = None
@@ -14,7 +14,7 @@ class DBConn:
                  base64.b64decode(dbpar['pass']) + '@' + dbpar['host'] + '/'
                  + dbpar['dbname'] + '')
         engine.connect()
-        engine = engine
+        self.engine = engine
 
     def __new__(cls):
         if DBConn.instance is None:
