@@ -5,6 +5,7 @@ import base64
 class DBConn:
 
     instance = None
+    engine = None
 
     def __init__(self):
         with open('db_info.json', 'r') as data_file:
@@ -13,7 +14,7 @@ class DBConn:
                  base64.b64decode(dbpar['pass']) + '@' + dbpar['host'] + '/'
                  + dbpar['dbname'] + '')
         engine.connect()
-        instance = engine
+        engine = engine
 
     def __new__(cls):
         if DBConn.instance is None:
