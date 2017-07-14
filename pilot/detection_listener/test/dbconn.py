@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 import json
+import base64
 
 class DBConn:
 
