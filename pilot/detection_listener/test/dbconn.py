@@ -15,6 +15,7 @@ class DBConn(object):
                  + dbpar['dbname'] + '')
         engine.connect()
         self.engine = engine
+        instance = engine
 
     def __new__(cls):
         if DBConn.instance is None:
