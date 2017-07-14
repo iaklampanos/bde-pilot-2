@@ -91,16 +91,8 @@ def getMethods():
 def getClosestWeather(date, level):
     return api_methods.get_closest(cur, date, level)
 
-with open('db_info.json', 'r') as data_file:
-     dbpar = json.load(data_file)
-# conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
-#                         "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + base64.b64decode(dbpar['pass']) + "'")
-from sqlalchemy import create_engine
-engine = create_engine('postgresql+psycopg2://'+dbpar['user']+':'+base64.b64decode(dbpar['pass'])+'@'+dbpar['host']+'/'+dbpar['dbname']+'')
-engine.connect()
-cur = engine
-from multiprocessing.util import register_after_fork
-register_after_fork(engine, engine.dispose)
+from dbconn import DBConn
+cur = DBConn()
 inp = 'parameters.json'
 models = []
 res = cur.execute("SELECT * from models")

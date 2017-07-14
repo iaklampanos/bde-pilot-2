@@ -22,13 +22,11 @@ import threading
 import Queue
 import base64
 import itertools
+from dbconn import DBConn
 
 APPS_ROOT = os.path.dirname(os.path.abspath(__file__))
 
-with open('db_info.json', 'r') as data_file:
-    dbpar = json.load(data_file)
-conn = psycopg2.connect("dbname='" + dbpar['dbname'] + "' user='" + dbpar['user'] +
-                        "' host='" + dbpar['host'] + "' port='" + dbpar['port'] + "'password='" + base64.b64decode(dbpar['pass']) + "'")
+conn = DBConn()
 
 def dispersion_integral(dataset_name):
     dataset = Dataset(APPS_ROOT + '/' + dataset_name, 'r')
