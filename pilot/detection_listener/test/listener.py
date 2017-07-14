@@ -92,7 +92,7 @@ def getClosestWeather(date, level):
     return api_methods.get_closest(cur, date, level)
 
 from dbconn import DBConn
-cur = DBConn()
+cur = DBConn().engine
 inp = 'parameters.json'
 models = []
 res = cur.execute("SELECT * from models")
