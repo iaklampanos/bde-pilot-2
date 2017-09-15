@@ -1,0 +1,70 @@
+&share
+ wrf_core = 'ARW',
+ max_dom = 2,
+ start_date = '1988-09-01_00:00:00','1988-09-01_00:00:00','1988-09-01_00:00:00','1986-05-01_00:00:00', 
+ end_date   = '1988-09-03_00:00:00','1988-09-01_00:00:00','1988-09-01_00:00:00','1986-05-31_18:00:00', 
+ interval_seconds = 21600
+ io_form_geogrid = 2,
+/
+
+&geogrid
+ parent_id         =   1, 1, 2,
+ parent_grid_ratio =   1, 5, 3,
+ i_parent_start    =   1, 5, 5,
+ j_parent_start    =   1, 5, 5,
+ e_we              =   65, 276, 493,
+ e_sn              =   65, 276, 493,,
+ geog_data_res     =  '30s','30s','30s',
+ dx = 75000,
+ dy = 75000,
+ map_proj = 'lambert',
+ ref_lat   =  53.00,
+ ref_lon   =  15.00,
+ truelat1  =  38.00,
+ truelat2  =  68.00,
+ stand_lon =  15.00,
+ geog_data_path = './geog/'
+ opt_geogrid_tbl_path         = './',
+/
+
+&ungrib
+ out_format = 'WPS',
+ prefix = './FILE',
+/
+
+&metgrid
+ fg_name = './FILE'
+ opt_metgrid_tbl_path = './',
+ io_form_metgrid = 2, 
+/
+
+&mod_levs
+press_pa = 201300,
+200100,
+100000,
+97500,
+95000,
+92500,
+90000,
+85000,
+80000,
+75000,
+70000,
+65000,
+60000,
+55000,
+50000,
+45000,
+40000,
+35000,
+30000,
+25000,
+20000,
+15000,
+10000,
+7000,
+5000,
+3000,
+2000,
+1000
+/
