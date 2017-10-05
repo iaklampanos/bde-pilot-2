@@ -11,7 +11,7 @@ $ docker-compose up -d
 #### RUN
 ```sh
 After data ingestion
-$ docker -D exec -it sc5_sextant bash /bde-pilot-2/backend/sc5_backend.sh
+$ docker -D exec -it sc5_sextant bash /pilot-sc5-cycle3/backend/sc5_backend.sh
 ```
 
 #### Info

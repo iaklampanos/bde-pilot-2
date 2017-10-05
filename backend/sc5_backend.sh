@@ -1,6 +1,6 @@
 #!/bin/bash
-cp /bde-pilot-2/data_ingest/db_info.json .
-cd /bde-pilot-2/backend/
+cp /pilot-sc5-cycle3/data_ingest/db_info.json .
+cd /pilot-sc5-cycle3/backend/
 rm -f *.zip
 killall -9 redis-server
 killall -9 celery

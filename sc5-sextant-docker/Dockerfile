@@ -10,13 +10,13 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /pilot_data
-RUN git clone http://github.com/davidath/bde-pilot-2.git
+RUN git clone https://github.com/big-data-europe/pilot-sc5-cycle3
 RUN apt-get remove -y python-setuptools
 RUN wget https://bootstrap.pypa.io/get-pip.py
 RUN python get-pip.py
 RUN rm -rf /tomcat/webapps/Sextant_v2.0/
-RUN cp -Rp /bde-pilot-2/sc5-sextant-docker/Sextant_v2.0/ /tomcat/webapps/
-RUN pip install -r /bde-pilot-2/requirements.txt
+RUN cp -Rp /pilot-sc5-cycle3/sc5-sextant-docker/Sextant_v2.0/ /tomcat/webapps/
+RUN pip install -r /pilot-sc5-cycle3/requirements.txt
 RUN pip install --upgrade https://github.com/Lasagne/Lasagne/archive/master.zip
 RUN pip install --upgrade https://github.com/Theano/Theano/archive/master.zip
 
