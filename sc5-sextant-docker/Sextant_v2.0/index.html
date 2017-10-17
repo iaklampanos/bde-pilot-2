@@ -2433,6 +2433,37 @@
       <div id="explorePanel" data-toggle="collapse" data-target="#exploreBody" aria-expanded="false" aria-controls="exploreBody">
       <div class="page-header">
               <div class="row" style="margin-right:5px">
+                <div class="col-md-11 col-sm-11">
+                    <h4>Station ban</h4>
+                    <div class="col-md-11 col-sm-11">
+                      <form action="" id="stat_ban">
+                        <input type="checkbox" name="station" value="ALMARAZ">ALMARAZ
+                        <input type="checkbox" name="station" value="CERNAVODA">CERNAVODA
+                        <input type="checkbox" name="station" value="COFRENTES">COFRENTES <br>
+                        <input type="checkbox" name="station" value="DOEL">DOEL
+                        <input type="checkbox" name="station" value="EMSLAND">EMSLAND
+                        <input type="checkbox" name="station" value="FORSMARK">FORSMARK<br>
+                        <input type="checkbox" name="station" value="GROHNDE">GROHNDE
+                        <input type="checkbox" name="station" value="HEYSHAM">HEYSHAM
+                        <input type="checkbox" name="station" value="HINKLEY">HINKLEY<br>
+                        <input type="checkbox" name="station" value="KHMELNITSKY">KHMELNITSKY
+                        <input type="checkbox" name="station" value="KOZLODUY">KOZLODUY
+                        <input type="checkbox" name="station" value="KRSKO">KRSKO<br>
+                        <input type="checkbox" name="station" value="LOVIISA">LOVIISA
+                        <input type="checkbox" name="station" value="PAKS">PAKS
+                        <input type="checkbox" name="station" value="RINGHALS">RINGHALS<br>
+                        <input type="checkbox" name="station" value="SIZEWELL">SIZEWELL
+                        <input type="checkbox" name="station" value="VANDELLOS">VANDELLOS
+                        <input type="checkbox" name="station" value="SUKRAINE">SUKRAINE
+                        <input type="checkbox" name="station" value="CHERNOBYL">CHERNOBYL
+                      </form>
+                    </div>
+                    <div class="col-md-11 col-sm-11">
+                      <form action="" id="compare">
+                        <input type="radio" name="comp" value="fbf">Frame by Frame
+                        <input type="radio" name="comp" value="cf">Cluster first<br>
+                      </form>
+                    </div>
               <div class="col-md-11 col-sm-11">
                   <h4>Pollutant</h4>
                   <div class="col-md-11 col-sm-11">
@@ -2547,7 +2578,7 @@
     $( "#datepicker" ).datepicker({
       changeMonth: true,
       changeYear: true,
-      yearRange: "1994:1995",
+      yearRange: "1986:1995",
       defaultDate: "1994-01-01",
       dateFormat: 'yy-mm-dd'
     });

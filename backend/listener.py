@@ -92,10 +92,13 @@ def taskstatus(task_id):
     return jsonify(response)
 
 # Service handling the clustering methods
-@app.route('/detections/<date>/<pollutant>/<metric>/<origin>', methods=['POST'])
+@app.route('/detections/<date>/<pollutant>/<metric>/<origin>/<comp>', methods=['POST'])
 def detections(date, pollutant, metric, origin):
     lat_lon = request.get_json(force=True)
-    return api_methods.detections(cur, models, lat_lon, date, pollutant, metric, origin)
+    if comp != 'fbf':
+        return api_methods.detections(cur, models, lat_lon, date, pollutant, metric, origin)
+    else:
+        return api_methods.fbf_detections(cur, models, lat_lon, date, pollutant, metric, origin)
 
 # Service that returns the ingested models/methods for source estimation
 @app.route('/getMethods/', methods=['GET'])

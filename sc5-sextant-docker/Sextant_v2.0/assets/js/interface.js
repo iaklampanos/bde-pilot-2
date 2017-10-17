@@ -2,7 +2,7 @@
  * Zoom to all layers
  */
 
-var listener_ip = "http://143.233.226.33:8084/";
+var listener_ip = "http://127.0.0.1:5000/";
 
 function zoomToAll(mode) {
     var first = true;
@@ -566,7 +566,7 @@ function isMetricChecked() {
     return false;
 }
 
-function metriccheckedVal() {
+function compVal() {
     var rlist = document.getElementById('est_met');
     for (var i = 0; i < rlist.length; i++) {
         if (rlist[i].checked) {
@@ -575,6 +575,47 @@ function metriccheckedVal() {
     }
 }
 
+
+function iscompChecked() {
+    var rlist = document.getElementById('compare');
+    for (var i = 0; i < rlist.length; i++) {
+        if (rlist[i].checked) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function metriccheckedVal() {
+    var rlist = document.getElementById('compare');
+    for (var i = 0; i < rlist.length; i++) {
+        if (rlist[i].checked) {
+            return rlist[i].value;
+        }
+    }
+}
+
+function getBans() {
+    var ret = [];
+    var rlist = document.getElementById('stat_ban');
+    for (var i = 0; i < rlist.length; i++) {
+        if (rlist[i].checked) {
+            ret.push(rlist[i].value);
+        }
+    }
+    return ret;
+}
+
+function isBanned(bans, station){
+   for (var i=0;i<bans.length;i++)
+   {
+      if (bans[i] == station)
+      {
+        return true;
+      }
+   }
+   return false;
+}
 
 
 var geo = undefined;
@@ -597,7 +638,7 @@ function estimateLocation() {
     drawStations();
     var res = document.getElementById('source_result');
     res.innerHTML = '';
-    if (isPollChecked() && isMethodChecked() && !!date) {
+    if (isPollChecked() && isMethodChecked() && !!date && iscompChecked()) {
         var locs = [];
         vector.getSource().forEachFeature(function(feature) {
             try {
@@ -625,15 +666,16 @@ function estimateLocation() {
             uri.style.display = 'none';
             if (methodcheckedVal().indexOf('classification') == -1) {
                 var req = new XMLHttpRequest();
-                req.open("POST", listener_ip + "detections/" + timestamp + "/" + pollcheckedVal() + "/cosine/" + methodcheckedVal(), true);
+                req.open("POST", listener_ip + "detections/" + timestamp + "/" + pollcheckedVal() + "/cosine/" + methodcheckedVal() + '/' + compVal(), true);
                 req.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
                 req.send(JSON.stringify(locs));
                 req.onloadend = function() {
                     resp = JSON.parse(req.responseText);
+                    bans = getBans();
                     if (resp["scores"][0] - resp["scores"][2] != 0) {
                         res_str = 'Estimated sources: <br> <table style="border-collapse: collapse;"><tr><th style="padding: 8px;">Station<br>name</th><th style="padding: 8px;">Score</th><th style="padding: 8px;">Draw</th></tr>';
                         for (var i = 0; i < resp['scores'].length; i++) {
-                            if (resp['scores'][i] != 0) {
+                            if (resp['scores'][i] != 0 && !isBanned(bans,resp['stations'][i])) {
                                 res_str += '<tr><td style="padding: 8px;">'+resp['stations'][i] + '</td><td style="padding: 8px;">' + resp['scores'][i] + '</td><td style="padding: 8px;"><form id="ui_form_'+i+'"><button type="button" class="btn btn-primary" onclick="drawDispersion('+i+')">Plume</button><button type="button" class="btn btn-primary" onclick="checkPop('+i+')">Affected areas</button></form><div id="loader_ic_'+i+'" class="loader" style="display:none;"></div></td></tr>';
                                 }
                         }
