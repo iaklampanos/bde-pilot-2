@@ -567,7 +567,7 @@ function isMetricChecked() {
 }
 
 function compVal() {
-    var rlist = document.getElementById('est_met');
+    var rlist = document.getElementById('compare');
     for (var i = 0; i < rlist.length; i++) {
         if (rlist[i].checked) {
             return rlist[i].value;

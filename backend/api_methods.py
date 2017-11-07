@@ -428,7 +428,7 @@ def cdetections(cur, models, lat_lon, date, pollutant, metric, origin):
 # This function loads weather data, there are two different functions for loading
 # weather data due to the fact that clustering and classification methods expect
 # weather data in different shape or need different preprocess.
-def load_weather_data(cur, date, origin):
+def fbf_load_weather_data(cur, date, origin):
     # Safe query is used due to multiple workers accessing the same database
     # and connection.
     print date
@@ -457,6 +457,32 @@ def load_weather_data(cur, date, origin):
             1, 1, it_shape[0], 1, it_shape[1], it_shape[2])
     return items,res
 
+def load_weather_data(cur, date, origin):
+    # Safe query is used due to multiple workers accessing the same database
+    # and connection.
+    resp = DBConn().safequery("select filename,hdfs_path,GHT,EXTRACT(EPOCH FROM TIMESTAMP '" +
+                date + "' - date)/3600/24 as diff from weather group by date\
+                having EXTRACT(EPOCH FROM TIMESTAMP '" + date + "' - date)/3600/24 >= 0 order by diff;")
+    res = resp.fetchone()
+    # If model has mult in its title then we need multiple levels (500,700,900 hPa)
+    # of the GHT variable.
+    if 'mult' in origin:
+        # Load weather as a pickled object
+        items = cPickle.loads(str(res[2]))
+        it_shape = items.shape
+        items = np.average(items,0)
+        items = items.reshape(1, 1, 1, it_shape[
+                              1], it_shape[2], it_shape[3])
+        # items = items.reshape(1, 1, items.shape[0], items.shape[
+        #                       1], items.shape[2], items.shape[3])
+    else:
+        # GHT 700hPa
+        items = cPickle.loads(str(res[2]))
+        items = items[:, 1, :, :]
+        items = items.reshape(
+            1, 1, items.shape[0], 1, items.shape[1], items.shape[2])
+    return items,res
+
 def fbf(current_weather):
     global_dist=[]
     for d in os.listdir(APPS_ROOT):
@@ -482,7 +508,7 @@ def load_cluster_date(items, models, origin):
     ds.twod_transformation()
     # Normalization
     ds.normalize()
-    # # Find selected model
+    # Find selected model
     for m in models:
         # If anything else then k-means, then we need to re run the clustering
         # model and get the output of the hidden layer for centroid comparison
@@ -503,9 +529,16 @@ def load_cluster_date(items, models, origin):
                     clust_obj._desc_date[cd[0][0]])
     cd = [(utils.reconstruct_date(clust_obj._desc_date[c[0]]),c[1]) for c in cd]
     cd = sorted(cd, key=lambda k: k[1],reverse=False)
-    return cluster_date,cd
+    print cd
+    return cluster_date
 
 def fbf_load_cluster_date(items, models, origin):
+    for m in models:
+        if origin == m[0]:
+            if 'kmeans' not in m[0]:
+                clust_obj = m[2]
+            else:
+                clust_obj = m[1]
     cd = []
     cdd = fbf(items)
     cd_scale = np.array(cdd)
@@ -514,6 +547,8 @@ def fbf_load_cluster_date(items, models, origin):
     print cd_scale
     for pos,i in enumerate(cdd):
         cd.append((cdd[pos][0],cd_scale[pos]))
+    # cd = [(utils.reconstruct_date(clust_obj._desc_date[c[0]]),c[1]) for c in cd]
+    # cd = sorted(cd, key=lambda k: k[1],reverse=False)
     return cd[0][0],cd
 
 def calc_station_scores(cur, lat_lon, timestamp, origin, descriptor, pollutant):
@@ -537,10 +572,10 @@ def calc_station_scores(cur, lat_lon, timestamp, origin, descriptor, pollutant):
             det_obj.get_indices()
             det_obj.create_detection_map()
         # Compare detection map to real dispersion
-        if det_obj.calc() != 0:
-            results.append((row[2], det_obj.cosine()))
-        else:
-            results.append((row[2], 0))
+        # if det_obj.calc() != 0:
+        results.append((row[2], det_obj.cosine()))
+        # else:
+        #    results.append((row[2], 0))
     # Return all results
     return results
 
@@ -772,7 +807,7 @@ def fbf_detections(cur, models, lat_lon, date, pollutant, metric, origin):
     # Load weather variable
     (items,res) = fbf_load_weather_data(cur, date, origin)
     # Get best cluster candidate
-    (cluster_date,cluster_dates) = load_cluster_date(items, models, origin)
+    (cluster_date,cluster_dates) = fbf_load_cluster_date(items, models, origin)
     descriptor = origin.split('_')
     descriptor = descriptor[len(descriptor) - 1]
     timestamp = datetime.datetime.strptime(cluster_date, '%y-%m-%d-%H')
@@ -811,9 +846,11 @@ def detections(cur, models, lat_lon, date, pollutant, metric, origin):
     # Sort scores
     results = sorted(results, key=lambda k: k[1] if k[
                      1] > 0 else float('inf'), reverse=False)
+    print results
+    top3 = results
     # Get top 3 stations
-    top3 = results[:3]
-    print top3
+    # top3 = results[:3]
+    # print top3
     # Turn top 3 station dispersion to visualization friendly form
     scores, dispersions, stations = get_top3_stations(cur, top3, timestamp, origin, pollutant)
     # Convert results to JSON form

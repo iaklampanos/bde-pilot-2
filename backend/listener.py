@@ -93,7 +93,7 @@ def taskstatus(task_id):
 
 # Service handling the clustering methods
 @app.route('/detections/<date>/<pollutant>/<metric>/<origin>/<comp>', methods=['POST'])
-def detections(date, pollutant, metric, origin):
+def detections(date, pollutant, metric, origin, comp):
     lat_lon = request.get_json(force=True)
     if comp != 'fbf':
         return api_methods.detections(cur, models, lat_lon, date, pollutant, metric, origin)

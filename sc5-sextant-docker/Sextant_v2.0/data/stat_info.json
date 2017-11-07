@@ -107,4 +107,11 @@
     "name": "HEYSHAM",
     "country":"ENGLAND",
     "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Heysham_Power_Station%2C_from_dockside.jpg/1024px-Heysham_Power_Station%2C_from_dockside.jpg"
-}]
+}, {
+    "lat": "51.389",
+    "lon": "30.094",
+    "name": "CHERNOBYL",
+    "country":"UKRAINE",
+    "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Heysham_Power_Station%2C_from_dockside.jpg/1024px-Heysham_Power_Station%2C_from_dockside.jpg"
+}
+]

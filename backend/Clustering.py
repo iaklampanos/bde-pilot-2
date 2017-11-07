@@ -243,7 +243,7 @@ class Clustering(Dataset):
     #                 plot_dir=outp, plot_name='clustering_frequency', plot_format='jpeg',
     #                 plot_width='2048', plot_height='1536')
 
-    def centroids_distance(self, dataset, features_first=False):
+    def fbf_centroids_distance(self, dataset, features_first=False):
         # Returns the distances of each cluster centroid from given
         # dataset in ascending order.
         items = dataset.get_items()
@@ -252,6 +252,17 @@ class Clustering(Dataset):
         # dists = [(x, np.linalg.norm(self._centroids[x]-items))
         #          for x in range(0, self._n_clusters)]
         dists = [(x, scipy.spatial.distance.cosine(self._centroids[x],items))
+                 for x in range(0, self._n_clusters)]
+        dists = sorted(dists, key=lambda x: x[1], reverse=False)
+        return dists
+
+    def centroids_distance(self, dataset, features_first=False):
+        # Returns the distances of each cluster centroid from given
+        # dataset in ascending order.
+        items = dataset.get_items()
+        if features_first:
+            items = np.transpose(items)
+        dists = [(x, np.linalg.norm(self._centroids[x]-items))
                  for x in range(0, self._n_clusters)]
         dists = sorted(dists, key=lambda x: x[1], reverse=False)
         return dists
