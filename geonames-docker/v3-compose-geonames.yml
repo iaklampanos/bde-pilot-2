@@ -1,0 +1,35 @@
+version: "3"
+
+services:
+                                                                                                                                                                                                                                                                                                                                                                                                                                                
+  strabon:                                                                                                                                                                                                                                   
+    image: bde2020/strabon:1.0.1                                                                                                                                                                                                             
+    ports:                                                                                                                                                                                                                                   
+      - "8298:8080"                                                                                                                                                                                                                          
+    volumes:                                                                                                                                                                                                                                 
+      - /root/sc5-geonames/strabon-dump:/dumps                                                                                                                                                                                                       
+    depends_on:                                                                                                                                                                                                                              
+      - postgis                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                             
+  postgis:                                                                                                                                                                                                                                   
+    image: bde2020/postgis                                                                                                                                                                                                                   
+                                                                                                                                                                                                                                             
+  geonames:                                                                                                                                                                                                                                  
+    image: semagrow/virtuoso:bench-7.1                                                                                                                                                                                                       
+    volumes:                                                                                                                                                                                                                            
+      - geonames-data:/data                                                                                                                                                                                                                        
+    environment:
+      - DOWNLOAD_URL=http://users.iit.demokritos.gr/~gmouchakis/geonames-europe-populated-compact.tar.gz
+
+  cassandra:
+    image: bde2020/cassandra
+
+  semagrow:
+    image: semagrow/semagrow:test-eval-simple-old
+    ports:
+      - 9999:8080
+    volumes:
+      - /root/sc5-geonames/semagrow-metadata:/etc/default/semagrow
+
+volumes:
+  geonames-data:

@@ -27,6 +27,7 @@ import Queue
 import itertools
 from dbconn import DBConn
 from itertools import chain
+import re
 
 APPS_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -428,35 +429,6 @@ def cdetections(cur, models, lat_lon, date, pollutant, metric, origin):
 # This function loads weather data, there are two different functions for loading
 # weather data due to the fact that clustering and classification methods expect
 # weather data in different shape or need different preprocess.
-def fbf_load_weather_data(cur, date, origin):
-    # Safe query is used due to multiple workers accessing the same database
-    # and connection.
-    print date
-    resp = DBConn().safequery("select filename,hdfs_path,GHT,EXTRACT(EPOCH FROM TIMESTAMP '" +
-                date + "' - date)/3600/24 as diff from weather group by date\
-                having EXTRACT(EPOCH FROM TIMESTAMP '" + date + "' - date)/3600/24 >= 0 order by diff;")
-    res = resp.fetchone()
-    # If model has mult in its title then we need multiple levels (500,700,900 hPa)
-    # of the GHT variable.
-    if 'mult' in origin:
-        # Load weather as a pickled object
-        print res[0]
-        items = cPickle.loads(str(res[2]))
-        items = items.reshape(12,3,64,64)
-        # it_shape = items.shape
-        # items = np.average(items,0)
-        # items = items.reshape(1, 1, 1, it_shape[
-        #                       1], it_shape[2], it_shape[3])
-    else:
-        # GHT 700hPa
-        items = cPickle.loads(str(res[2]))
-        items = items[:, 1, :, :]
-        it_shape = items.shape
-        items = np.average(items,0)
-        items = items.reshape(
-            1, 1, it_shape[0], 1, it_shape[1], it_shape[2])
-    return items,res
-
 def load_weather_data(cur, date, origin):
     # Safe query is used due to multiple workers accessing the same database
     # and connection.
@@ -469,12 +441,8 @@ def load_weather_data(cur, date, origin):
     if 'mult' in origin:
         # Load weather as a pickled object
         items = cPickle.loads(str(res[2]))
-        it_shape = items.shape
-        items = np.average(items,0)
-        items = items.reshape(1, 1, 1, it_shape[
-                              1], it_shape[2], it_shape[3])
-        # items = items.reshape(1, 1, items.shape[0], items.shape[
-        #                       1], items.shape[2], items.shape[3])
+        items = items.reshape(1, 1, items.shape[0], items.shape[
+                              1], items.shape[2], items.shape[3])
     else:
         # GHT 700hPa
         items = cPickle.loads(str(res[2]))
@@ -482,21 +450,6 @@ def load_weather_data(cur, date, origin):
         items = items.reshape(
             1, 1, items.shape[0], 1, items.shape[1], items.shape[2])
     return items,res
-
-def fbf(current_weather):
-    global_dist=[]
-    for d in os.listdir(APPS_ROOT):
-        if d.endswith('.npy'):
-           descriptor = np.load(d).reshape(14,3,64,64)
-           local_dists = []
-           for i in xrange(len(current_weather)):
-               for lvl in xrange(3):
-                       local_dists.append(np.linalg.norm(current_weather[i,lvl,:]-descriptor[i,lvl,:]))
-           local_dists = np.array(local_dists)
-           local_dists = np.mean(local_dists)
-           global_dist.append((d.split('.npy')[0],local_dists))
-    global_dist = sorted(global_dist, key=lambda x: x[1], reverse=False)
-    return global_dist
 
 # This function return the closest cluster based on the real weather choosen by
 # the user.
@@ -527,30 +480,10 @@ def load_cluster_date(items, models, origin):
                 cd = clust_obj.centroids_distance(ds, features_first=True)
                 cluster_date = utils.reconstruct_date(
                     clust_obj._desc_date[cd[0][0]])
-    cd = [(utils.reconstruct_date(clust_obj._desc_date[c[0]]),c[1]) for c in cd]
-    cd = sorted(cd, key=lambda k: k[1],reverse=False)
-    print cd
     return cluster_date
 
-def fbf_load_cluster_date(items, models, origin):
-    for m in models:
-        if origin == m[0]:
-            if 'kmeans' not in m[0]:
-                clust_obj = m[2]
-            else:
-                clust_obj = m[1]
-    cd = []
-    cdd = fbf(items)
-    cd_scale = np.array(cdd)
-    cd_scale = cd_scale[:,1].astype(np.float32)
-    cd_scale = cd_scale / np.max(cd_scale)
-    print cd_scale
-    for pos,i in enumerate(cdd):
-        cd.append((cdd[pos][0],cd_scale[pos]))
-    # cd = [(utils.reconstruct_date(clust_obj._desc_date[c[0]]),c[1]) for c in cd]
-    # cd = sorted(cd, key=lambda k: k[1],reverse=False)
-    return cd[0][0],cd
-
+# This functions calculates scores for each station of a certain cluster by comparing
+# every dispersion with the constructed detection point map.
 def calc_station_scores(cur, lat_lon, timestamp, origin, descriptor, pollutant):
     # Load GRID
     (filelat, filelon, llat, llon) = load_lat_lon(lat_lon)
@@ -572,86 +505,12 @@ def calc_station_scores(cur, lat_lon, timestamp, origin, descriptor, pollutant):
             det_obj.get_indices()
             det_obj.create_detection_map()
         # Compare detection map to real dispersion
-        # if det_obj.calc() != 0:
-        results.append((row[2], det_obj.cosine()))
-        # else:
-        #    results.append((row[2], 0))
+        if det_obj.calc() != 0:
+            results.append((row[2], det_obj.cosine()))
+        else:
+            results.append((row[2], 0))
     # Return all results
     return results
-
-# This functions calculates scores for each station of a certain cluster by comparing
-# every dispersion with the constructed detection point map.
-def fbf_calc_station_scores(cur, lat_lon, timestamp, origin, descriptor, pollutant, cluster_dates):
-    # Load GRID
-    (filelat, filelon, llat, llon) = load_lat_lon(lat_lon)
-    det_obj = Detection(np.zeros(shape=(501, 501)),
-                        filelat, filelon, llat, llon)
-    det_obj.get_indices()
-    det_obj.create_detection_map(resize=False)
-    det_map = det_obj._det_map
-    results = []
-    new_cd = []
-    for cd in cluster_dates:
-        print cd[0],cd[1]
-        cluster_date = datetime.datetime.strptime(cd[0],'%y-%m-%d-%H')
-        cluster_date = datetime.datetime.strftime(cluster_date, '%m-%d-%Y %H:%M:%S')
-        resp = DBConn().safequery(
-            "SELECT station,hdfs_path,c137_pickle,i131_pickle from cluster where date=TIMESTAMP \'" + cluster_date + "\';")
-        res = resp.fetchall()
-        disp_results = []
-        for row in res:
-            if pollutant == 'C137':
-                det = cPickle.loads(str(row[2]))
-            else:
-                det = cPickle.loads(str(row[3]))
-            # Preprocessing of dispersion
-            det_shape = det.shape
-            det = maxabs_scale(det.flatten(),axis=1)
-            det = det.reshape(det_shape)
-            # Get distance between real dispersion and detection points
-            disp_results.append((row[0], scipy.spatial.distance.cosine(det.flatten(), det_map.flatten())))
-        results = sorted(disp_results, key=lambda k: k[1], reverse=False)
-        for r in results:
-            if (r[1] < 1.0) and (r[0] != 'GARONA' and r[0] != 'IGNALINA'):
-                new_cd.append((cd[0]+'_'+r[0],r[1]))
-        # print results[0]
-        # new_cd.append((cd[0],cd[1]*results[0]))
-    new_cd = sorted(new_cd, key=lambda k: k[1] , reverse=False)
-    print new_cd
-    new_cd2 = []
-    for c in new_cd:
-        if not new_cd2:
-            new_cd2.append(c)
-        else:
-            test = [i[0].split('_')[1] for i in new_cd2]
-            if not(c[0].split('_')[1] in test):
-                new_cd2.append(c)
-    print '------------------------------------------------'
-    return new_cd2
-    # Get all dispersion of every station for a certain cluster
-    # res = DBConn().safequery("select filename,hdfs_path,station,c137_pickle,i131_pickle from cluster where date=TIMESTAMP \'" +
-    #             datetime.datetime.strftime(timestamp, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "' and descriptor='" + descriptor + "'")
-    # # For each dispersion/station
-    # for row in res:
-    #     # Create detection point map
-    #     if pollutant == 'C137':
-    #         det_obj = Detection(cPickle.loads(
-    #             str(row[3])), filelat, filelon, llat, llon)
-    #         det_obj.get_indices()
-    #         det_obj.create_detection_map()
-    #     else:
-    #         det_obj = Detection(cPickle.loads(
-    #             str(row[4])), filelat, filelon, llat, llon)
-    #         det_obj.get_indices()
-    #         det_obj.create_detection_map()
-    #     # Compare detection map to real dispersion
-    #     if det_obj.calc() != 0:
-    #         results.append((row[2], det_obj.cosine()))
-    #     else:
-    #         results.append((row[2], 0))
-    # # Return all results
-    # return results
-
 
 # This function selects the top 3 most close stations to a dispersion and converts
 # their dispersions into GeoJSON form for visualization
@@ -725,112 +584,6 @@ def get_top3_stations(cur, top3, timestamp, origin, pollutant):
                     dispersions.append(json.dumps(row[4]))
     return scores, dispersions, stations
 
-# This function selects the top 3 most close stations to a dispersion and converts
-# their dispersions into GeoJSON form for visualization
-def fbf_get_top3_stations(cur, top3, timestamp, origin, pollutant):
-    # Get top 3 names and scores
-    top3_names = [top[0] for top in top3]
-    top3_scores = [round(top[1], 3) for top in top3]
-    stations = []
-    scores = []
-    dispersions = []
-    # Find their database records
-    for t in top3:
-        localtime = datetime.datetime.strptime(t[0].split('_')[0], '%y-%m-%d-%H')
-        resp = DBConn().safequery("select filename,hdfs_path,station,c137,i131 from cluster where date=TIMESTAMP \'" +
-                    datetime.datetime.strftime(localtime, '%m-%d-%Y %H:%M:%S') + "\' and origin='" + origin + "' and station='"+t[0].split('_')[1]+"'")
-        rows = resp.fetchall()
-        # For each dispersion in a certain cluster
-        for row in rows:
-            # If the name is in top 3
-            # if row[2] in top3_names:
-                # Check if dispersion visualization form has already been cached
-            if (row[3] == None) or (row[4] == None):
-                # If not, retrieve original NetCDF file
-                urllib.urlretrieve(row[1], row[0])
-                # Convert 72 hour dispersion into a single frame
-                dispersion_integral(row[0])
-                # Convert dispersion frame to tiff (new tiff still withholds geographical info)
-                os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
-                          row[0] + '\\":C137 ' + row[0].split('.')[0] + '_c137.tiff')
-                os.system('gdal_translate NETCDF:\\"' + APPS_ROOT + '/' + 'int_' +
-                          row[0] + '\\":I131 ' + row[0].split('.')[0] + '_i131.tiff')
-                # Turn HYSPLIT grid into EPSG:4326 projection and use gdal_polygonize
-                # in order to turn tiff into GeoJSON
-                os.system('make png TIFF_IN=' +
-                          row[0].split('.')[0] + '_c137.tiff')
-                os.system('make png TIFF_IN=' +
-                          row[0].split('.')[0] + '_i131.tiff')
-                # Delete used files
-                os.system('make clean')
-                # Load JSON Files
-                with open(row[0].split('.')[0] + '_c137.json', 'r') as c137:
-                    c137_json = json.load(c137)
-                with open(row[0].split('.')[0] + '_i131.json', 'r') as i131:
-                    i131_json = json.load(i131)
-                # Update record for caching purposes
-                DBConn().safequery("UPDATE cluster SET  c137=\'" +
-                            json.dumps(c137_json) + "\' WHERE filename=\'" + row[0] + "\'")
-                DBConn().safequery("UPDATE cluster SET  i131=\'" +
-                            json.dumps(i131_json) + "\' WHERE filename=\'" + row[0] + "\'")
-                # Delete used files
-                os.system('rm ' + APPS_ROOT + '/' +
-                          row[0].split('.')[0] + '_c137.json')
-                os.system('rm ' + APPS_ROOT + '/' +
-                          row[0].split('.')[0] + '_i131.json')
-                os.system('rm ' + APPS_ROOT + '/' + row[0])
-                os.system('rm ' + APPS_ROOT + '/' + 'int_' + row[0])
-                # os.system('rm ' + APPS_ROOT + '/' + res[0])
-                stations.append(str(row[2]))
-                # scores.append(top3_scores[top3_names.index(row[2])])
-                scores.append(round(t[1],3))
-                # Choose selected pollutant
-                if pollutant == 'C137':
-                    dispersions.append(json.dumps(c137_json))
-                else:
-                    dispersions.append(json.dumps(i131_json))
-            # If dispersion has been cached
-            else:
-                # os.system('rm ' + APPS_ROOT + '/' + res[0])
-                stations.append(str(row[2]))
-                # scores.append(top3_scores[top3_names.index(row[2])])
-                scores.append(round(t[1],3))
-                if pollutant == 'C137':
-                    dispersions.append(json.dumps(row[3]))
-                else:
-                    dispersions.append(json.dumps(row[4]))
-    return scores, dispersions, stations
-
-# This function is the one that is called by the controller when clustering models
-# have been selected. It uses the above functions in order to function properly.
-def fbf_detections(cur, models, lat_lon, date, pollutant, metric, origin):
-    # Load weather variable
-    (items,res) = fbf_load_weather_data(cur, date, origin)
-    # Get best cluster candidate
-    (cluster_date,cluster_dates) = fbf_load_cluster_date(items, models, origin)
-    descriptor = origin.split('_')
-    descriptor = descriptor[len(descriptor) - 1]
-    timestamp = datetime.datetime.strptime(cluster_date, '%y-%m-%d-%H')
-    # Get scores for each station for the best cluster candidate
-    results = fbf_calc_station_scores(cur, lat_lon, timestamp, origin, descriptor, pollutant, cluster_dates)
-    # Sort scores
-    # results = sorted(results, key=lambda k: k[1] if k[
-    #                  1] > 0 else float('inf'), reverse=False)
-    # Get top 3 stations
-    # top3 = results[:3]
-    top3 = results
-    # print top3
-    # Turn top 3 station dispersion to visualization friendly form
-    scores, dispersions, stations = fbf_get_top3_stations(cur, top3, timestamp, origin, pollutant)
-    # Convert results to JSON form
-    scores, dispersions, stations = zip(
-        *sorted(zip(scores, dispersions, stations), key=lambda k: k[0] if k[0] > 0 else float('inf'), reverse=False))
-    send = {}
-    send['stations'] = stations
-    send['scores'] = scores
-    send['dispersions'] = dispersions
-    return json.dumps(send)
-
 # This function is the one that is called by the controller when clustering models
 # have been selected. It uses the above functions in order to function properly.
 def detections(cur, models, lat_lon, date, pollutant, metric, origin):
@@ -846,11 +599,9 @@ def detections(cur, models, lat_lon, date, pollutant, metric, origin):
     # Sort scores
     results = sorted(results, key=lambda k: k[1] if k[
                      1] > 0 else float('inf'), reverse=False)
-    print results
-    top3 = results
     # Get top 3 stations
-    # top3 = results[:3]
-    # print top3
+    top3 = results[:3]
+    print top3
     # Turn top 3 station dispersion to visualization friendly form
     scores, dispersions, stations = get_top3_stations(cur, top3, timestamp, origin, pollutant)
     # Convert results to JSON form
@@ -999,6 +750,30 @@ def query(semagrow, cell_id):
 
   return results
 
+def hospital_query(semagrow, cell_id):
+  values = ""
+  for id in cell_id:
+    values = values + "<http://iit.demokritos.gr/"+str(id)+"> "
+  semagrow.setQuery("""
+        PREFIX strdf: <http://strdf.di.uoa.gr/ontology#>
+
+        SELECT ?osm ?point ?tags WHERE {
+          ?cellid strdf:hasGeometry ?geometry .
+          ?osm <http://www.opengis.net/ont/geosparql#asWKT> ?point .
+          ?osm <http://openstreetmap.org/id> ?id .
+          ?s <http://cassandra.semagrow.eu/openstreetmap/hospitals#node_id> ?id .
+          ?s <http://cassandra.semagrow.eu/openstreetmap/hospitals#tags> ?tags .
+          VALUES ?cellid { %s }
+          FILTER strdf:within(?point, ?geometry)
+        }
+  """%values)
+
+  semagrow.setReturnFormat(JSON)
+
+  results = semagrow.queryAndConvert()
+
+  return results
+
 # This is the function called by the controller in order to return affected from
 # the dispersion areas (when querying each id individually).
 def single_pop(cell_pols,disp):
@@ -1016,7 +791,7 @@ def single_pop(cell_pols,disp):
     # For each id query SEMAGROW to get more info
     for id in affected_ids:
         try:
-            semagrow = SPARQLWrapper('http://10.0.10.12:9999/SemaGrow/query')
+            semagrow = SPARQLWrapper('http://10.0.10.11:9999/SemaGrow/sparql')
             results = single_query(semagrow,id)
             points = [(Point(float(res['long']['value']),float(res['lat']['value'])),int(res['population']['value']),res['geoname']['value'],res['name']['value']) for res in results['results']['bindings']]
             multi_points.append(points)
@@ -1049,7 +824,7 @@ def pop(cell_pols,disp):
     affected_ids = list(set(affected_ids))
     multi_points = []
     # Open endpoint
-    semagrow = SPARQLWrapper('http://10.0.10.12:9999/SemaGrow/query')
+    semagrow = SPARQLWrapper('http://10.0.10.11:9999/SemaGrow/sparql')
     # Batch query
     for batch in range(0,len(affected_ids),semagrow_batch_size):
         results = query(semagrow,affected_ids[batch:batch+semagrow_batch_size])
@@ -1062,5 +837,43 @@ def pop(cell_pols,disp):
     # Build response in JSON format
     for p,point in enumerate(multi_points):
         jpols.append(dict(type='Feature', properties={"POP":unicode(point[1]),"URI":unicode(point[2]),"NAME":unicode(point[3])}, geometry=mapping(point[0])))
+    end_res = dict(type='FeatureCollection', crs={ "type": "name", "properties": { "name":"urn:ogc:def:crs:OGC:1.3:CRS84" }},features=jpols)
+    return json.dumps(end_res)
+
+
+# This is the function called by the controller in order to return affected from
+# the dispersion areas (batch id querying).
+def hosp(cell_pols,disp):
+    start = time.time()
+    # Load dispersion in the JSON format
+    disp = json.loads(disp)
+    # Turn JSON into shapely polygons
+    multi = MultiPolygon([shape(pol['geometry']) for pol in disp['features']])
+    # Get intersection with our grid, therefore which cells are being affected_ids
+    # by the dispersion
+    affected_ids = [pol['id'] for pol in cell_pols if multi.intersects(pol['obj'])]
+    # Remove duplicate entries
+    affected_ids = list(set(affected_ids))
+    multi_points = []
+    # Open endpoint
+    semagrow = SPARQLWrapper('http://10.0.10.14:9999/SemaGrow/sparql')
+    # Batch query
+    for batch in range(0,len(affected_ids),semagrow_batch_size):
+        results = hospital_query(semagrow,affected_ids[batch:batch+semagrow_batch_size])
+        for res in results['results']['bindings']:
+            tup = re.match(r'POINT(.*)',res['point']['value']).group(1)
+            tup = tup.replace(')','')
+            tup = tup.replace('(','')
+            lon = tup.split(' ')[1]
+            lat = tup.split(' ')[2]
+            points = [(Point(float(lon),float(lat)),res['tags']['value'].encode('utf-8'))]
+        multi_points.append(points)
+    # Collapse multi points into single list
+    multi_points = list(chain.from_iterable(multi_points))
+    jpols = []
+    timing(start,time.time())
+    # Build response in JSON format
+    for p,point in enumerate(multi_points):
+        jpols.append(dict(type='Feature', properties={"TAGS":point[1]}, geometry=mapping(point[0])))
     end_res = dict(type='FeatureCollection', crs={ "type": "name", "properties": { "name":"urn:ogc:def:crs:OGC:1.3:CRS84" }},features=jpols)
     return json.dumps(end_res)

@@ -960,6 +960,9 @@ function addSelect(){
              if (id.indexOf('POP_') !== -1) {
                return true;
              }
+             else if (id.indexOf('HOSP_') !== -1) {
+               return true;
+             }
              else if (id.indexOf('NETWORK_') !== -1){
                return true;
              }
@@ -979,8 +982,21 @@ function addSelect(){
     var id = e.selected[0].getId();
     if (id.indexOf('POP_') !== -1) {
       var div = document.getElementById('city_uri');
+      div.innerHTML = '';
       div.style.display = 'block';
       div.innerHTML = 'Location name : <a href='+e.selected[0].get('uri')+'>'+e.selected[0].get('name')+'</a>';
+    }
+    else if (id.indexOf('HOSP_') !== -1) {
+          var div = document.getElementById('city_uri');
+          div.style.display = 'block';
+          div.innerHTML = '';
+          var tags = e.selected[0].get('tags');
+          tags = tags.split('\n');
+          str_tags = 'Tags : ';
+          for (var i=0;i<tags.length;i++){
+              str_tags += tags[i] + '<br>'
+          }
+          div.innerHTML = str_tags;
     }
     else if (id.indexOf('NETWORK_') !== -1){
       var id = e.selected[0].getId();

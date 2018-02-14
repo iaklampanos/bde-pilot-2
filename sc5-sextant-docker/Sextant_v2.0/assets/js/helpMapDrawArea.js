@@ -320,3 +320,15 @@ function clearPopGrid(){
     catch(err){ ; }
     });
 }
+
+function clearHospGrid(){
+  vector.getSource().forEachFeature(function(feature) {
+    try{
+        var id = feature.getId();
+        if (id.indexOf('HOSP_') !== -1){
+           vector.getSource().removeFeature(feature);
+        }
+      }
+    catch(err){ ; }
+    });
+}

@@ -3,15 +3,13 @@ version: "2"
 services:
   namenode:
     image: bde2020/hadoop-namenode:1.0.0
+    container_name: sc5_namenode
     volumes:
-      - /mnt/synology/sc5_hadoop/namenode:/hadoop/dfs/name
+      - /srv/synology/sc5_hadoop/namenode:/hadoop/dfs/name
     environment:
       - CLUSTER_NAME=bde_cluster
-      - "constraint:node==slave2"
     env_file:
       - ./hadoop.env
-    ports:
-      - "60070:50070"
     networks:
       - sc5_net
 
@@ -20,13 +18,11 @@ services:
     hostname: datanode1
     container_name: sc5_datanode1
     volumes:
-      - /srv/sc5_hadoop/datanode:/hadoop/dfs/data
+      - /srv/synology/sc5_hadoop/datanode:/hadoop/dfs/data
     env_file:
       - ./hadoop.env
     environment:
       - "constraint:node==slave1"
-    ports:
-      - "60075:50075"
     networks:
       - sc5_net
     depends_on:
@@ -37,13 +33,11 @@ services:
     hostname: datanode2
     container_name: sc5_datanode2
     volumes:
-      - /srv/sc5_hadoop/datanode:/hadoop/dfs/data
+      - /srv/synology/sc5_hadoop/datanode:/hadoop/dfs/data
     env_file:
       - ./hadoop.env
     environment:
       - "constraint:node==slave2"
-    ports:
-      - "60075:50075"
     networks:
       - sc5_net
     depends_on:
@@ -54,13 +48,11 @@ services:
     hostname: datanode3
     container_name: sc5_datanode3
     volumes:
-      - /srv/sc5_hadoop/datanode:/hadoop/dfs/data
+      - /srv/synology/sc5_hadoop/datanode:/hadoop/dfs/data
     env_file:
       - ./hadoop.env
     environment:
       - "constraint:node==slave3"
-    ports:
-      - "60075:50075"
     networks:
       - sc5_net
     depends_on:
@@ -71,9 +63,9 @@ services:
     environment:
       - "constraint:node==slave4"
     ports:
-      - "5332:5432"
+      - "5432:5432"
     volumes:
-      - /srv/sc5_postgis:/var/lib/postgresql/9.4/main
+      - /srv/synology/sc5_postgis:/var/lib/postgresql/9.4/main
     networks:
       - sc5_net
 
@@ -81,15 +73,15 @@ services:
     image: sc5_sextant
     container_name: sc5_sextant
     environment:
-      - "constraint:node==slave2"
+      - "constraint:node==slave4"
     volumes:
-      - /srv/sc5_ingest_data:/pilot_data/
+      - /srv/synology/sc5_ingest_data:/pilot_data/
     ports:
-      - "9292:8080"
-      - "9291:5000"
+      - "9999:8080"
+      - "5000:5000"
     networks:
       - sc5_net
 
 networks:
   sc5_net:
-    driver: overlay
+    driver: bridge

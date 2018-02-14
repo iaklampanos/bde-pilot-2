@@ -13,6 +13,7 @@ import dataset_utils as utils
 from netCDF4 import Dataset
 from scipy.ndimage.filters import gaussian_filter
 import scipy
+import scipy.misc
 from sklearn.preprocessing import maxabs_scale
 
 RESIZE_DIM = 167

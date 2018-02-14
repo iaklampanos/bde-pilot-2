@@ -1,10 +1,28 @@
 # BDE SC5 PILOT #3
 
+The pilot is carried out by NCSR-D in the frame of SC5 Climate Action, Environment, Resource Efficiency and Raw Materials.
+
+The pilot demonstrates the following workflow: A (potentially hazardous) substance is released in the atmosphere that results to increased readings in one or more monitoring stations. The user accesses a user interface provided by the pilot to define the locations of the monitoring stations as well as a timeseries of the measured values (e.g. gamma dose rate). The platform initiates
+- a weather matching algorithm, that is a search for similarity of the current weather and the pre-computed weather patterns, as well as
+- a dispersion matching algorithm, that is a search for similarity of the current substance dispersion patterns with the precomputed ones.
+- Semanticly-aware querying to enrich dispersion patterns with additional information such as affected population and nearby hospitals
+- A uniform perspective of heterogeneous data stored in heterogeneous data management and processing infrastructures using SemaGrow.
+
+# Demo
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=ZtjZhNviEwo
+" target="_blank"><img src="https://img.youtube.com/vi/ZtjZhNviEwo/0.jpg"
+alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
+
+
 #### Setup
 ```sh
 $ cd sc5_sextant-docker
 $ docker build . -t sc5_sextant
 $ cd ..
+$ docker-compose up -d
+$ cd osm-docker
+$ docker-compose up -d
+$ cd ../geonames-docker
 $ docker-compose up -d
 ```
 

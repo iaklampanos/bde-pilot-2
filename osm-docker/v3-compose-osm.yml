@@ -1,0 +1,30 @@
+version: "3"
+
+services:
+
+  strabon:
+    image: bde2020/strabon:1.0.1
+    ports:
+      - "8296:8080"
+    volumes:
+      - /root/sc5_osm/strabon-dump:/dumps
+    depends_on:
+      - postgis
+
+  postgis:
+    image: bde2020/postgis
+
+  osm:
+    image: semagrow/virtuoso:bench-7.1
+    environment:
+      - DOWNLOAD_URL=http://users.iit.demokritos.gr/~gmouchakis/osm-ids.nt.tar.gz
+
+  cassandra:
+    image: bde2020/cassandra
+
+  semagrow:
+    image: semagrow/semagrow-cassandra:test-eval-simple
+    ports:
+      - 9999:8080
+    volumes:                                                                                                                                                                                                                                 
+      - /root/sc5_osm/semagrow-metadata:/etc/default/semagrow

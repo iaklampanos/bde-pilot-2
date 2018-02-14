@@ -18,7 +18,7 @@ services:
     hostname: datanode1
     container_name: sc5_datanode1
     volumes:
-      - /mnt/disk1/thanasis/dockers/sc5_hadoop/datanode:/hadoop/dfs/data
+      - /mnt/synology/sc5_hadoop/datanode:/hadoop/dfs/data
     env_file:
       - ./hadoop.env
     environment:
@@ -33,7 +33,7 @@ services:
     hostname: datanode2
     container_name: sc5_datanode2
     volumes:
-      - /mnt/disk1/thanasis/dockers/sc5_hadoop/datanode:/hadoop/dfs/data
+      - /mnt/synology/sc5_hadoop/datanode:/hadoop/dfs/data
     env_file:
       - ./hadoop.env
     environment:
@@ -48,7 +48,7 @@ services:
     hostname: datanode3
     container_name: sc5_datanode3
     volumes:
-      - /mnt/disk1/thanasis/dockers/sc5_hadoop/datanode:/hadoop/dfs/data
+      - /mnt/synology/sc5_hadoop/datanode:/hadoop/dfs/data
     env_file:
       - ./hadoop.env
     environment:
@@ -65,7 +65,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - /mnt/disk1/thanasis/dockers/sc5_postgis:/var/lib/postgresql/9.4/main
+      - /mnt/synology/sc5_postgis:/var/lib/postgresql/9.4/main
     networks:
       - sc5_net
 
@@ -75,7 +75,7 @@ services:
     environment:
       - "constraint:node==slave4"
     volumes:
-      - /mnt/disk1/thanasis/dockers/sc5_ingest_data:/pilot_data/
+      - /mnt/synology/sc5_ingest_data:/pilot_data/
     ports:
       - "9999:8080"
       - "5000:5000"
